@@ -1,0 +1,18 @@
+[package]
+name = "hkdf"
+version = "0.1.0"
+authors = ["vladikoff"]
+license = "MIT"
+homepage = "https://github.com/vladikoff/rust-hkdf/"
+repository = "https://github.com/vladikoff/rust-hkdf/"
+description = "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
+keywords = [ "HKDF", "Crypto" ]
+readme = "README.md"
+
+[lib]
+name = "hkdf"
+path = "src/hkdf.rs"
+
+[dependencies]
+rust-crypto = "*"
+rustc-serialize = "*"
