@@ -9,14 +9,14 @@ Supports:
 
 ## Installation
 
-From the git repository:
-
 From crates.io:
 
 ```toml
 [dependencies]
 hkdf = "0.1.0"
 ```
+
+From the git repository:
 
 ```toml
 [dependencies.hkdf]
