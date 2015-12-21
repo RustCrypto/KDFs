@@ -1,10 +1,5 @@
-#![feature(macro_rules)]
-#![feature(simd)]
-#![feature(slicing_syntax)]
-#![cfg_attr(test, deny(warnings))]
 extern crate crypto;
-extern crate "rustc-serialize" as rustc_serialize;
-#[cfg(test)] extern crate test;
+extern crate rustc_serialize;
 
 use crypto::hmac;
 use crypto::digest::Digest;
@@ -13,7 +8,7 @@ use crypto::sha2::Sha256;
 
 pub struct Hkdf {
     pub prk: Vec<u8>,
-    pub block_size: uint
+    pub block_size: usize
 }
 
 impl Hkdf {
@@ -32,7 +27,7 @@ impl Hkdf {
         }
     }
 
-    pub fn derive(&mut self, info: &[u8], length: uint) -> Vec<u8> {
+    pub fn derive(&mut self, info: &[u8], length: usize) -> Vec<u8> {
         let block_size = self.block_size;
         let remain = if length % block_size == 0 {
             0
@@ -48,20 +43,20 @@ impl Hkdf {
             panic!("Invalid number of blocks, length too large");
         }
 
-        for n in range(0, blocks_needed + 1) {
-            let mut output_block = hmac::Hmac::new(Sha256::new(), self.prk.as_slice());
+        for n in 0..blocks_needed+1 {
+            let mut output_block = hmac::Hmac::new(Sha256::new(), &self.prk);
             let c = vec![(n + 1) as u8];
 
-            output_block.input(prev.as_slice());
-            output_block.input(info.as_slice());
-            output_block.input(c.as_slice());
+            output_block.input(&prev);
+            output_block.input(&info);
+            output_block.input(&c);
 
             prev = output_block.result().code().to_vec();
-            okm.push_all(prev.as_slice());
+            okm.extend(&prev);
         }
 
         let mut result = Vec::<u8>::new();
-        result.push_all(okm[..length]);
+        result.extend(&okm[..length]);
 
         return result;
     }
@@ -77,7 +72,7 @@ mod tests {
         ikm: String,
         salt: String,
         info: String,
-        length: uint,
+        length: usize,
         prk: String,
         okm: String
     }
@@ -120,13 +115,13 @@ mod tests {
         let tests = tests();
         for t in tests.iter() {
             let mut hkdf = Hkdf::new(
-                t.digest.as_slice(),
-                t.ikm.from_hex().unwrap().as_slice(),
-                t.salt.from_hex().unwrap().as_slice()
+                &t.digest,
+                &t.ikm.from_hex().unwrap(),
+                &t.salt.from_hex().unwrap()
             );
 
             let okm = hkdf.derive(
-                t.info.from_hex().unwrap().as_slice(),
+                &t.info.from_hex().unwrap(),
                 t.length
             );
 
@@ -136,15 +131,15 @@ mod tests {
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn test_unsupported_digest() {
-        Hkdf::new("SHA-1337", "".to_string().into_bytes().as_slice(), "".to_string().into_bytes().as_slice());
+        Hkdf::new("SHA-1337", &[], &[]);
     }
 
     #[test]
-    #[should_fail]
+    #[should_panic]
     fn test_unsupported_length() {
-        let mut hkdf = Hkdf::new("SHA-256", "".to_string().into_bytes().as_slice(), "".to_string().into_bytes().as_slice());
-        hkdf.derive("".to_string().into_bytes().as_slice(), 90000);
+        let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
+        hkdf.derive(&[], 90000);
     }
 }

@@ -1,4 +1,4 @@
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 extern crate hkdf;
 
 use rustc_serialize::hex::{ToHex,FromHex};
@@ -9,8 +9,8 @@ fn main() {
     let salt = "000102030405060708090a0b0c".from_hex().unwrap();
     let info = "f0f1f2f3f4f5f6f7f8f9".from_hex().unwrap();
 
-    let mut hk = Hkdf::new("SHA-256", ikm.as_slice(), salt.as_slice());
-    let okm = hk.derive(info.as_slice(), 42);
+    let mut hk = Hkdf::new("SHA-256", &ikm, &salt);
+    let okm = hk.derive(&info, 42);
 
     println!("Vector 1 PRK is {}", hk.prk.to_hex());
     println!("Vector 1 OKM is {}", okm.to_hex());
