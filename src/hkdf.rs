@@ -128,11 +128,20 @@ mod tests {
         }
     }
 
+    const MAX_SHA256_LENGTH: usize = 255 * (256 / 8); // =8160
+
     #[test]
     fn test_lengths() {
         let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
-        let longest = hkdf.derive(&[], 300);
-        for length in 0..300 {
+        let longest = hkdf.derive(&[], MAX_SHA256_LENGTH);
+        // Runtime is O(length), so exhaustively testing all legal lengths
+        // would take too long (at least without --release). Only test a
+        // subset: the first 500, the last 10, and every 100th in between.
+        let lengths = (0..MAX_SHA256_LENGTH + 1).filter(|&len| {
+            len < 500 || len > MAX_SHA256_LENGTH - 10 || len % 100 == 0
+        });
+
+        for length in lengths {
             let okm = hkdf.derive(&[], length);
             assert_eq!(okm.len(), length);
             assert_eq!(okm.to_hex(), longest[..length].to_hex());
@@ -142,14 +151,14 @@ mod tests {
     #[test]
     fn test_max_length() {
         let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
-        hkdf.derive(&[], 255 * (256 / 8));
+        hkdf.derive(&[], MAX_SHA256_LENGTH);
     }
 
     #[test]
     #[should_panic(expected="length too large")]
     fn test_max_length_exceeded() {
         let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
-        hkdf.derive(&[], 255 * (256 / 8) + 1);
+        hkdf.derive(&[], MAX_SHA256_LENGTH + 1);
     }
 
     #[test]
