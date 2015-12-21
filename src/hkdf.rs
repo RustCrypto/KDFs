@@ -1,6 +1,7 @@
 extern crate crypto;
 extern crate rustc_serialize;
 
+use std::cmp;
 use crypto::hmac;
 use crypto::digest::Digest;
 use crypto::mac::Mac;
@@ -8,7 +9,7 @@ use crypto::sha2::Sha256;
 
 pub struct Hkdf {
     pub prk: Vec<u8>,
-    pub block_size: usize,
+    pub hmac_output_bytes: usize,
 }
 
 impl Hkdf {
@@ -23,42 +24,36 @@ impl Hkdf {
 
         Hkdf {
             prk: hmac.result().code().to_vec(),
-            block_size: alg.block_size(),
+            hmac_output_bytes: hmac.output_bytes(),
         }
     }
 
     pub fn derive(&mut self, info: &[u8], length: usize) -> Vec<u8> {
-        let block_size = self.block_size;
-        let remain = if length % block_size == 0 {
-            0
-        } else {
-            1
-        };
-
-        let blocks_needed = length / block_size + remain;
-        let mut okm = Vec::<u8>::new();
+        let mut okm = Vec::<u8>::with_capacity(length);
         let mut prev = Vec::<u8>::new();
 
-        if blocks_needed > 255 {
+        if length > self.hmac_output_bytes * 255 {
             panic!("Invalid number of blocks, length too large");
         }
 
-        for n in 0..blocks_needed + 1 {
+        let mut remaining = length;
+        let mut blocknum = 1;
+        while remaining > 0 {
             let mut output_block = hmac::Hmac::new(Sha256::new(), &self.prk);
-            let c = vec![(n + 1) as u8];
+            let c = vec![blocknum as u8];
 
             output_block.input(&prev);
             output_block.input(&info);
             output_block.input(&c);
 
             prev = output_block.result().code().to_vec();
-            okm.extend(&prev);
+            let needed = cmp::min(remaining, self.hmac_output_bytes);
+            okm.extend(&prev[..needed]);
+            blocknum += 1;
+            remaining -= needed;
         }
 
-        let mut result = Vec::<u8>::new();
-        result.extend(&okm[..length]);
-
-        return result;
+        return okm;
     }
 }
 
@@ -131,6 +126,30 @@ mod tests {
             assert_eq!(hkdf.prk.to_hex(), t.prk);
             assert_eq!(okm.to_hex(), t.okm);
         }
+    }
+
+    #[test]
+    fn test_lengths() {
+        let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
+        let longest = hkdf.derive(&[], 300);
+        for length in 0..300 {
+            let okm = hkdf.derive(&[], length);
+            assert_eq!(okm.len(), length);
+            assert_eq!(okm.to_hex(), longest[..length].to_hex());
+        }
+    }
+
+    #[test]
+    fn test_max_length() {
+        let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
+        hkdf.derive(&[], 255 * (256 / 8));
+    }
+
+    #[test]
+    #[should_panic(expected="length too large")]
+    fn test_max_length_exceeded() {
+        let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
+        hkdf.derive(&[], 255 * (256 / 8) + 1);
     }
 
     #[test]
