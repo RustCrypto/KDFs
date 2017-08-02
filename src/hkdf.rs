@@ -1,29 +1,29 @@
-extern crate crypto;
-extern crate rustc_serialize;
+extern crate generic_array;
+extern crate digest;
+extern crate hmac;
 
 use std::cmp;
-use crypto::hmac;
-use crypto::mac::Mac;
-use crypto::sha2::Sha256;
+use digest::{Input, BlockInput, FixedOutput};
+use generic_array::{ArrayLength, GenericArray};
+use hmac::{Hmac, Mac};
 
-pub struct Hkdf {
-    pub prk: Vec<u8>,
-    pub hmac_output_bytes: usize,
+pub struct Hkdf<D>
+    where D: Input + BlockInput + FixedOutput + Default,
+          D::OutputSize: ArrayLength<u8>
+{
+    pub prk: GenericArray<u8, D::OutputSize>,
 }
 
-impl Hkdf {
-    pub fn new(digest: &str, ikm: &[u8], salt: &[u8]) -> Hkdf {
-        let alg = match digest {
-            "SHA-256" => Sha256::new(),
-            _ => panic!("Hashing algorithm not supported"),
-        };
-
-        let mut hmac = hmac::Hmac::new(alg, salt);
+impl <D> Hkdf<D>
+    where D: Input + BlockInput + FixedOutput + Default,
+          D::OutputSize: ArrayLength<u8>
+{
+    pub fn new(ikm: &[u8], salt: &[u8]) -> Hkdf<D> {
+        let mut hmac = Hmac::<D>::new(salt);
         hmac.input(ikm);
 
         Hkdf {
             prk: hmac.result().code().to_vec(),
-            hmac_output_bytes: hmac.output_bytes(),
         }
     }
 
@@ -38,7 +38,7 @@ impl Hkdf {
         let mut remaining = length;
         let mut blocknum = 1;
         while remaining > 0 {
-            let mut output_block = hmac::Hmac::new(Sha256::new(), &self.prk);
+            let mut output_block = hmac::Hmac::new(&self.prk);
             let c = vec![blocknum as u8];
 
             output_block.input(&prev);
@@ -60,6 +60,7 @@ impl Hkdf {
 mod tests {
     use Hkdf;
     use rustc_serialize::hex::{ToHex, FromHex};
+    use sha2::Sha256;
 
     struct Test<'a> {
         digest: &'a str,
@@ -116,9 +117,8 @@ mod tests {
     fn test_derive() {
         let tests = tests();
         for t in tests.iter() {
-            let mut hkdf = Hkdf::new(&t.digest,
-                                     &t.ikm.from_hex().unwrap(),
-                                     &t.salt.from_hex().unwrap());
+            let mut hkdf = Hkdf::<Sha256>::new(&t.ikm.from_hex().unwrap(),
+                                               &t.salt.from_hex().unwrap());
 
             let okm = hkdf.derive(&t.info.from_hex().unwrap(), t.length);
 
@@ -131,7 +131,7 @@ mod tests {
 
     #[test]
     fn test_lengths() {
-        let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
+        let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
         let longest = hkdf.derive(&[], MAX_SHA256_LENGTH);
         // Runtime is O(length), so exhaustively testing all legal lengths
         // would take too long (at least without --release). Only test a
@@ -149,27 +149,21 @@ mod tests {
 
     #[test]
     fn test_max_length() {
-        let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
+        let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
         hkdf.derive(&[], MAX_SHA256_LENGTH);
     }
 
     #[test]
     #[should_panic(expected="length too large")]
     fn test_max_length_exceeded() {
-        let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
+        let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
         hkdf.derive(&[], MAX_SHA256_LENGTH + 1);
     }
 
     #[test]
     #[should_panic]
-    fn test_unsupported_digest() {
-        Hkdf::new("SHA-1337", &[], &[]);
-    }
-
-    #[test]
-    #[should_panic]
     fn test_unsupported_length() {
-        let mut hkdf = Hkdf::new("SHA-256", &[], &[]);
+        let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
         hkdf.derive(&[], 90000);
     }
 }
