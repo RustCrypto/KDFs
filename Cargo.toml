@@ -20,3 +20,5 @@ hmac = "0.4"
 
 [dev-dependencies]
 crypto-tests = "0.5"
+hex = "0.2"
+sha2 = "0.6"
