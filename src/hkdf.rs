@@ -84,7 +84,7 @@ mod tests {
 
     // Test Vectors from https://tools.ietf.org/html/rfc5869.
     fn tests<'a>() -> Vec<Test<'a>> {
-        vec![Test {
+        vec![Test { // Test Case 1
                  ikm: "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
                  salt: "000102030405060708090a0b0c",
                  info: "f0f1f2f3f4f5f6f7f8f9",
@@ -93,7 +93,7 @@ mod tests {
                  okm: "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b8\
                        87185865",
              },
-             Test {
+             Test { // Test Case 2
                  ikm: "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425\
                        262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b\
                        4c4d4e4f",
@@ -109,7 +109,7 @@ mod tests {
                        827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5\
                        c1f3434f1d87",
              },
-             Test {
+             Test { // Test Case 3
                  ikm: "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
                  salt: "",
                  info: "",
