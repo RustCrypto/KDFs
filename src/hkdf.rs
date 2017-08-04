@@ -5,6 +5,8 @@ extern crate hmac;
 #[cfg(test)]
 extern crate hex;
 #[cfg(test)]
+extern crate sha_1;
+#[cfg(test)]
 extern crate sha2;
 
 use std::cmp;
@@ -71,6 +73,7 @@ impl <D> Hkdf<D>
 mod tests {
     use Hkdf;
     use hex::{ToHex, FromHex};
+    use sha_1::Sha1;
     use sha2::Sha256;
 
     struct Test<'a> {
@@ -83,7 +86,7 @@ mod tests {
     }
 
     // Test Vectors from https://tools.ietf.org/html/rfc5869.
-    fn tests<'a>() -> Vec<Test<'a>> {
+    fn tests_sha256<'a>() -> Vec<Test<'a>> {
         vec![Test { // Test Case 1
                  ikm: "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
                  salt: "000102030405060708090a0b0c",
@@ -121,13 +124,14 @@ mod tests {
     }
 
     #[test]
-    fn test_derive() {
-        let tests = tests();
+    fn test_derive_sha256() {
+        let tests = tests_sha256();
         for t in tests.iter() {
             let ikm = &Vec::from_hex(&t.ikm).unwrap()[..];
             let salt = &Vec::from_hex(&t.salt).unwrap()[..];
             let info = &Vec::from_hex(&t.info).unwrap()[..];
             let mut hkdf = Hkdf::<Sha256>::new(ikm, salt);
+            //Hash::SHA1 => Hkdf::<Sha1>::new(ikm, salt),
             let okm = hkdf.derive(info, t.length);
 
             assert_eq!(hkdf.prk.to_hex(), t.prk);
@@ -173,5 +177,80 @@ mod tests {
     fn test_unsupported_length() {
         let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
         hkdf.derive(&[], 90000);
+    }
+
+    // Test Vectors from https://tools.ietf.org/html/rfc5869.
+    fn tests_sha1<'a>() -> Vec<Test<'a>> {
+        vec![Test { // Test Case 4
+                 ikm: "0b0b0b0b0b0b0b0b0b0b0b",
+                 salt: "000102030405060708090a0b0c",
+                 info: "f0f1f2f3f4f5f6f7f8f9",
+                 length: 42,
+                 prk: "9b6c18c432a7bf8f0e71c8eb88f4b30baa2ba243",
+                 okm: "085a01ea1b10f36933068b56efa5ad81\
+                       a4f14b822f5b091568a9cdd4f155fda2\
+                       c22e422478d305f3f896",
+             },
+             Test { // Test Case 5
+                 ikm: "000102030405060708090a0b0c0d0e0f\
+                       101112131415161718191a1b1c1d1e1f\
+                       202122232425262728292a2b2c2d2e2f\
+                       303132333435363738393a3b3c3d3e3f\
+                       404142434445464748494a4b4c4d4e4f",
+                 salt: "606162636465666768696a6b6c6d6e6f\
+                        707172737475767778797a7b7c7d7e7f\
+                        808182838485868788898a8b8c8d8e8f\
+                        909192939495969798999a9b9c9d9e9f\
+                        a0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+                 info: "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf\
+                        c0c1c2c3c4c5c6c7c8c9cacbcccdcecf\
+                        d0d1d2d3d4d5d6d7d8d9dadbdcdddedf\
+                        e0e1e2e3e4e5e6e7e8e9eaebecedeeef\
+                        f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+                 length: 82,
+                 prk: "8adae09a2a307059478d309b26c4115a224cfaf6",
+                 okm: "0bd770a74d1160f7c9f12cd5912a06eb\
+                       ff6adcae899d92191fe4305673ba2ffe\
+                       8fa3f1a4e5ad79f3f334b3b202b2173c\
+                       486ea37ce3d397ed034c7f9dfeb15c5e\
+                       927336d0441f4c4300e2cff0d0900b52\
+                       d3b4",
+             },
+             Test { // Test Case 6
+                 ikm: "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+                 salt: "",
+                 info: "",
+                 length: 42,
+                 prk: "da8c8a73c7fa77288ec6f5e7c297786aa0d32d01",
+                 okm: "0ac1af7002b3d761d1e55298da9d0506\
+                       b9ae52057220a306e07b6b87e8df21d0\
+                       ea00033de03984d34918",
+             },
+             Test { // Test Case 7
+                 ikm: "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c",
+                 salt: "", // "Not Provided"
+                 info: "",
+                 length: 42,
+                 prk: "2adccada18779e7c2077ad2eb19d3f3e731385dd",
+                 okm: "2c91117204d745f3500d636a62f64f0a\
+                       b3bae548aa53d423b0d1f27ebba6f5e5\
+                       673a081d70cce7acfc48",
+             },
+        ]
+    }
+
+    #[test]
+    fn test_derive_sha1() {
+        let tests = tests_sha1();
+        for t in tests.iter() {
+            let ikm = &Vec::from_hex(&t.ikm).unwrap()[..];
+            let salt = &Vec::from_hex(&t.salt).unwrap()[..];
+            let info = &Vec::from_hex(&t.info).unwrap()[..];
+            let mut hkdf = Hkdf::<Sha1>::new(ikm, salt);
+            let okm = hkdf.derive(info, t.length);
+
+            assert_eq!(hkdf.prk.to_hex(), t.prk);
+            assert_eq!(okm.to_hex(), t.okm);
+        }
     }
 }
