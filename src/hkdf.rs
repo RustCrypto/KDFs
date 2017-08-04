@@ -2,8 +2,14 @@ extern crate generic_array;
 extern crate digest;
 extern crate hmac;
 
+#[cfg(test)]
+extern crate hex;
+#[cfg(test)]
+extern crate sha2;
+
 use std::cmp;
 use digest::{Input, BlockInput, FixedOutput};
+use digest::Digest; // for sizetest=D::new()
 use generic_array::{ArrayLength, GenericArray};
 use hmac::{Hmac, Mac};
 
@@ -21,9 +27,10 @@ impl <D> Hkdf<D>
     pub fn new(ikm: &[u8], salt: &[u8]) -> Hkdf<D> {
         let mut hmac = Hmac::<D>::new(salt);
         hmac.input(ikm);
-
+        let mut arr = GenericArray::default();
+        arr.copy_from_slice(hmac.result().code());
         Hkdf {
-            prk: hmac.result().code().to_vec(),
+            prk: arr,
         }
     }
 
@@ -31,14 +38,18 @@ impl <D> Hkdf<D>
         let mut okm = Vec::<u8>::with_capacity(length);
         let mut prev = Vec::<u8>::new();
 
-        if length > self.hmac_output_bytes * 255 {
+        //if length > <D as FixedOutput>::OutputSize.to_usize() * 255 {
+        //if length > D::OutputSize.to_usize() * 255 {
+        let sizetest = D::new();
+        let hmac_output_bytes = sizetest.fixed_result().len();
+        if length > hmac_output_bytes * 255 {
             panic!("Invalid number of blocks, length too large");
         }
 
         let mut remaining = length;
         let mut blocknum = 1;
         while remaining > 0 {
-            let mut output_block = hmac::Hmac::new(&self.prk);
+            let mut output_block = Hmac::<D>::new(&self.prk);
             let c = vec![blocknum as u8];
 
             output_block.input(&prev);
@@ -46,7 +57,7 @@ impl <D> Hkdf<D>
             output_block.input(&c);
 
             prev = output_block.result().code().to_vec();
-            let needed = cmp::min(remaining, self.hmac_output_bytes);
+            let needed = cmp::min(remaining, hmac_output_bytes);
             okm.extend(&prev[..needed]);
             blocknum += 1;
             remaining -= needed;
@@ -59,11 +70,10 @@ impl <D> Hkdf<D>
 #[cfg(test)]
 mod tests {
     use Hkdf;
-    use rustc_serialize::hex::{ToHex, FromHex};
+    use hex::{ToHex, FromHex};
     use sha2::Sha256;
 
     struct Test<'a> {
-        digest: &'a str,
         ikm: &'a str,
         salt: &'a str,
         info: &'a str,
@@ -75,7 +85,6 @@ mod tests {
     // Test Vectors from https://tools.ietf.org/html/rfc5869.
     fn tests<'a>() -> Vec<Test<'a>> {
         vec![Test {
-                 digest: "SHA-256",
                  ikm: "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
                  salt: "000102030405060708090a0b0c",
                  info: "f0f1f2f3f4f5f6f7f8f9",
@@ -85,7 +94,6 @@ mod tests {
                        87185865",
              },
              Test {
-                 digest: "SHA-256",
                  ikm: "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425\
                        262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b\
                        4c4d4e4f",
@@ -102,7 +110,6 @@ mod tests {
                        c1f3434f1d87",
              },
              Test {
-                 digest: "SHA-256",
                  ikm: "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
                  salt: "",
                  info: "",
@@ -117,10 +124,11 @@ mod tests {
     fn test_derive() {
         let tests = tests();
         for t in tests.iter() {
-            let mut hkdf = Hkdf::<Sha256>::new(&t.ikm.from_hex().unwrap(),
-                                               &t.salt.from_hex().unwrap());
-
-            let okm = hkdf.derive(&t.info.from_hex().unwrap(), t.length);
+            let ikm = &Vec::from_hex(&t.ikm).unwrap()[..];
+            let salt = &Vec::from_hex(&t.salt).unwrap()[..];
+            let info = &Vec::from_hex(&t.info).unwrap()[..];
+            let mut hkdf = Hkdf::<Sha256>::new(ikm, salt);
+            let okm = hkdf.derive(info, t.length);
 
             assert_eq!(hkdf.prk.to_hex(), t.prk);
             assert_eq!(okm.to_hex(), t.okm);
@@ -143,7 +151,7 @@ mod tests {
         for length in lengths {
             let okm = hkdf.derive(&[], length);
             assert_eq!(okm.len(), length);
-            assert_eq!(okm.to_hex(), longest[..length].to_hex());
+            assert_eq!(okm.to_hex(), longest[..length].iter().to_hex());
         }
     }
 
