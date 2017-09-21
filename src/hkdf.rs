@@ -22,8 +22,8 @@ pub struct Hkdf<D>
     pub prk: GenericArray<u8, D::OutputSize>,
 }
 
-impl <D> Hkdf<D>
-    where D: Input + BlockInput + FixedOutput + Default,
+impl<D> Hkdf<D>
+    where D: Digest + Default,
           D::OutputSize: ArrayLength<u8>
 {
     pub fn new(ikm: &[u8], salt: &[u8]) -> Hkdf<D> {
@@ -55,7 +55,7 @@ impl <D> Hkdf<D>
             let c = vec![blocknum as u8];
 
             output_block.input(&prev);
-            output_block.input(&info);
+            output_block.input(info);
             output_block.input(&c);
 
             prev = output_block.result().code().to_vec();
@@ -65,7 +65,7 @@ impl <D> Hkdf<D>
             remaining -= needed;
         }
 
-        return okm;
+        okm
     }
 }
 
