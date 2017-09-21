@@ -10,13 +10,12 @@ extern crate sha_1;
 extern crate sha2;
 
 use std::cmp;
-use digest::{Input, BlockInput, FixedOutput};
-use digest::Digest; // for sizetest=D::new()
+use digest::Digest;
 use generic_array::{ArrayLength, GenericArray};
 use hmac::{Hmac, Mac};
 
 pub struct Hkdf<D>
-    where D: Input + BlockInput + FixedOutput + Default,
+    where D: Digest + Default,
           D::OutputSize: ArrayLength<u8>
 {
     pub prk: GenericArray<u8, D::OutputSize>,
@@ -40,10 +39,8 @@ impl<D> Hkdf<D>
         let mut okm = Vec::<u8>::with_capacity(length);
         let mut prev = Vec::<u8>::new();
 
-        //if length > <D as FixedOutput>::OutputSize.to_usize() * 255 {
-        //if length > D::OutputSize.to_usize() * 255 {
-        let sizetest = D::new();
-        let hmac_output_bytes = sizetest.fixed_result().len();
+        use generic_array::typenum::Unsigned;
+        let hmac_output_bytes = D::OutputSize::to_usize();
         if length > hmac_output_bytes * 255 {
             panic!("Invalid number of blocks, length too large");
         }
