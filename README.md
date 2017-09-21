@@ -27,3 +27,9 @@ git = "https://github.com/vladikoff/rust-hkdf.git"
 ## Usage
 
 See the example [examples/main.rs](examples/main.rs) or run it with `cargo run --example main`
+
+## Authors
+
+[![Vlad Filippov](https://avatars3.githubusercontent.com/u/128755?s=70)](http://vf.io/) | [![Brian Warner](https://avatars3.githubusercontent.com/u/27146?v=4&s=70)](http://www.lothar.com/blog/) 
+---|---
+[Vlad Filippov](http://vf.io/) | [Brian Warner](http://www.lothar.com/blog/)
