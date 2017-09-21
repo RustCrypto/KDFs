@@ -3,7 +3,6 @@ extern crate rustc_serialize;
 
 use std::cmp;
 use crypto::hmac;
-use crypto::digest::Digest;
 use crypto::mac::Mac;
 use crypto::sha2::Sha256;
 
