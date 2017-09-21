@@ -5,7 +5,8 @@
 [HMAC-based Extract-and-Expand Key Derivation Function (HKDF)](https://tools.ietf.org/html/rfc5869) for [Rust](http://www.rust-lang.org/).
 Supports:
 
-* SHA-256
+- SHA-256
+- SHA-1
 
 ## Installation
 
