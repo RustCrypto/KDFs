@@ -1,6 +1,6 @@
 [package]
 name = "hkdf"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["vladikoff"]
 license = "MIT"
 homepage = "https://github.com/vladikoff/rust-hkdf/"
