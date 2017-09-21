@@ -28,6 +28,12 @@ git = "https://github.com/vladikoff/rust-hkdf.git"
 
 See the example [examples/main.rs](examples/main.rs) or run it with `cargo run --example main`
 
+## Changelog
+
+- 0.2.0 - support for rustc 1.20.0
+- 0.1.1 - fixes to support rustc 1.5.0
+- 0.1.0 - initial release
+
 ## Authors
 
 [![Vlad Filippov](https://avatars3.githubusercontent.com/u/128755?s=70)](http://vf.io/) | [![Brian Warner](https://avatars3.githubusercontent.com/u/27146?v=4&s=70)](http://www.lothar.com/blog/) 
