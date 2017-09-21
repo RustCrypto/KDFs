@@ -15,7 +15,7 @@ From crates.io:
 
 ```toml
 [dependencies]
-hkdf = "0.1.1"
+hkdf = "*"
 ```
 
 From the git repository:
