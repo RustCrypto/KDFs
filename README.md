@@ -1,6 +1,7 @@
 # rust-hkdf
 
 [![Build Status](https://travis-ci.org/vladikoff/rust-hkdf.svg?branch=master)](https://travis-ci.org/vladikoff/rust-hkdf)
+[![creates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf)
 
 [HMAC-based Extract-and-Expand Key Derivation Function (HKDF)](https://tools.ietf.org/html/rfc5869) for [Rust](http://www.rust-lang.org/).
 Supports:
