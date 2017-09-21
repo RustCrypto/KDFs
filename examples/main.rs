@@ -1,15 +1,17 @@
-extern crate rustc_serialize;
+extern crate hex;
 extern crate hkdf;
+extern crate sha2;
 
-use rustc_serialize::hex::{ToHex,FromHex};
+use sha2::Sha256;
+use hex::{ToHex,FromHex};
 use hkdf::Hkdf;
 
 fn main() {
-    let ikm = "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b".from_hex().unwrap();
-    let salt = "000102030405060708090a0b0c".from_hex().unwrap();
-    let info = "f0f1f2f3f4f5f6f7f8f9".from_hex().unwrap();
+    let ikm = Vec::from_hex("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
+    let salt = Vec::from_hex("000102030405060708090a0b0c").unwrap();
+    let info = Vec::from_hex("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-    let mut hk = Hkdf::new("SHA-256", &ikm, &salt);
+    let mut hk = Hkdf::<Sha256>::new(&ikm, &salt);
     let okm = hk.derive(&info, 42);
 
     println!("Vector 1 PRK is {}", hk.prk.to_hex());
