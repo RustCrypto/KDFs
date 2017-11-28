@@ -5,7 +5,7 @@ extern crate hmac;
 #[cfg(test)]
 extern crate hex;
 #[cfg(test)]
-extern crate sha_1;
+extern crate sha1;
 #[cfg(test)]
 extern crate sha2;
 
@@ -15,21 +15,23 @@ use generic_array::{ArrayLength, GenericArray};
 use hmac::{Hmac, Mac};
 
 pub struct Hkdf<D>
-    where D: Digest + Default,
+    where D: Digest,
           D::OutputSize: ArrayLength<u8>
 {
     pub prk: GenericArray<u8, D::OutputSize>,
 }
 
 impl<D> Hkdf<D>
-    where D: Digest + Default,
+    where D: Digest,
           D::OutputSize: ArrayLength<u8>
 {
     pub fn new(ikm: &[u8], salt: &[u8]) -> Hkdf<D> {
-        let mut hmac = Hmac::<D>::new(salt);
+        // Hmac::new() is now defined to return a Result, but as far as I can
+        // tell, it can only return Ok.
+        let mut hmac = Hmac::<D>::new(salt).unwrap();
         hmac.input(ikm);
         let mut arr = GenericArray::default();
-        arr.copy_from_slice(hmac.result().code());
+        arr.copy_from_slice(&hmac.result().code());
         Hkdf {
             prk: arr,
         }
@@ -48,7 +50,7 @@ impl<D> Hkdf<D>
         let mut remaining = length;
         let mut blocknum = 1;
         while remaining > 0 {
-            let mut output_block = Hmac::<D>::new(&self.prk);
+            let mut output_block = Hmac::<D>::new(&self.prk).unwrap();
             let c = vec![blocknum as u8];
 
             output_block.input(&prev);
@@ -70,7 +72,7 @@ impl<D> Hkdf<D>
 mod tests {
     use Hkdf;
     use hex::{ToHex, FromHex};
-    use sha_1::Sha1;
+    use sha1::Sha1;
     use sha2::Sha256;
 
     struct Test<'a> {
