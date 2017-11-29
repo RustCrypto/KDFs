@@ -26,8 +26,12 @@ impl<D> Hkdf<D>
           D::OutputSize: ArrayLength<u8>
 {
     pub fn new(ikm: &[u8], salt: &[u8]) -> Hkdf<D> {
-        // Hmac::new() is now defined to return a Result, but as far as I can
-        // tell, it can only return Ok.
+        // The hmac-0.5 MAC trait (which provides new()) is now defined to
+        // return a Result, apparently to support things like CMAC which
+        // require a specific key length. As far as I can tell, HMAC in
+        // particular can only return an Ok(), since HMAC accepts any length
+        // of bytes as its key. So we use unwrap() here, rather than exposing
+        // the error to our caller. This might change in a future version.
         let mut hmac = Hmac::<D>::new(salt).unwrap();
         hmac.input(ikm);
         let mut arr = GenericArray::default();
