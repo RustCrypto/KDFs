@@ -23,3 +23,8 @@ crypto-tests = "0.5.*"
 hex = "0.2.*"
 sha-1 = "0.7.*"
 sha2 = "0.7.*"
+bencher = "0.1"
+
+[[bench]]
+name = "hkdf"
+harness = false
