@@ -75,7 +75,7 @@ impl<D> Hkdf<D>
 #[cfg(test)]
 mod tests {
     use Hkdf;
-    use hex::{ToHex, FromHex};
+    use hex;
     use sha1::Sha1;
     use sha2::Sha256;
 
@@ -130,15 +130,15 @@ mod tests {
     fn test_derive_sha256() {
         let tests = tests_sha256();
         for t in tests.iter() {
-            let ikm = &Vec::from_hex(&t.ikm).unwrap()[..];
-            let salt = &Vec::from_hex(&t.salt).unwrap()[..];
-            let info = &Vec::from_hex(&t.info).unwrap()[..];
-            let mut hkdf = Hkdf::<Sha256>::new(ikm, salt);
+            let ikm = hex::decode(&t.ikm).unwrap();
+            let salt = hex::decode(&t.salt).unwrap();
+            let info = hex::decode(&t.info).unwrap();
+            let mut hkdf = Hkdf::<Sha256>::new(&ikm[..], &salt[..]);
             //Hash::SHA1 => Hkdf::<Sha1>::new(ikm, salt),
-            let okm = hkdf.derive(info, t.length);
+            let okm = hkdf.derive(&info[..], t.length);
 
-            assert_eq!(hkdf.prk.to_hex(), t.prk);
-            assert_eq!(okm.to_hex(), t.okm);
+            assert_eq!(hex::encode(hkdf.prk), t.prk);
+            assert_eq!(hex::encode(okm), t.okm);
         }
     }
 
@@ -158,7 +158,7 @@ mod tests {
         for length in lengths {
             let okm = hkdf.derive(&[], length);
             assert_eq!(okm.len(), length);
-            assert_eq!(okm.to_hex(), longest[..length].iter().to_hex());
+            assert_eq!(hex::encode(okm), hex::encode(longest[..length].iter()));
         }
     }
 
@@ -246,14 +246,14 @@ mod tests {
     fn test_derive_sha1() {
         let tests = tests_sha1();
         for t in tests.iter() {
-            let ikm = &Vec::from_hex(&t.ikm).unwrap()[..];
-            let salt = &Vec::from_hex(&t.salt).unwrap()[..];
-            let info = &Vec::from_hex(&t.info).unwrap()[..];
-            let mut hkdf = Hkdf::<Sha1>::new(ikm, salt);
-            let okm = hkdf.derive(info, t.length);
+            let ikm = hex::decode(&t.ikm).unwrap();
+            let salt = hex::decode(&t.salt).unwrap();
+            let info = hex::decode(&t.info).unwrap();
+            let mut hkdf = Hkdf::<Sha1>::new(&ikm[..], &salt[..]);
+            let okm = hkdf.derive(&info[..], t.length);
 
-            assert_eq!(hkdf.prk.to_hex(), t.prk);
-            assert_eq!(okm.to_hex(), t.okm);
+            assert_eq!(hex::encode(hkdf.prk), t.prk);
+            assert_eq!(hex::encode(okm), t.okm);
         }
     }
 }

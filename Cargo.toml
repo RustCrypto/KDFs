@@ -20,7 +20,7 @@ hmac = "0.5.*"
 
 [dev-dependencies]
 crypto-tests = "0.5.*"
-hex = "0.2.*"
+hex = "0.3.*"
 sha-1 = "0.7.*"
 sha2 = "0.7.*"
 bencher = "0.1"
