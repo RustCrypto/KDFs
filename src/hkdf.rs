@@ -14,6 +14,7 @@ use digest::Digest;
 use generic_array::{ArrayLength, GenericArray};
 use hmac::{Hmac, Mac};
 
+#[derive(Clone)]
 pub struct Hkdf<D>
     where D: Digest,
           D::OutputSize: ArrayLength<u8>
@@ -41,29 +42,30 @@ impl<D> Hkdf<D>
         }
     }
 
-    pub fn derive(&mut self, info: &[u8], length: usize) -> Vec<u8> {
-        let mut okm = Vec::<u8>::with_capacity(length);
-        let mut prev = Vec::<u8>::new();
-
+    pub fn derive(&self, info: &[u8], length: usize) -> Vec<u8> {
         use generic_array::typenum::Unsigned;
+
+        let mut okm = Vec::<u8>::with_capacity(length);
+        let mut prev: Option<generic_array::GenericArray<u8, <D as digest::FixedOutput>::OutputSize>> = None;
+
         let hmac_output_bytes = D::OutputSize::to_usize();
         if length > hmac_output_bytes * 255 {
             panic!("Invalid number of blocks, length too large");
         }
 
         let mut remaining = length;
-        let mut blocknum = 1;
+        let mut blocknum: u32 = 1;
         while remaining > 0 {
             let mut output_block = Hmac::<D>::new(&self.prk).unwrap();
-            let c = vec![blocknum as u8];
 
-            output_block.input(&prev);
+            if let Some(ref prev) = prev { output_block.input(prev) };
             output_block.input(info);
-            output_block.input(&c);
+            output_block.input(&[blocknum as u8]);
 
-            prev = output_block.result().code().to_vec();
+            let output = output_block.result().code();
             let needed = cmp::min(remaining, hmac_output_bytes);
-            okm.extend(&prev[..needed]);
+            okm.extend(&output[..needed]);
+            prev = Some(output);
             blocknum += 1;
             remaining -= needed;
         }
@@ -146,7 +148,7 @@ mod tests {
 
     #[test]
     fn test_lengths() {
-        let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
+        let hkdf = Hkdf::<Sha256>::new(&[], &[]);
         let longest = hkdf.derive(&[], MAX_SHA256_LENGTH);
         // Runtime is O(length), so exhaustively testing all legal lengths
         // would take too long (at least without --release). Only test a
@@ -164,21 +166,21 @@ mod tests {
 
     #[test]
     fn test_max_length() {
-        let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
+        let hkdf = Hkdf::<Sha256>::new(&[], &[]);
         hkdf.derive(&[], MAX_SHA256_LENGTH);
     }
 
     #[test]
     #[should_panic(expected="length too large")]
     fn test_max_length_exceeded() {
-        let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
+        let hkdf = Hkdf::<Sha256>::new(&[], &[]);
         hkdf.derive(&[], MAX_SHA256_LENGTH + 1);
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_length() {
-        let mut hkdf = Hkdf::<Sha256>::new(&[], &[]);
+        let hkdf = Hkdf::<Sha256>::new(&[], &[]);
         hkdf.derive(&[], 90000);
     }
 
