@@ -26,7 +26,13 @@ impl<D> Hkdf<D>
     where D: Digest,
           D::OutputSize: ArrayLength<u8>
 {
+    #[deprecated(since="0.4.0", note="renamed to extract, with arguments in reversed order")]
     pub fn new(ikm: &[u8], salt: &[u8]) -> Hkdf<D> {
+        Self::extract(salt, ikm)
+    }
+
+    /// The RFC5869 HKDF-Extract operation
+    pub fn extract(salt: &[u8], ikm: &[u8]) -> Hkdf<D> {
         // The hmac-0.5 MAC trait (which provides new()) is now defined to
         // return a Result, apparently to support things like CMAC which
         // require a specific key length. As far as I can tell, HMAC in
@@ -42,7 +48,13 @@ impl<D> Hkdf<D>
         }
     }
 
+    #[deprecated(since="0.4.0", note="renamed to expand")]
     pub fn derive(&self, info: &[u8], length: usize) -> Vec<u8> {
+        self.expand(info, length)
+    }
+
+    /// The RFC5869 HKDF-Expand operation
+    pub fn expand(&self, info: &[u8], length: usize) -> Vec<u8> {
         use generic_array::typenum::Unsigned;
 
         let mut okm = Vec::<u8>::with_capacity(length);
@@ -135,9 +147,9 @@ mod tests {
             let ikm = hex::decode(&t.ikm).unwrap();
             let salt = hex::decode(&t.salt).unwrap();
             let info = hex::decode(&t.info).unwrap();
-            let mut hkdf = Hkdf::<Sha256>::new(&ikm[..], &salt[..]);
-            //Hash::SHA1 => Hkdf::<Sha1>::new(ikm, salt),
-            let okm = hkdf.derive(&info[..], t.length);
+            let mut hkdf = Hkdf::<Sha256>::extract(&salt[..], &ikm[..]);
+            //Hash::SHA1 => Hkdf::<Sha1>::extract(salt, ikm),
+            let okm = hkdf.expand(&info[..], t.length);
 
             assert_eq!(hex::encode(hkdf.prk), t.prk);
             assert_eq!(hex::encode(okm), t.okm);
@@ -148,8 +160,8 @@ mod tests {
 
     #[test]
     fn test_lengths() {
-        let hkdf = Hkdf::<Sha256>::new(&[], &[]);
-        let longest = hkdf.derive(&[], MAX_SHA256_LENGTH);
+        let hkdf = Hkdf::<Sha256>::extract(&[], &[]);
+        let longest = hkdf.expand(&[], MAX_SHA256_LENGTH);
         // Runtime is O(length), so exhaustively testing all legal lengths
         // would take too long (at least without --release). Only test a
         // subset: the first 500, the last 10, and every 100th in between.
@@ -158,7 +170,7 @@ mod tests {
         });
 
         for length in lengths {
-            let okm = hkdf.derive(&[], length);
+            let okm = hkdf.expand(&[], length);
             assert_eq!(okm.len(), length);
             assert_eq!(hex::encode(okm), hex::encode(longest[..length].iter()));
         }
@@ -166,22 +178,22 @@ mod tests {
 
     #[test]
     fn test_max_length() {
-        let hkdf = Hkdf::<Sha256>::new(&[], &[]);
-        hkdf.derive(&[], MAX_SHA256_LENGTH);
+        let hkdf = Hkdf::<Sha256>::extract(&[], &[]);
+        hkdf.expand(&[], MAX_SHA256_LENGTH);
     }
 
     #[test]
     #[should_panic(expected="length too large")]
     fn test_max_length_exceeded() {
-        let hkdf = Hkdf::<Sha256>::new(&[], &[]);
-        hkdf.derive(&[], MAX_SHA256_LENGTH + 1);
+        let hkdf = Hkdf::<Sha256>::extract(&[], &[]);
+        hkdf.expand(&[], MAX_SHA256_LENGTH + 1);
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_length() {
-        let hkdf = Hkdf::<Sha256>::new(&[], &[]);
-        hkdf.derive(&[], 90000);
+        let hkdf = Hkdf::<Sha256>::extract(&[], &[]);
+        hkdf.expand(&[], 90000);
     }
 
     // Test Vectors from https://tools.ietf.org/html/rfc5869.
@@ -251,8 +263,8 @@ mod tests {
             let ikm = hex::decode(&t.ikm).unwrap();
             let salt = hex::decode(&t.salt).unwrap();
             let info = hex::decode(&t.info).unwrap();
-            let mut hkdf = Hkdf::<Sha1>::new(&ikm[..], &salt[..]);
-            let okm = hkdf.derive(&info[..], t.length);
+            let mut hkdf = Hkdf::<Sha1>::extract(&salt[..], &ikm[..]);
+            let okm = hkdf.expand(&info[..], t.length);
 
             assert_eq!(hex::encode(hkdf.prk), t.prk);
             assert_eq!(hex::encode(okm), t.okm);
