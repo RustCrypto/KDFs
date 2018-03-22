@@ -1,4 +1,4 @@
-# RustCrypto KDFs
+# RustCrypto KDFs [![Build Status](https://travis-ci.org/RustCrypto/KDFs.svg?branch=master)](https://travis-ci.org/RustCrypto/KDFs)
 
 Collection of key derivation functions (KDFs) written in pure Rust.
 
