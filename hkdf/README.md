@@ -1,10 +1,8 @@
 # rust-hkdf [![creates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf) [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf)
 
 [HMAC-based Extract-and-Expand Key Derivation Function (HKDF)](https://tools.ietf.org/html/rfc5869) for [Rust](http://www.rust-lang.org/).
-Supports:
 
-- SHA-256
-- SHA-1
+Uses the Digest trait which specifies an interface common to digest functions, such as SHA-1, SHA-256, etc.
 
 ## Installation
 
