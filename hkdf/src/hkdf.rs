@@ -27,19 +27,26 @@ impl<D> Hkdf<D>
           D::OutputSize: ArrayLength<u8>
 {
     #[deprecated(since="0.4.0", note="renamed to extract, with arguments in reversed order")]
-    pub fn new(ikm: &[u8], salt: &[u8]) -> Hkdf<D> {
+    pub fn new(ikm: &[u8], salt: Option<&[u8]>) -> Hkdf<D> {
         Self::extract(salt, ikm)
     }
 
     /// The RFC5869 HKDF-Extract operation
-    pub fn extract(salt: &[u8], ikm: &[u8]) -> Hkdf<D> {
+    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
         // The hmac-0.5 MAC trait (which provides new()) is now defined to
         // return a Result, apparently to support things like CMAC which
         // require a specific key length. As far as I can tell, HMAC in
         // particular can only return an Ok(), since HMAC accepts any length
         // of bytes as its key. So we use unwrap() here, rather than exposing
         // the error to our caller. This might change in a future version.
-        let mut hmac = Hmac::<D>::new(salt).unwrap();
+        let s = if !salt.is_some() {
+            //Option::from(D::OutputSize as &[u8])
+            salt
+        } else {
+            salt
+        };
+
+        let mut hmac = Hmac::<D>::new(s.unwrap()).unwrap();
         hmac.input(ikm);
         let mut arr = GenericArray::default();
         arr.copy_from_slice(&hmac.result().code());
@@ -147,8 +154,7 @@ mod tests {
             let ikm = hex::decode(&t.ikm).unwrap();
             let salt = hex::decode(&t.salt).unwrap();
             let info = hex::decode(&t.info).unwrap();
-            let mut hkdf = Hkdf::<Sha256>::extract(&salt[..], &ikm[..]);
-            //Hash::SHA1 => Hkdf::<Sha1>::extract(salt, ikm),
+            let mut hkdf = Hkdf::<Sha256>::extract(Option::from(&salt[..]), &ikm[..]);
             let okm = hkdf.expand(&info[..], t.length);
 
             assert_eq!(hex::encode(hkdf.prk), t.prk);
@@ -160,7 +166,7 @@ mod tests {
 
     #[test]
     fn test_lengths() {
-        let hkdf = Hkdf::<Sha256>::extract(&[], &[]);
+        let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
         let longest = hkdf.expand(&[], MAX_SHA256_LENGTH);
         // Runtime is O(length), so exhaustively testing all legal lengths
         // would take too long (at least without --release). Only test a
@@ -178,21 +184,21 @@ mod tests {
 
     #[test]
     fn test_max_length() {
-        let hkdf = Hkdf::<Sha256>::extract(&[], &[]);
+        let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
         hkdf.expand(&[], MAX_SHA256_LENGTH);
     }
 
     #[test]
     #[should_panic(expected="length too large")]
     fn test_max_length_exceeded() {
-        let hkdf = Hkdf::<Sha256>::extract(&[], &[]);
+        let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
         hkdf.expand(&[], MAX_SHA256_LENGTH + 1);
     }
 
     #[test]
     #[should_panic]
     fn test_unsupported_length() {
-        let hkdf = Hkdf::<Sha256>::extract(&[], &[]);
+        let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
         hkdf.expand(&[], 90000);
     }
 
@@ -263,11 +269,25 @@ mod tests {
             let ikm = hex::decode(&t.ikm).unwrap();
             let salt = hex::decode(&t.salt).unwrap();
             let info = hex::decode(&t.info).unwrap();
-            let mut hkdf = Hkdf::<Sha1>::extract(&salt[..], &ikm[..]);
+            let mut hkdf = Hkdf::<Sha1>::extract(Option::from(&salt[..]), &ikm[..]);
             let okm = hkdf.expand(&info[..], t.length);
 
             assert_eq!(hex::encode(hkdf.prk), t.prk);
             assert_eq!(hex::encode(okm), t.okm);
         }
+    }
+
+    #[test]
+    fn test_derive_sha1_with_none() {
+        let ikm = hex::decode("0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c").unwrap();
+        let salt = None;
+        let info = hex::decode("").unwrap();
+        let hkdf = Hkdf::<Sha1>::extract(salt, &ikm[..]);
+        let okm = hkdf.expand(&info[..], 42);
+
+        assert_eq!(hex::encode(hkdf.prk), "2adccada18779e7c2077ad2eb19d3f3e731385dd");
+        assert_eq!(hex::encode(okm), "2c91117204d745f3500d636a62f64f0a\
+                                            b3bae548aa53d423b0d1f27ebba6f5e5\
+                                            673a081d70cce7acfc48");
     }
 }
