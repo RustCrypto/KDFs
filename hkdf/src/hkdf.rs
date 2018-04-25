@@ -39,14 +39,11 @@ impl<D> Hkdf<D>
         // particular can only return an Ok(), since HMAC accepts any length
         // of bytes as its key. So we use unwrap() here, rather than exposing
         // the error to our caller. This might change in a future version.
-        let s = if !salt.is_some() {
-            //Option::from(D::OutputSize as &[u8])
-            salt
-        } else {
-            salt
-        };
+        let mut hmac = match salt {
+            Some(s) => Hmac::<D>::new(s),
+            None => Hmac::<D>::new(&generic_array::GenericArray::<u8, D::OutputSize>::default()),
+        }.expect("HMAC can accept keys of any size");
 
-        let mut hmac = Hmac::<D>::new(s.unwrap()).unwrap();
         hmac.input(ikm);
         let mut arr = GenericArray::default();
         arr.copy_from_slice(&hmac.result().code());
