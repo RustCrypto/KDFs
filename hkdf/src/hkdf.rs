@@ -26,19 +26,8 @@ impl<D> Hkdf<D>
     where D: Digest,
           D::OutputSize: ArrayLength<u8>
 {
-    #[deprecated(since="0.4.0", note="renamed to extract, with arguments in reversed order")]
-    pub fn new(ikm: &[u8], salt: Option<&[u8]>) -> Hkdf<D> {
-        Self::extract(salt, ikm)
-    }
-
     /// The RFC5869 HKDF-Extract operation
     pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
-        // The hmac-0.5 MAC trait (which provides new()) is now defined to
-        // return a Result, apparently to support things like CMAC which
-        // require a specific key length. As far as I can tell, HMAC in
-        // particular can only return an Ok(), since HMAC accepts any length
-        // of bytes as its key. So we use unwrap() here, rather than exposing
-        // the error to our caller. This might change in a future version.
         let mut hmac = match salt {
             Some(s) => Hmac::<D>::new(s),
             None => Hmac::<D>::new(&generic_array::GenericArray::<u8, D::OutputSize>::default()),
@@ -50,11 +39,6 @@ impl<D> Hkdf<D>
         Hkdf {
             prk: arr,
         }
-    }
-
-    #[deprecated(since="0.4.0", note="renamed to expand")]
-    pub fn derive(&self, info: &[u8], length: usize) -> Vec<u8> {
-        self.expand(info, length)
     }
 
     /// The RFC5869 HKDF-Expand operation
@@ -163,7 +147,7 @@ mod tests {
 
     #[test]
     fn test_lengths() {
-        let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
+        let hkdf = Hkdf::<Sha256>::extract(None, &[]);
         let longest = hkdf.expand(&[], MAX_SHA256_LENGTH);
         // Runtime is O(length), so exhaustively testing all legal lengths
         // would take too long (at least without --release). Only test a
@@ -266,7 +250,7 @@ mod tests {
             let ikm = hex::decode(&t.ikm).unwrap();
             let salt = hex::decode(&t.salt).unwrap();
             let info = hex::decode(&t.info).unwrap();
-            let mut hkdf = Hkdf::<Sha1>::extract(Option::from(&salt[..]), &ikm[..]);
+            let mut hkdf = Hkdf::<Sha1>::extract(Some(&salt[..]), &ikm[..]);
             let okm = hkdf.expand(&info[..], t.length);
 
             assert_eq!(hex::encode(hkdf.prk), t.prk);
