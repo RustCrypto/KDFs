@@ -10,7 +10,7 @@ fn main() {
     let salt = hex::decode("000102030405060708090a0b0c").unwrap();
     let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-    let hk = Hkdf::<Sha256>::extract(&salt, &ikm);
+    let hk = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
     let okm = hk.expand(&info, 42);
 
     println!("Vector 1 PRK is {}", hex::encode(hk.prk));
