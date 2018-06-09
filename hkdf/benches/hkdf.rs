@@ -8,17 +8,17 @@ use hkdf::Hkdf;
 use sha2::Sha256;
 
 fn sha256_10(b: &mut Bencher) {
-    b.iter(|| Hkdf::<Sha256>::new(&[], &[]).derive(&[], 10));
+    b.iter(|| Hkdf::<Sha256>::extract(Some(&[]), &[]).expand(&[], 10));
     b.bytes = 10u64;
 }
 
 fn sha256_1k(b: &mut Bencher) {
-    b.iter(|| Hkdf::<Sha256>::new(&[], &[]).derive(&[], 1024));
+    b.iter(|| Hkdf::<Sha256>::extract(Some(&[]), &[]).expand(&[], 1024));
     b.bytes = 1024u64;
 }
 
 fn sha256_8k(b: &mut Bencher) {
-    b.iter(|| Hkdf::<Sha256>::new(&[], &[]).derive(&[], 8000));
+    b.iter(|| Hkdf::<Sha256>::extract(Some(&[]), &[]).expand(&[], 8000));
     b.bytes = 8000u64;
 }
 
