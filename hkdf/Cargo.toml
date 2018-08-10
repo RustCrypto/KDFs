@@ -9,6 +9,9 @@ description = "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
 keywords = [ "HKDF", "Crypto" ]
 readme = "README.md"
 
+[features]
+std = []
+
 [lib]
 name = "hkdf"
 path = "src/hkdf.rs"
