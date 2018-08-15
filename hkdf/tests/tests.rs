@@ -61,7 +61,7 @@ fn test_derive_sha256() {
         let ikm = hex::decode(&t.ikm).unwrap();
         let salt = hex::decode(&t.salt).unwrap();
         let info = hex::decode(&t.info).unwrap();
-        let mut hkdf = Hkdf::<Sha256>::extract(Option::from(&salt[..]), &ikm[..]);
+        let mut hkdf = Hkdf::<Sha256>::extract(Option::from(&salt[..]), &ikm[..]).unwrap();
         let mut okm = vec![0u8; t.length];
         assert!(hkdf.expand(&info[..], &mut okm).is_ok());
 
@@ -74,7 +74,7 @@ const MAX_SHA256_LENGTH: usize = 255 * (256 / 8); // =8160
 
 #[test]
 fn test_lengths() {
-    let hkdf = Hkdf::<Sha256>::extract(None, &[]);
+    let hkdf = Hkdf::<Sha256>::extract(None, &[]).unwrap();
     let mut longest = vec![0u8; MAX_SHA256_LENGTH];
     assert!(hkdf.expand(&[], &mut longest).is_ok());
     // Runtime is O(length), so exhaustively testing all legal lengths
@@ -94,21 +94,21 @@ fn test_lengths() {
 
 #[test]
 fn test_max_length() {
-    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]).unwrap();
     let mut okm = vec![0u8; MAX_SHA256_LENGTH];
     assert!(hkdf.expand(&[], &mut okm).is_ok());
 }
 
 #[test]
 fn test_max_length_exceeded() {
-    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]).unwrap();
     let mut okm = vec![0u8; MAX_SHA256_LENGTH + 1];
     assert!(hkdf.expand(&[], &mut okm).is_err());
 }
 
 #[test]
 fn test_unsupported_length() {
-    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]).unwrap();
     let mut okm = vec![0u8; 90000];
     assert!(hkdf.expand(&[], &mut okm).is_err());
 }
@@ -180,7 +180,7 @@ fn test_derive_sha1() {
         let ikm = hex::decode(&t.ikm).unwrap();
         let salt = hex::decode(&t.salt).unwrap();
         let info = hex::decode(&t.info).unwrap();
-        let mut hkdf = Hkdf::<Sha1>::extract(Some(&salt[..]), &ikm[..]);
+        let mut hkdf = Hkdf::<Sha1>::extract(Some(&salt[..]), &ikm[..]).unwrap();
         let mut okm = vec![0u8; t.length];
         assert!(hkdf.expand(&info[..], &mut okm).is_ok());
 
@@ -194,7 +194,7 @@ fn test_derive_sha1_with_none() {
     let ikm = hex::decode("0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c").unwrap();
     let salt = None;
     let info = hex::decode("").unwrap();
-    let hkdf = Hkdf::<Sha1>::extract(salt, &ikm[..]);
+    let hkdf = Hkdf::<Sha1>::extract(salt, &ikm[..]).unwrap();
     let mut okm = vec![0u8; 42];
     assert!(hkdf.expand(&info[..], &mut okm).is_ok());
 

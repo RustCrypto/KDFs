@@ -10,7 +10,7 @@ fn main() {
     let salt = hex::decode("000102030405060708090a0b0c").unwrap();
     let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-    let hk = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
+    let hk = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm).unwrap();
     let mut okm = [0u8; 42];
     hk.expand(&info, &mut okm).unwrap(); //Will never fail as 42 is a valid length for Sha256 to output
 

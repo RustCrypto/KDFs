@@ -5,7 +5,6 @@ extern crate digest;
 extern crate hmac;
 #[cfg(feature = "std")] extern crate std;
 
-use core::cmp;
 use digest::Digest;
 use generic_array::{ArrayLength, GenericArray};
 use hmac::{Hmac, Mac};
@@ -23,21 +22,33 @@ pub struct Hkdf<D>
 }
 
 impl<D> Hkdf<D>
-    where D: Digest,
+    where D: Digest + Clone,
           D::OutputSize: ArrayLength<u8>
 {
     /// The RFC5869 HKDF-Extract operation
-    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
+    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> Result<Hkdf<D>, hmac::crypto_mac::InvalidKeyLength> {
         let mut hmac = match salt {
-            Some(s) => Hmac::<D>::new(s),
-            None => Hmac::<D>::new(&generic_array::GenericArray::<u8, D::OutputSize>::default()),
-        }.expect("HMAC can accept keys of any size");
+            Some(s) => Hmac::<D>::new_varkey(s)?,
+            None => Hmac::<D>::new(&Default::default()),
+        };
 
         hmac.input(ikm);
-        let mut arr = GenericArray::default();
-        arr.copy_from_slice(&hmac.result().code());
+        Ok(Hkdf {
+            prk: hmac.result().code(),
+        })
+    }
+
+    /// The RFC5869 HKDF-Extract operation
+    /// Removes runtime check on the length of the salt as the length is know at compile time.
+    pub fn extract_exact(salt: Option<&GenericArray<u8, <Hmac<D> as Mac>::KeySize>>, ikm: &[u8]) -> Hkdf<D> {
+        let mut hmac = match salt {
+            Some(s) => Hmac::<D>::new(s),
+            None => Hmac::<D>::new(&Default::default()),
+        };
+
+        hmac.input(ikm);
         Hkdf {
-            prk: arr,
+            prk: hmac.result().code(),
         }
     }
 
@@ -45,33 +56,25 @@ impl<D> Hkdf<D>
     pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), InvalidLength> {
         use generic_array::typenum::Unsigned;
 
-        let length = okm.len();
         let mut prev: Option<generic_array::GenericArray<u8, <D as digest::FixedOutput>::OutputSize>> = None;
 
         let hmac_output_bytes = D::OutputSize::to_usize();
-        if length > hmac_output_bytes * 255 {
+        if okm.len() > hmac_output_bytes * 255 {
             return Err(InvalidLength);
         }
 
-        let mut remaining = length;
-        let mut blocknum: u32 = 1;
-        let mut offset = 0;
-        while remaining > 0 {
-            let mut output_block = Hmac::<D>::new(&self.prk).unwrap();
+        let mut hmac = Hmac::<D>::new_varkey(&self.prk).unwrap();
+        for (blocknum, okm_block) in okm.chunks_mut(hmac_output_bytes).enumerate() {
+            let block_len = okm_block.len();
 
-            if let Some(ref prev) = prev { output_block.input(prev) };
-            output_block.input(info);
-            output_block.input(&[blocknum as u8]);
+            if let Some(ref prev) = prev { hmac.input(prev) };
+            hmac.input(info);
+            hmac.input(&[blocknum as u8 + 1]);
 
-            let output = output_block.result().code();
-            let needed = cmp::min(remaining, hmac_output_bytes);
-
-            okm[offset..offset+needed].copy_from_slice(&output[..needed]);
-            offset += needed;
+            let output = hmac.result().code();
+            okm_block.copy_from_slice(&output[..block_len]);
 
             prev = Some(output);
-            blocknum += 1;
-            remaining -= needed;
         }
 
         Ok(())
