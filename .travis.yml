@@ -18,7 +18,7 @@ matrix:
       rust: stable
 
 install:
-  - cargo install cross
+  - cargo install cross --force
 
 script:
   - cross test --verbose --all --release --target $TARGET
