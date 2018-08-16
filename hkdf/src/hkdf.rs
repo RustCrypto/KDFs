@@ -26,23 +26,9 @@ impl<D> Hkdf<D>
           D::OutputSize: ArrayLength<u8>
 {
     /// The RFC5869 HKDF-Extract operation
-    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> Result<Hkdf<D>, hmac::crypto_mac::InvalidKeyLength> {
+    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
         let mut hmac = match salt {
-            Some(s) => Hmac::<D>::new_varkey(s)?,
-            None => Hmac::<D>::new(&Default::default()),
-        };
-
-        hmac.input(ikm);
-        Ok(Hkdf {
-            prk: hmac.result().code(),
-        })
-    }
-
-    /// The RFC5869 HKDF-Extract operation
-    /// Removes runtime check on the length of the salt as the length is know at compile time.
-    pub fn extract_exact(salt: Option<&GenericArray<u8, <Hmac<D> as Mac>::KeySize>>, ikm: &[u8]) -> Hkdf<D> {
-        let mut hmac = match salt {
-            Some(s) => Hmac::<D>::new(s),
+            Some(s) => Hmac::<D>::new_varkey(s).expect("HMAC can take a key of any size"),
             None => Hmac::<D>::new(&Default::default()),
         };
 
