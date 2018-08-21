@@ -10,7 +10,7 @@ From crates.io:
 
 ```toml
 [dependencies]
-hkdf = "0.5"
+hkdf = "0.6"
 ```
 
 ## Usage
@@ -19,6 +19,7 @@ See the example [examples/main.rs](examples/main.rs) or run it with `cargo run -
 
 ## Changelog
 
+- 0.6.0 - remove std requirement. The `expand` signature has changed.
 - 0.5.0 - removed deprecated interface, fixed omitting HKDF salt.
 - 0.4.0 - RFC-inspired interface, Reduce heap allocation, remove unnecessary mut, derive Clone. deps: hex-0.3, benchmarks.
 - 0.3.0 - update dependencies: digest-0.7, hmac-0.5
