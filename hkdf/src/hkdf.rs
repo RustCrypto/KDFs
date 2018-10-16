@@ -1,3 +1,29 @@
+//! An implementation of HKDF, the [HMAC-based Extract-and-Expand Key Derivation Function][1].
+//!
+//! # Usage
+//!
+//! ```rust
+//! # extern crate hex;
+//! # extern crate hkdf;
+//! # extern crate sha2;
+//!
+//! # use sha2::Sha256;
+//! # use hkdf::Hkdf;
+//!
+//! # fn main() {
+//! let ikm = hex::decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
+//! let salt = hex::decode("000102030405060708090a0b0c").unwrap();
+//! let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap();
+//!
+//! let hk = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
+//! let mut okm = [0u8; 42];
+//! hk.expand(&info, &mut okm).unwrap();
+//! println!("PRK is {}", hex::encode(hk.prk));
+//! println!("OKM is {}", hex::encode(&okm[..]));
+//! # }
+//! ```
+//!
+//! [1]: https://tools.ietf.org/html/rfc5869
 #![no_std]
 
 extern crate digest;
@@ -9,9 +35,11 @@ use digest::generic_array::{self, ArrayLength, GenericArray};
 use hmac::{Hmac, Mac};
 use core::fmt;
 
+/// Structure for InvalidLength, used for output error handling.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct InvalidLength;
 
+/// Structure representing the HKDF, capable of HKDF-Expand and HKDF-extract operations.
 #[derive(Clone)]
 pub struct Hkdf<D>
     where D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
