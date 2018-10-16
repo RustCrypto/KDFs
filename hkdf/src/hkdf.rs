@@ -1,12 +1,11 @@
 #![no_std]
 
-extern crate generic_array;
 extern crate digest;
 extern crate hmac;
 #[cfg(feature = "std")] extern crate std;
 
-use digest::Digest;
-use generic_array::{ArrayLength, GenericArray};
+use digest::{BlockInput, FixedOutput, Input, Reset};
+use digest::generic_array::{self, ArrayLength, GenericArray};
 use hmac::{Hmac, Mac};
 use core::fmt;
 
@@ -15,15 +14,16 @@ pub struct InvalidLength;
 
 #[derive(Clone)]
 pub struct Hkdf<D>
-    where D: Digest,
-          D::OutputSize: ArrayLength<u8>
+    where D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
+          D::OutputSize: ArrayLength<u8>,
 {
     pub prk: GenericArray<u8, D::OutputSize>,
 }
 
 impl<D> Hkdf<D>
-    where D: Digest + Clone,
-          D::OutputSize: ArrayLength<u8>
+    where D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
+          D::BlockSize: ArrayLength<u8> + Clone,
+          D::OutputSize: ArrayLength<u8>,
 {
     /// The RFC5869 HKDF-Extract operation
     pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
@@ -42,7 +42,7 @@ impl<D> Hkdf<D>
     pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), InvalidLength> {
         use generic_array::typenum::Unsigned;
 
-        let mut prev: Option<generic_array::GenericArray<u8, <D as digest::FixedOutput>::OutputSize>> = None;
+        let mut prev: Option<GenericArray<u8, <D as digest::FixedOutput>::OutputSize>> = None;
 
         let hmac_output_bytes = D::OutputSize::to_usize();
         if okm.len() > hmac_output_bytes * 255 {
@@ -57,7 +57,7 @@ impl<D> Hkdf<D>
             hmac.input(info);
             hmac.input(&[blocknum as u8 + 1]);
 
-            let output = hmac.result().code();
+            let output = hmac.result_reset().code();
             okm_block.copy_from_slice(&output[..block_len]);
 
             prev = Some(output);
