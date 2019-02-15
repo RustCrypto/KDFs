@@ -61,12 +61,18 @@ fn test_derive_sha256() {
         let ikm = hex::decode(&t.ikm).unwrap();
         let salt = hex::decode(&t.salt).unwrap();
         let info = hex::decode(&t.info).unwrap();
-        let hkdf = Hkdf::<Sha256>::extract(Option::from(&salt[..]), &ikm[..]);
+        let (prk, hkdf) = Hkdf::<Sha256>::extract(Option::from(&salt[..]), &ikm[..]);
         let mut okm = vec![0u8; t.length];
         assert!(hkdf.expand(&info[..], &mut okm).is_ok());
 
-        assert_eq!(hex::encode(hkdf.prk), t.prk);
-        assert_eq!(hex::encode(okm), t.okm);
+        assert_eq!(hex::encode(prk), t.prk);
+        assert_eq!(hex::encode(&okm), t.okm);
+        
+        let prk = &hex::decode(&t.prk).unwrap();
+        let hkdf = Hkdf::<Sha256>::from_prk(prk).unwrap();
+        assert!(hkdf.expand(&info[..], &mut okm).is_ok());
+        
+        assert_eq!(hex::encode(&okm), t.okm);
     }
 }
 
@@ -74,7 +80,7 @@ const MAX_SHA256_LENGTH: usize = 255 * (256 / 8); // =8160
 
 #[test]
 fn test_lengths() {
-    let hkdf = Hkdf::<Sha256>::extract(None, &[]);
+    let hkdf = Hkdf::<Sha256>::new(None, &[]);
     let mut longest = vec![0u8; MAX_SHA256_LENGTH];
     assert!(hkdf.expand(&[], &mut longest).is_ok());
     // Runtime is O(length), so exhaustively testing all legal lengths
@@ -94,23 +100,33 @@ fn test_lengths() {
 
 #[test]
 fn test_max_length() {
-    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256>::new(Some(&[]), &[]);
     let mut okm = vec![0u8; MAX_SHA256_LENGTH];
     assert!(hkdf.expand(&[], &mut okm).is_ok());
 }
 
 #[test]
 fn test_max_length_exceeded() {
-    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256>::new(Some(&[]), &[]);
     let mut okm = vec![0u8; MAX_SHA256_LENGTH + 1];
     assert!(hkdf.expand(&[], &mut okm).is_err());
 }
 
 #[test]
 fn test_unsupported_length() {
-    let hkdf = Hkdf::<Sha256>::extract(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256>::new(Some(&[]), &[]);
     let mut okm = vec![0u8; 90000];
     assert!(hkdf.expand(&[], &mut okm).is_err());
+}
+
+#[test]
+fn test_prk_too_short() {
+    use sha2::digest::generic_array::typenum::Unsigned;
+    use sha2::digest::Digest;
+
+    let output_len = <Sha256 as Digest>::OutputSize::to_usize();
+    let prk = vec![0; output_len - 1];
+    assert!(Hkdf::<Sha256>::from_prk(&prk).is_err());
 }
 
 // Test Vectors from https://tools.ietf.org/html/rfc5869.
@@ -180,12 +196,18 @@ fn test_derive_sha1() {
         let ikm = hex::decode(&t.ikm).unwrap();
         let salt = hex::decode(&t.salt).unwrap();
         let info = hex::decode(&t.info).unwrap();
-        let hkdf = Hkdf::<Sha1>::extract(Some(&salt[..]), &ikm[..]);
+        let (prk, hkdf) = Hkdf::<Sha1>::extract(Some(&salt[..]), &ikm[..]);
         let mut okm = vec![0u8; t.length];
         assert!(hkdf.expand(&info[..], &mut okm).is_ok());
 
-        assert_eq!(hex::encode(hkdf.prk), t.prk);
-        assert_eq!(hex::encode(okm), t.okm);
+        assert_eq!(hex::encode(prk), t.prk);
+        assert_eq!(hex::encode(&okm), t.okm);
+        
+        let prk = &hex::decode(&t.prk).unwrap();
+        let hkdf = Hkdf::<Sha1>::from_prk(&prk).unwrap();
+        assert!(hkdf.expand(&info[..], &mut okm).is_ok());
+        
+        assert_eq!(hex::encode(&okm), t.okm);
     }
 }
 
@@ -194,12 +216,12 @@ fn test_derive_sha1_with_none() {
     let ikm = hex::decode("0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c").unwrap();
     let salt = None;
     let info = hex::decode("").unwrap();
-    let hkdf = Hkdf::<Sha1>::extract(salt, &ikm[..]);
+    let (prk, hkdf) = Hkdf::<Sha1>::extract(salt, &ikm[..]);
     let mut okm = vec![0u8; 42];
     assert!(hkdf.expand(&info[..], &mut okm).is_ok());
 
-    assert_eq!(hex::encode(hkdf.prk), "2adccada18779e7c2077ad2eb19d3f3e731385dd");
-    assert_eq!(hex::encode(okm), "2c91117204d745f3500d636a62f64f0a\
+    assert_eq!(hex::encode(prk), "2adccada18779e7c2077ad2eb19d3f3e731385dd");
+    assert_eq!(hex::encode(&okm), "2c91117204d745f3500d636a62f64f0a\
                                             b3bae548aa53d423b0d1f27ebba6f5e5\
                                             673a081d70cce7acfc48");
 }

@@ -10,11 +10,11 @@ fn main() {
     let salt = hex::decode("000102030405060708090a0b0c").unwrap();
     let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-    let hk = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
+    let (prk, hk) = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
     let mut okm = [0u8; 42];
-    hk.expand(&info, &mut okm).unwrap(); //Will never fail as 42 is a valid length for Sha256 to output
+    hk.expand(&info, &mut okm).expect("42 is a valid length for Sha256 to output");
 
-    println!("Vector 1 PRK is {}", hex::encode(hk.prk));
+    println!("Vector 1 PRK is {}", hex::encode(prk));
     println!("Vector 1 OKM is {}", hex::encode(&okm[..]));
     println!("Matched with https://tools.ietf.org/html/rfc5869#appendix-A.1");
 
