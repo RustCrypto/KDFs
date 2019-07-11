@@ -50,7 +50,7 @@ pub struct Hkdf<D>
 
 impl<D> Hkdf<D>
     where D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
-          D::BlockSize: ArrayLength<u8> + Clone,
+          D::BlockSize: ArrayLength<u8>,
           D::OutputSize: ArrayLength<u8>,
 {
     /// The RFC5869 HKDF-Extract operation
