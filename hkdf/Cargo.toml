@@ -1,6 +1,6 @@
 [package]
 name = "hkdf"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["vladikoff", "warner", "RustCrypto Developers"]
 license = "MIT/Apache-2.0"
 homepage = "https://github.com/RustCrypto/KDFs/"
@@ -18,7 +18,7 @@ path = "src/hkdf.rs"
 
 [dependencies]
 digest = "0.8"
-hmac = "0.7"
+hmac = "0.7.1"
 
 [dev-dependencies]
 crypto-tests = "0.5.*"
