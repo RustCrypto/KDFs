@@ -27,8 +27,5 @@ fn sha256_8k(b: &mut Bencher) {
 
 // note: SHA-256 output limit is 255*32=8160 bytes
 
-benchmark_group!(benches,
-                 sha256_10,
-                 sha256_1k,
-                 sha256_8k);
+benchmark_group!(benches, sha256_10, sha256_1k, sha256_8k);
 benchmark_main!(benches);

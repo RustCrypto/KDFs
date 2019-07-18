@@ -56,9 +56,10 @@ where
 }
 
 impl<D> Hkdf<D>
-where D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
-      D::BlockSize: ArrayLength<u8>,
-      D::OutputSize: ArrayLength<u8>,
+where
+    D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
+    D::BlockSize: ArrayLength<u8>,
+    D::OutputSize: ArrayLength<u8>,
 {
     /// Convenience method for [`extract`] when the generated pseudorandom key
     /// can be ignored and only HKDF-Expand operation is needed.
