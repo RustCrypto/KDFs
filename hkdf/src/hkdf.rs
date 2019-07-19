@@ -15,10 +15,9 @@
 //! let salt = hex::decode("000102030405060708090a0b0c").unwrap();
 //! let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap();
 //!
-//! let (prk, hk) = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
+//! let h = Hkdf::<Sha256>::new(Some(&salt[..]), &ikm);
 //! let mut okm = [0u8; 42];
-//! hk.expand(&info, &mut okm).unwrap();
-//! println!("PRK is {}", hex::encode(prk));
+//! h.expand(&info, &mut okm).unwrap();
 //! println!("OKM is {}", hex::encode(&okm[..]));
 //! # }
 //! ```
@@ -61,8 +60,9 @@ where
     D::BlockSize: ArrayLength<u8>,
     D::OutputSize: ArrayLength<u8>,
 {
-    /// Convenience method for [`extract`] when the generated pseudorandom key
-    /// can be ignored and only HKDF-Expand operation is needed.
+    /// Convenience method for [`extract`] when the generated pseudorandom
+    /// key can be ignored and only HKDF-Expand operation is needed. This is
+    /// the most common constructor.
     pub fn new(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
         let (_, hkdf) = Hkdf::extract(salt, ikm);
         hkdf

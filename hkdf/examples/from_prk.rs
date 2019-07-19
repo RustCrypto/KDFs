@@ -5,16 +5,18 @@ extern crate sha2;
 use hkdf::Hkdf;
 use sha2::Sha256;
 
-// this is the most common way to use HKDF: you provide the Initial Key
-// Material and an optional salt, then you expand it (perhaps multiple times)
-// into some Output Key Material bound to an "info" context string.
+// If you already have a strong key to work from (uniformly-distributed and
+// long enough), you can save a tiny amount of time by skipping the extract
+// step. In this case, you pass a Pseudo-Random Key (PRK) into the `from_prk`
+// constructor, then use the resulting `Hkdf` object as usual.
 
 fn main() {
-    let ikm = hex::decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
-    let salt = hex::decode("000102030405060708090a0b0c").unwrap();
+    // data from RFC 5869, section A.1, Test Case 1
+    let prk =
+        hex::decode("077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5").unwrap();
     let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap();
 
-    let hk = Hkdf::<Sha256>::new(Some(&salt[..]), &ikm);
+    let hk = Hkdf::<Sha256>::from_prk(&prk).expect("PRK should be large enough");
     let mut okm = [0u8; 42];
     hk.expand(&info, &mut okm)
         .expect("42 is a valid length for Sha256 to output");
