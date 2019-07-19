@@ -19,6 +19,7 @@ See the example [examples/main.rs](examples/main.rs) or run it with `cargo run -
 
 ## Changelog
 
+- 0.8.0 - new API, add `Hkdf::from_prk()`, `Hkdf::extract()`
 - 0.7.0 - Update digest to 0.8, refactor for API changes, remove redundant `generic-array` crate.
 - 0.6.0 - remove std requirement. The `expand` signature has changed.
 - 0.5.0 - removed deprecated interface, fixed omitting HKDF salt.
