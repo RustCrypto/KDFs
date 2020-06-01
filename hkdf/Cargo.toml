@@ -17,14 +17,14 @@ name = "hkdf"
 path = "src/hkdf.rs"
 
 [dependencies]
-digest = "0.8"
-hmac = "0.7.1"
+digest = "= 0.9.0-pre"
+hmac = "= 0.8.0-pre"
 
 [dev-dependencies]
 crypto-tests = "0.5.*"
-hex = "0.3.*"
-sha-1 = "0.8.*"
-sha2 = "0.8.*"
+hex = "0.4.0-pre"
+sha-1 = "0.9.0-pre"
+sha2 = "0.9.0-pre"
 bencher = "0.1"
 
 [[bench]]
