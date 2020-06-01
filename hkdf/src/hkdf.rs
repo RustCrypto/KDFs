@@ -32,8 +32,8 @@ extern crate std;
 
 use core::fmt;
 use digest::generic_array::{self, ArrayLength, GenericArray};
-use digest::{BlockInput, FixedOutput, Input, Reset};
-use hmac::{Hmac, Mac};
+use digest::{BlockInput, FixedOutput, Reset, Update};
+use hmac::{Hmac, Mac, NewMac};
 
 /// Error that is returned when supplied pseudorandom key (PRK) is not long enough.
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -47,7 +47,7 @@ pub struct InvalidLength;
 #[derive(Clone)]
 pub struct Hkdf<D>
 where
-    D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
+    D: Update + BlockInput + FixedOutput + Reset + Default + Clone,
     D::BlockSize: ArrayLength<u8>,
     D::OutputSize: ArrayLength<u8>,
 {
@@ -56,7 +56,7 @@ where
 
 impl<D> Hkdf<D>
 where
-    D: Input + BlockInput + FixedOutput + Reset + Default + Clone,
+    D: Update + BlockInput + FixedOutput + Reset + Default + Clone,
     D::BlockSize: ArrayLength<u8>,
     D::OutputSize: ArrayLength<u8>,
 {
@@ -91,9 +91,9 @@ where
             None => Hmac::<D>::new(&Default::default()),
         };
 
-        hmac.input(ikm);
+        hmac.update(ikm);
 
-        let prk = hmac.result().code();
+        let prk = hmac.result().into_bytes();
         let hkdf = Hkdf::from_prk(&prk).expect("PRK size is correct");
         (prk, hkdf)
     }
@@ -114,12 +114,12 @@ where
             let block_len = okm_block.len();
 
             if let Some(ref prev) = prev {
-                hmac.input(prev)
+                hmac.update(prev)
             };
-            hmac.input(info);
-            hmac.input(&[blocknum as u8 + 1]);
+            hmac.update(info);
+            hmac.update(&[blocknum as u8 + 1]);
 
-            let output = hmac.result_reset().code();
+            let output = hmac.result_reset().into_bytes();
             okm_block.copy_from_slice(&output[..block_len]);
 
             prev = Some(output);
