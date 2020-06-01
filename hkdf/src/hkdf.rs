@@ -23,9 +23,9 @@
 //! ```
 //!
 //! [1]: https://tools.ietf.org/html/rfc5869
-#![no_std]
 
-use digest;
+#![no_std]
+#![warn(rust_2018_idioms)]
 
 #[cfg(feature = "std")]
 extern crate std;
