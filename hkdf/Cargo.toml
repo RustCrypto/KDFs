@@ -8,6 +8,7 @@ repository = "https://github.com/RustCrypto/KDFs/"
 description = "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
 keywords = [ "HKDF", "Crypto" ]
 readme = "README.md"
+edition = "2018"
 
 [features]
 std = []

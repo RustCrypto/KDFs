@@ -1,7 +1,5 @@
 #[macro_use]
 extern crate bencher;
-extern crate hkdf;
-extern crate sha2;
 
 use bencher::Bencher;
 use hkdf::Hkdf;

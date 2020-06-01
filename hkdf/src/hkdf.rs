@@ -23,10 +23,10 @@
 //! ```
 //!
 //! [1]: https://tools.ietf.org/html/rfc5869
-#![no_std]
 
-extern crate digest;
-extern crate hmac;
+#![no_std]
+#![warn(rust_2018_idioms)]
+
 #[cfg(feature = "std")]
 extern crate std;
 
@@ -71,7 +71,7 @@ where
     /// Create `Hkdf` from an already cryptographically strong pseudorandom key
     /// as per section 3.3 from RFC5869.
     pub fn from_prk(prk: &[u8]) -> Result<Hkdf<D>, InvalidPrkLength> {
-        use generic_array::typenum::Unsigned;
+        use crate::generic_array::typenum::Unsigned;
 
         // section 2.3 specifies that prk must be "at least HashLen octets"
         if prk.len() < D::OutputSize::to_usize() {
@@ -100,7 +100,7 @@ where
 
     /// The RFC5869 HKDF-Expand operation
     pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), InvalidLength> {
-        use generic_array::typenum::Unsigned;
+        use crate::generic_array::typenum::Unsigned;
 
         let mut prev: Option<GenericArray<u8, <D as digest::FixedOutput>::OutputSize>> = None;
 
@@ -130,7 +130,7 @@ where
 }
 
 impl fmt::Display for InvalidPrkLength {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str("invalid pseudorandom key length, too short")
     }
 }
@@ -139,7 +139,7 @@ impl fmt::Display for InvalidPrkLength {
 impl ::std::error::Error for InvalidPrkLength {}
 
 impl fmt::Display for InvalidLength {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         f.write_str("invalid number of blocks, too large output")
     }
 }
