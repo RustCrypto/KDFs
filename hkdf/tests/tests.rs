@@ -1,7 +1,4 @@
-extern crate hex;
-extern crate hkdf;
-extern crate sha1;
-extern crate sha2;
+use hex;
 
 use hkdf::Hkdf;
 use sha1::Sha1;
