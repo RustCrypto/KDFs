@@ -93,7 +93,7 @@ where
 
         hmac.update(ikm);
 
-        let prk = hmac.result().into_bytes();
+        let prk = hmac.finalize().into_bytes();
         let hkdf = Hkdf::from_prk(&prk).expect("PRK size is correct");
         (prk, hkdf)
     }
@@ -119,7 +119,7 @@ where
             hmac.update(info);
             hmac.update(&[blocknum as u8 + 1]);
 
-            let output = hmac.result_reset().into_bytes();
+            let output = hmac.finalize_reset().into_bytes();
             okm_block.copy_from_slice(&output[..block_len]);
 
             prev = Some(output);
