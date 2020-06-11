@@ -1,6 +1,8 @@
+use core::iter;
+
 use hex;
 
-use hkdf::Hkdf;
+use hkdf::{Hkdf, HkdfExtract};
 use sha1::Sha1;
 use sha2::Sha256;
 
@@ -233,4 +235,87 @@ fn test_derive_sha1_with_none() {
          b3bae548aa53d423b0d1f27ebba6f5e5\
          673a081d70cce7acfc48"
     );
+}
+
+#[test]
+fn test_expand_multi_info() {
+    let info_components = &[
+        &b"09090909090909090909090909090909090909090909"[..],
+        &b"8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a"[..],
+        &b"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0"[..],
+        &b"4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4"[..],
+        &b"1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d"[..],
+    ];
+
+    let (_, hkdf_ctx) = Hkdf::<Sha256>::extract(None, b"some ikm here");
+
+    // Compute HKDF-Expand on the concatenation of all the info components
+    let mut oneshot_res = [0u8; 16];
+    hkdf_ctx
+        .expand(&info_components.concat(), &mut oneshot_res)
+        .unwrap();
+
+    // Now iteratively join the components of info_components until it's all 1 component. The value
+    // of HKDF-Expand should be the same throughout
+    let mut num_concatted = 0;
+    let mut info_head = Vec::new();
+
+    while num_concatted < info_components.len() {
+        info_head.extend(info_components[num_concatted]);
+
+        // Build the new input to be the info head followed by the remaining components
+        let input: Vec<&[u8]> = iter::once(info_head.as_slice())
+            .chain(info_components.iter().cloned().skip(num_concatted + 1))
+            .collect();
+
+        // Compute and compare to the one-shot answer
+        let mut multipart_res = [0u8; 16];
+        hkdf_ctx
+            .expand_multi_info(&input, &mut multipart_res)
+            .unwrap();
+        assert_eq!(multipart_res, oneshot_res);
+
+        num_concatted += 1;
+    }
+}
+
+#[test]
+fn test_extract_streaming() {
+    let ikm_components = &[
+        &b"09090909090909090909090909090909090909090909"[..],
+        &b"8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a8a"[..],
+        &b"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0"[..],
+        &b"4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4"[..],
+        &b"1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d"[..],
+    ];
+    let salt = b"mysalt";
+
+    // Compute HKDF-Extract on the concatenation of all the IKM components
+    let (oneshot_res, _) = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm_components.concat());
+
+    // Now iteratively join the components of ikm_components until it's all 1 component. The value
+    // of HKDF-Extract should be the same throughout
+    let mut num_concatted = 0;
+    let mut ikm_head = Vec::new();
+
+    while num_concatted < ikm_components.len() {
+        ikm_head.extend(ikm_components[num_concatted]);
+
+        // Make a new extraction context and build the new input to be the IKM head followed by the
+        // remaining components
+        let mut extract_ctx = HkdfExtract::<Sha256>::new(Some(&salt[..]));
+        let input = iter::once(ikm_head.as_slice())
+            .chain(ikm_components.iter().cloned().skip(num_concatted + 1));
+
+        // Stream in the IKM input in the chunks specified
+        for ikm in input {
+            extract_ctx.input_ikm(ikm);
+        }
+
+        // Finalize and compare to the one-shot answer
+        let (multipart_res, _) = extract_ctx.finalize();
+        assert_eq!(multipart_res, oneshot_res);
+
+        num_concatted += 1;
+    }
 }

@@ -6,10 +6,8 @@
 //! # extern crate hex;
 //! # extern crate hkdf;
 //! # extern crate sha2;
-//!
 //! # use sha2::Sha256;
 //! # use hkdf::Hkdf;
-//!
 //! # fn main() {
 //! let ikm = hex::decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
 //! let salt = hex::decode("000102030405060708090a0b0c").unwrap();
@@ -43,7 +41,59 @@ pub struct InvalidPrkLength;
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct InvalidLength;
 
-/// Structure representing the HKDF, capable of HKDF-Expand and HKDF-extract operations.
+/// Structure representing the streaming context of an HKDF-Extract operation
+/// ```rust
+/// # use hkdf::{Hkdf, HkdfExtract};
+/// # use sha2::Sha256;
+/// let mut extract_ctx = HkdfExtract::<Sha256>::new(Some(b"mysalt"));
+/// extract_ctx.input_ikm(b"hello");
+/// extract_ctx.input_ikm(b" world");
+/// let (streamed_res, _) = extract_ctx.finalize();
+///
+/// let (oneshot_res, _) = Hkdf::<Sha256>::extract(Some(b"mysalt"), b"hello world");
+/// assert_eq!(streamed_res, oneshot_res);
+/// ```
+#[derive(Clone)]
+pub struct HkdfExtract<D>
+where
+    D: Update + BlockInput + FixedOutput + Reset + Default + Clone,
+    D::BlockSize: ArrayLength<u8>,
+    D::OutputSize: ArrayLength<u8>,
+{
+    hmac: Hmac<D>,
+}
+
+impl<D> HkdfExtract<D>
+where
+    D: Update + BlockInput + FixedOutput + Reset + Default + Clone,
+    D::BlockSize: ArrayLength<u8>,
+    D::OutputSize: ArrayLength<u8>,
+{
+    /// Initiates the HKDF-Extract context with the given optional salt
+    pub fn new(salt: Option<&[u8]>) -> HkdfExtract<D> {
+        let hmac = match salt {
+            Some(s) => Hmac::<D>::new_varkey(s).expect("HMAC can take a key of any size"),
+            None => Hmac::<D>::new(&Default::default()),
+        };
+
+        HkdfExtract { hmac }
+    }
+
+    /// Feeds in additional input key material to the HKDF-Extract context
+    pub fn input_ikm(&mut self, ikm: &[u8]) {
+        self.hmac.update(ikm);
+    }
+
+    /// Completes the HKDF-Extract operation, returning both the generated pseudorandom key and
+    /// `Hkdf` struct for expanding.
+    pub fn finalize(self) -> (GenericArray<u8, D::OutputSize>, Hkdf<D>) {
+        let prk = self.hmac.finalize().into_bytes();
+        let hkdf = Hkdf::from_prk(&prk).expect("PRK size is correct");
+        (prk, hkdf)
+    }
+}
+
+/// Structure representing the HKDF, capable of HKDF-Expand and HKDF-Extract operations.
 #[derive(Clone)]
 pub struct Hkdf<D>
 where
@@ -60,9 +110,9 @@ where
     D::BlockSize: ArrayLength<u8>,
     D::OutputSize: ArrayLength<u8>,
 {
-    /// Convenience method for [`extract`] when the generated pseudorandom
-    /// key can be ignored and only HKDF-Expand operation is needed. This is
-    /// the most common constructor.
+    /// Convenience method for [`extract`][Hkdf::extract] when the generated
+    /// pseudorandom key can be ignored and only HKDF-Expand operation is needed. This is the most
+    /// common constructor.
     pub fn new(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
         let (_, hkdf) = Hkdf::extract(salt, ikm);
         hkdf
@@ -86,22 +136,19 @@ where
     /// The RFC5869 HKDF-Extract operation returning both the generated
     /// pseudorandom key and `Hkdf` struct for expanding.
     pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> (GenericArray<u8, D::OutputSize>, Hkdf<D>) {
-        let mut hmac = match salt {
-            Some(s) => Hmac::<D>::new_varkey(s).expect("HMAC can take a key of any size"),
-            None => Hmac::<D>::new(&Default::default()),
-        };
-
-        hmac.update(ikm);
-
-        let prk = hmac.finalize().into_bytes();
-        let hkdf = Hkdf::from_prk(&prk).expect("PRK size is correct");
-        (prk, hkdf)
+        let mut extract_ctx = HkdfExtract::new(salt);
+        extract_ctx.input_ikm(ikm);
+        extract_ctx.finalize()
     }
 
-    /// The RFC5869 HKDF-Expand operation
-    ///
-    /// If you don't have any `info` to pass, use an empty slice.
-    pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), InvalidLength> {
+    /// The RFC5869 HKDF-Expand operation. This is equivalent to calling
+    /// [`expand`][Hkdf::extract] with the `info` argument set equal to the
+    /// concatenation of all the elements of `info_components`.
+    pub fn expand_multi_info(
+        &self,
+        info_components: &[&[u8]],
+        okm: &mut [u8],
+    ) -> Result<(), InvalidLength> {
         use crate::generic_array::typenum::Unsigned;
 
         let mut prev: Option<GenericArray<u8, <D as digest::FixedOutput>::OutputSize>> = None;
@@ -118,7 +165,13 @@ where
             if let Some(ref prev) = prev {
                 hmac.update(prev)
             };
-            hmac.update(info);
+
+            // Feed in the info components in sequence. This is equivalent to feeding in the
+            // concatenation of all the info components
+            for info in info_components {
+                hmac.update(info);
+            }
+
             hmac.update(&[blocknum as u8 + 1]);
 
             let output = hmac.finalize_reset().into_bytes();
@@ -128,6 +181,13 @@ where
         }
 
         Ok(())
+    }
+
+    /// The RFC5869 HKDF-Expand operation
+    /// 
+    /// If you don't have any `info` to pass, use an empty slice.
+    pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), InvalidLength> {
+        self.expand_multi_info(&[info], okm)
     }
 }
 
