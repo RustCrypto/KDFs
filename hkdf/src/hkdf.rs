@@ -110,7 +110,7 @@ where
     D::BlockSize: ArrayLength<u8>,
     D::OutputSize: ArrayLength<u8>,
 {
-    /// Convenience method for [`extract`](struct.Hkdf.html#method.extract) when the generated
+    /// Convenience method for [`extract`][Hkdf::extract] when the generated
     /// pseudorandom key can be ignored and only HKDF-Expand operation is needed. This is the most
     /// common constructor.
     pub fn new(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
