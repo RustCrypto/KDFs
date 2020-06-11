@@ -184,6 +184,8 @@ where
     }
 
     /// The RFC5869 HKDF-Expand operation
+    /// 
+    /// If you don't have any `info` to pass, use an empty slice.
     pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), InvalidLength> {
         self.expand_multi_info(&[info], okm)
     }
