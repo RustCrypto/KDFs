@@ -142,7 +142,7 @@ where
     }
 
     /// The RFC5869 HKDF-Expand operation. This is equivalent to calling
-    /// [`expand`](struct.Hkdf.html#method.expand) with the `info` argument set equal to the
+    /// [`expand`][Hkdf::extract] with the `info` argument set equal to the
     /// concatenation of all the elements of `info_components`.
     pub fn expand_multi_info(
         &self,
