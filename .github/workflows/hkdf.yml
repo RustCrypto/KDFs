@@ -18,15 +18,39 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust:
-          - 1.41.0 # MSRV
-          - stable
+        include:
+          - target: i686-unknown-linux-gnu
+            toolchain: 1.41.0 # MSRV
+            use_cross: false
+            deps: sudo apt install gcc-multilib
+          - target: i686-unknown-linux-gnu
+            toolchain: stable
+            use_cross: false
+            deps: sudo apt install gcc-multilib
+          - target: x86_64-unknown-linux-gnu
+            toolchain: 1.41.0 # MSRV
+            use_cross: false
+            deps: true
+          - target: x86_64-unknown-linux-gnu
+            toolchain: stable
+            use_cross: false
+            deps: true
     steps:
       - uses: actions/checkout@v1
+      - run: ${{ matrix.deps }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ matrix.rust }}
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
           override: true
-      - run: cargo test --release
-      - run: cargo test --release --all-features
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          use-cross: ${{ matrix.use_cross }}
+          args: --target ${{ matrix.target }} --release
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          use-cross: ${{ matrix.use_cross }}
+          args: --target ${{ matrix.target }} --release --all-features
