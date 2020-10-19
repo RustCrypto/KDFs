@@ -8,7 +8,6 @@
 //! # extern crate sha2;
 //! # use sha2::Sha256;
 //! # use hkdf::Hkdf;
-//! # fn main() {
 //! let ikm = hex::decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
 //! let salt = hex::decode("000102030405060708090a0b0c").unwrap();
 //! let info = hex::decode("f0f1f2f3f4f5f6f7f8f9").unwrap();
@@ -17,7 +16,6 @@
 //! let mut okm = [0u8; 42];
 //! h.expand(&info, &mut okm).unwrap();
 //! println!("OKM is {}", hex::encode(&okm[..]));
-//! # }
 //! ```
 //!
 //! [1]: https://tools.ietf.org/html/rfc5869
@@ -184,7 +182,7 @@ where
     }
 
     /// The RFC5869 HKDF-Expand operation
-    /// 
+    ///
     /// If you don't have any `info` to pass, use an empty slice.
     pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), InvalidLength> {
         self.expand_multi_info(&[info], okm)
