@@ -19,7 +19,7 @@ path = "src/hkdf.rs"
 
 [dependencies]
 digest = "0.9"
-hmac = "0.8"
+hmac = "0.10"
 
 [dev-dependencies]
 crypto-tests = "0.5.*"
