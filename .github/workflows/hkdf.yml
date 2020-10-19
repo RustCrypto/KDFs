@@ -1,0 +1,77 @@
+name: hkdf
+
+on:
+  pull_request:
+    paths:
+      - "hkdf/**"
+      - "Cargo.*"
+  push:
+    branches: master
+
+defaults:
+  run:
+    working-directory: hkdf
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: i686-unknown-linux-gnu
+            toolchain: 1.41.0 # MSRV
+            use_cross: false
+            deps: sudo apt install gcc-multilib
+          - target: i686-unknown-linux-gnu
+            toolchain: stable
+            use_cross: false
+            deps: sudo apt install gcc-multilib
+          - target: x86_64-unknown-linux-gnu
+            toolchain: 1.41.0 # MSRV
+            use_cross: false
+            deps: true
+          - target: x86_64-unknown-linux-gnu
+            toolchain: stable
+            use_cross: false
+            deps: true
+          - target: powerpc-unknown-linux-gnu
+            toolchain: 1.41.0 # MSRV
+            use_cross: true
+            deps: true
+          - target: powerpc-unknown-linux-gnu
+            toolchain: stable
+            use_cross: true
+            deps: true
+          ## TODO: debug PPC64 linking errors. Example failure:
+          ## <https://github.com/RustCrypto/KDFs/runs/1276943457?check_suite_focus=true>
+          #- target: powerpc64-unknown-linux-gnu
+          #  toolchain: 1.41.0 # MSRV
+          #  use_cross: true
+          #  deps: true
+          #- target: powerpc64-unknown-linux-gnu
+          #  toolchain: stable
+          #  use_cross: true
+          #  deps: true
+    steps:
+      - uses: actions/checkout@v1
+      - run: ${{ matrix.deps }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.toolchain }}
+          target: ${{ matrix.target }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          use-cross: ${{ matrix.use_cross }}
+          args: --target ${{ matrix.target }} --release
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          use-cross: ${{ matrix.use_cross }}
+          args: --target ${{ matrix.target }} --release --all-features
