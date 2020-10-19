@@ -35,6 +35,14 @@ jobs:
             toolchain: stable
             use_cross: false
             deps: true
+          - target: powerpc-unknown-linux-gnu
+            toolchain: 1.41.0 # MSRV
+            use_cross: true
+            deps: true
+          - target: powerpc-unknown-linux-gnu
+            toolchain: stable
+            use_cross: true
+            deps: true
     steps:
       - uses: actions/checkout@v1
       - run: ${{ matrix.deps }}
