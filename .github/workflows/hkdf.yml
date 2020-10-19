@@ -46,6 +46,16 @@ jobs:
             toolchain: stable
             use_cross: true
             deps: true
+          ## TODO: debug PPC64 linking errors. Example failure:
+          ## <https://github.com/RustCrypto/KDFs/runs/1276943457?check_suite_focus=true>
+          #- target: powerpc64-unknown-linux-gnu
+          #  toolchain: 1.41.0 # MSRV
+          #  use_cross: true
+          #  deps: true
+          #- target: powerpc64-unknown-linux-gnu
+          #  toolchain: stable
+          #  use_cross: true
+          #  deps: true
     steps:
       - uses: actions/checkout@v1
       - run: ${{ matrix.deps }}
