@@ -1,7 +1,10 @@
 name: hkdf
 
 on:
-  pull_request: {}
+  pull_request:
+    paths:
+      - "hkdf/**"
+      - "Cargo.*"
   push:
     branches: master
 
