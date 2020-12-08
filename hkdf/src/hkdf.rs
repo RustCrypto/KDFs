@@ -69,11 +69,9 @@ where
 {
     /// Initiates the HKDF-Extract context with the given optional salt
     pub fn new(salt: Option<&[u8]>) -> HkdfExtract<D> {
-        let hmac = match salt {
-            Some(s) => Hmac::<D>::new_varkey(s).expect("HMAC can take a key of any size"),
-            None => Hmac::<D>::new(&Default::default()),
-        };
-
+        let default_salt = GenericArray::<u8, D::OutputSize>::default();
+        let salt = salt.unwrap_or(&default_salt);
+        let hmac = Hmac::<D>::new_varkey(salt).expect("HMAC can take a key of any size");
         HkdfExtract { hmac }
     }
 

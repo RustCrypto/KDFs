@@ -65,7 +65,12 @@ fn test_derive_sha256() {
         let ikm = hex::decode(&t.ikm).unwrap();
         let salt = hex::decode(&t.salt).unwrap();
         let info = hex::decode(&t.info).unwrap();
-        let (prk, hkdf) = Hkdf::<Sha256>::extract(Option::from(&salt[..]), &ikm[..]);
+        let salt = if salt.is_empty() {
+            None
+        } else {
+            Some(&salt[..])
+        };
+        let (prk, hkdf) = Hkdf::<Sha256>::extract(salt, &ikm[..]);
         let mut okm = vec![0u8; t.length];
         assert!(hkdf.expand(&info[..], &mut okm).is_ok());
 
@@ -204,7 +209,12 @@ fn test_derive_sha1() {
         let ikm = hex::decode(&t.ikm).unwrap();
         let salt = hex::decode(&t.salt).unwrap();
         let info = hex::decode(&t.info).unwrap();
-        let (prk, hkdf) = Hkdf::<Sha1>::extract(Some(&salt[..]), &ikm[..]);
+        let salt = if salt.is_empty() {
+            None
+        } else {
+            Some(&salt[..])
+        };
+        let (prk, hkdf) = Hkdf::<Sha1>::extract(salt, &ikm[..]);
         let mut okm = vec![0u8; t.length];
         assert!(hkdf.expand(&info[..], &mut okm).is_ok());
 
