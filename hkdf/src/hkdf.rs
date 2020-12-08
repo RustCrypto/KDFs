@@ -71,7 +71,8 @@ where
     pub fn new(salt: Option<&[u8]>) -> HkdfExtract<D> {
         let hmac = match salt {
             Some(s) => Hmac::<D>::new_varkey(s).expect("HMAC can take a key of any size"),
-            None => Hmac::<D>::new(&Default::default()),
+            None => Hmac::<D>::new_varkey(&<GenericArray<u8, D::OutputSize>>::default())
+                .expect("HMAC can take a key of any size"),
         };
 
         HkdfExtract { hmac }
