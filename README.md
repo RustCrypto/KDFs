@@ -8,6 +8,8 @@ Collection of key derivation functions (KDFs) written in pure Rust.
 |--------|-----------|---------------|---------------|--------------|
 | `hkdf` | [HKDF]    | [![crates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf) | [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf) | [![Build](https://github.com/RustCrypto/KDFs/workflows/hkdf/badge.svg?branch=master&event=push)](https://github.com/RustCrypto/KDFs/actions?query=workflow:hkdf+branch:master)
 
+*NOTE: for KDFs which act as password hashing functions, please see [RustCrypto/password-hashes]*
+
 ## License
 
 All crates licensed under either of
@@ -32,3 +34,4 @@ dual licensed as above, without any additional terms or conditions.
 [//]: # (algorithms)
 
 [HKDF]: https://en.wikipedia.org/wiki/HKDF
+[RustCrypto/password-hashes]: https://github.com/RustCrypto/password-hashes
