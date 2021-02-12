@@ -1,4 +1,4 @@
-# RustCrypto KDFs ![Rust Version][rustc-image] [![Project Chat][chat-image]][chat-link]
+# RustCrypto KDFs ![Rust Version][rustc-image] [![Project Chat][chat-image]][chat-link] [![dependency status][deps-image]][deps-link]
 
 Collection of key derivation functions (KDFs) written in pure Rust.
 
@@ -30,6 +30,8 @@ dual licensed as above, without any additional terms or conditions.
 [rustc-image]: https://img.shields.io/badge/rustc-1.41+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs
+[deps-image]: https://deps.rs/repo/github/RustCrypto/KDFs/status.svg
+[deps-link]: https://deps.rs/repo/github/RustCrypto/KDFs
 
 [//]: # (algorithms)
 
