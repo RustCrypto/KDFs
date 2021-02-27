@@ -22,6 +22,7 @@ digest = "0.9"
 hmac = "0.10"
 
 [dev-dependencies]
+blobby = "0.3"
 crypto-tests = "0.5.*"
 hex = "0.4"
 sha-1 = "0.9"
