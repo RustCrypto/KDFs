@@ -3,9 +3,6 @@
 //! # Usage
 //!
 //! ```rust
-//! # extern crate hex;
-//! # extern crate hkdf;
-//! # extern crate sha2;
 //! # use sha2::Sha256;
 //! # use hkdf::Hkdf;
 //! let ikm = hex::decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b").unwrap();
@@ -71,7 +68,7 @@ where
     pub fn new(salt: Option<&[u8]>) -> HkdfExtract<D> {
         let default_salt = GenericArray::<u8, D::OutputSize>::default();
         let salt = salt.unwrap_or(&default_salt);
-        let hmac = Hmac::<D>::new_varkey(salt).expect("HMAC can take a key of any size");
+        let hmac = Hmac::<D>::new_from_slice(salt).expect("HMAC can take a key of any size");
         HkdfExtract { hmac }
     }
 
@@ -125,7 +122,7 @@ where
         }
 
         Ok(Hkdf {
-            hmac: Hmac::new_varkey(prk).expect("HMAC can take a key of any size"),
+            hmac: Hmac::new_from_slice(prk).expect("HMAC can take a key of any size"),
         })
     }
 

@@ -19,7 +19,7 @@ path = "src/hkdf.rs"
 
 [dependencies]
 digest = "0.9"
-hmac = "0.10"
+hmac = "0.11"
 
 [dev-dependencies]
 blobby = "0.3"
