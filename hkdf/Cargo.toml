@@ -1,34 +1,28 @@
 [package]
 name = "hkdf"
-version = "0.11.0"
-authors = ["vladikoff", "warner", "RustCrypto Developers"]
-license = "MIT/Apache-2.0"
+version = "0.12.0" # Also update html_root_url in lib.rs when bumping this
+authors = ["RustCrypto Developers"]
+license = "MIT OR Apache-2.0"
 homepage = "https://github.com/RustCrypto/KDFs/"
 repository = "https://github.com/RustCrypto/KDFs/"
 description = "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
-keywords = [ "HKDF", "Crypto" ]
+keywords = ["crypto", "HKDF", "KDF"]
+categories = ["cryptography", "no-std"]
 readme = "README.md"
 edition = "2018"
 
-[features]
-std = []
-
-[lib]
-name = "hkdf"
-path = "src/hkdf.rs"
-
 [dependencies]
-digest = "0.9"
-hmac = "0.11"
+hmac = "0.12"
 
 [dev-dependencies]
 blobby = "0.3"
-crypto-tests = "0.5.*"
-hex = "0.4"
-sha-1 = "0.9"
-sha2 = "0.9"
-bencher = "0.1"
+hex-literal = "0.2"
+sha-1 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10", default-features = false }
 
-[[bench]]
-name = "hkdf"
-harness = false
+[features]
+std = ["hmac/std"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
