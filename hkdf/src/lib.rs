@@ -93,12 +93,13 @@
 extern crate std;
 
 use core::fmt;
+use hmac::digest::{
+    core_api::BlockSizeUser, generic_array::typenum::Unsigned, Digest, FixedOutput, KeyInit,
+    Output, Update,
+};
+use hmac::SimpleHmac;
 #[cfg(feature = "std")]
 use std::fmt::Debug;
-use hmac::digest::{core_api::{
-    BlockSizeUser,
-}, generic_array::typenum::{Unsigned}, FixedOutput, KeyInit, Output, Update, Digest};
-use hmac::{SimpleHmac};
 
 /// Error that is returned when supplied pseudorandom key (PRK) is not long enough.
 #[derive(Copy, Clone, Debug)]
