@@ -93,16 +93,12 @@
 extern crate std;
 
 use core::fmt;
-use hmac::digest::{
-    block_buffer::Eager,
-    core_api::{
-        AlgorithmName, BlockSizeUser, BufferKindUser, CoreProxy, CoreWrapper, FixedOutputCore,
-        OutputSizeUser, UpdateCore,
-    },
-    generic_array::typenum::{IsLess, Le, NonZero, Unsigned, U256},
-    FixedOutput, HashMarker, KeyInit, Output, Update,
-};
-use hmac::{Hmac, HmacCore};
+#[cfg(feature = "std")]
+use std::fmt::Debug;
+use hmac::digest::{core_api::{
+    BlockSizeUser,
+}, generic_array::typenum::{Unsigned}, FixedOutput, KeyInit, Output, Update, Digest};
+use hmac::{SimpleHmac};
 
 /// Error that is returned when supplied pseudorandom key (PRK) is not long enough.
 #[derive(Copy, Clone, Debug)]
@@ -125,38 +121,16 @@ pub struct InvalidLength;
 /// assert_eq!(streamed_res, oneshot_res);
 /// ```
 #[derive(Clone)]
-pub struct HkdfExtract<D>
-where
-    D: CoreProxy,
-    D::Core: HashMarker
-        + UpdateCore
-        + FixedOutputCore
-        + BufferKindUser<BufferKind = Eager>
-        + Default
-        + Clone,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-{
-    hmac: Hmac<D>,
+pub struct HkdfExtract<D: Digest + BlockSizeUser> {
+    hmac: SimpleHmac<D>,
 }
 
-impl<D> HkdfExtract<D>
-where
-    D: CoreProxy,
-    D::Core: HashMarker
-        + UpdateCore
-        + FixedOutputCore
-        + BufferKindUser<BufferKind = Eager>
-        + Default
-        + Clone,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-{
+impl<D: Digest + BlockSizeUser + Clone> HkdfExtract<D> {
     /// Initiates the HKDF-Extract context with the given optional salt
     pub fn new(salt: Option<&[u8]>) -> HkdfExtract<D> {
-        let default_salt = Output::<D::Core>::default();
+        let default_salt = Output::<D>::default();
         let salt = salt.unwrap_or(&default_salt);
-        let hmac = Hmac::<D>::new_from_slice(salt).expect("HMAC can take a key of any size");
+        let hmac = SimpleHmac::<D>::new_from_slice(salt).expect("HMAC can take a key of any size");
         HkdfExtract { hmac }
     }
 
@@ -167,62 +141,28 @@ where
 
     /// Completes the HKDF-Extract operation, returning both the generated pseudorandom key and
     /// `Hkdf` struct for expanding.
-    pub fn finalize(self) -> (Output<D::Core>, Hkdf<D>) {
+    pub fn finalize(self) -> (Output<SimpleHmac<D>>, Hkdf<D>) {
         let prk = self.hmac.finalize_fixed();
         let hkdf = Hkdf::from_prk(&prk).expect("PRK size is correct");
         (prk, hkdf)
     }
 }
 
-impl<D> fmt::Debug for HkdfExtract<D>
-where
-    D: CoreProxy,
-    D::Core: HashMarker
-        + AlgorithmName
-        + UpdateCore
-        + FixedOutputCore
-        + BufferKindUser<BufferKind = Eager>
-        + Default
-        + Clone,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-{
+impl<D: Digest + BlockSizeUser + fmt::Debug> fmt::Debug for HkdfExtract<D> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("HkdfExtract<")?;
-        <D::Core as AlgorithmName>::write_alg_name(f)?;
+        D::fmt(&D::new(), f)?;
         f.write_str("> { ... }")
     }
 }
 
 /// Structure representing the HKDF, capable of HKDF-Expand and HKDF-Extract operations.
 #[derive(Clone)]
-pub struct Hkdf<D>
-where
-    D: CoreProxy,
-    D::Core: HashMarker
-        + UpdateCore
-        + FixedOutputCore
-        + BufferKindUser<BufferKind = Eager>
-        + Default
-        + Clone,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-{
-    hmac: HmacCore<D>,
+pub struct Hkdf<D: Digest + BlockSizeUser> {
+    hmac: SimpleHmac<D>,
 }
 
-impl<D> Hkdf<D>
-where
-    D: CoreProxy,
-    D::Core: HashMarker
-        + UpdateCore
-        + FixedOutputCore
-        + BufferKindUser<BufferKind = Eager>
-        + Default
-        + Clone,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-{
+impl<D: Digest + BlockSizeUser + Clone> Hkdf<D> {
     /// Convenience method for [`extract`][Hkdf::extract] when the generated
     /// pseudorandom key can be ignored and only HKDF-Expand operation is needed. This is the most
     /// common constructor.
@@ -235,18 +175,18 @@ where
     /// as per section 3.3 from RFC5869.
     pub fn from_prk(prk: &[u8]) -> Result<Hkdf<D>, InvalidPrkLength> {
         // section 2.3 specifies that prk must be "at least HashLen octets"
-        if prk.len() < <D::Core as OutputSizeUser>::OutputSize::to_usize() {
+        if prk.len() < D::OutputSize::to_usize() {
             return Err(InvalidPrkLength);
         }
 
         Ok(Hkdf {
-            hmac: HmacCore::new_from_slice(prk).expect("HMAC can take a key of any size"),
+            hmac: SimpleHmac::new_from_slice(prk).expect("HMAC can take a key of any size"),
         })
     }
 
     /// The RFC5869 HKDF-Extract operation returning both the generated
     /// pseudorandom key and `Hkdf` struct for expanding.
-    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> (Output<D::Core>, Hkdf<D>) {
+    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> (Output<SimpleHmac<D>>, Hkdf<D>) {
         let mut extract_ctx = HkdfExtract::new(salt);
         extract_ctx.input_ikm(ikm);
         extract_ctx.finalize()
@@ -260,15 +200,15 @@ where
         info_components: &[&[u8]],
         okm: &mut [u8],
     ) -> Result<(), InvalidLength> {
-        let mut prev: Option<Output<D::Core>> = None;
+        let mut prev: Option<Output<D>> = None;
 
-        let chunk_len = <D::Core as OutputSizeUser>::OutputSize::USIZE;
+        let chunk_len = D::OutputSize::USIZE;
         if okm.len() > chunk_len * 255 {
             return Err(InvalidLength);
         }
 
         for (block_n, block) in okm.chunks_mut(chunk_len).enumerate() {
-            let mut hmac = CoreWrapper::from_core(self.hmac.clone());
+            let mut hmac = self.hmac.clone();
 
             if let Some(ref prev) = prev {
                 hmac.update(prev)
@@ -301,22 +241,11 @@ where
     }
 }
 
-impl<D> fmt::Debug for Hkdf<D>
-where
-    D: CoreProxy,
-    D::Core: HashMarker
-        + AlgorithmName
-        + UpdateCore
-        + FixedOutputCore
-        + BufferKindUser<BufferKind = Eager>
-        + Default
-        + Clone,
-    <D::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<D::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-{
+#[cfg(feature = "std")]
+impl<D: Digest + BlockSizeUser + Debug> fmt::Debug for Hkdf<D> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("Hkdf<")?;
-        <D::Core as AlgorithmName>::write_alg_name(f)?;
+        D::fmt(&D::new(), f)?;
         f.write_str("> { ... }")
     }
 }
