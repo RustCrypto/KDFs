@@ -9,13 +9,14 @@
 //! ```rust
 //! use sha2::Sha256;
 //! use hkdf::Hkdf;
+//! use hmac::Hmac;
 //! use hex_literal::hex;
 //!
 //! let ikm = hex!("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b");
 //! let salt = hex!("000102030405060708090a0b0c");
 //! let info = hex!("f0f1f2f3f4f5f6f7f8f9");
 //!
-//! let hk = Hkdf::<Sha256>::new(Some(&salt[..]), &ikm);
+//! let hk = Hkdf::<Hmac<Sha256>>::new(Some(&salt[..]), &ikm);
 //! let mut okm = [0u8; 42];
 //! hk.expand(&info, &mut okm)
 //!     .expect("42 is a valid length for Sha256 to output");
@@ -36,10 +37,11 @@
 //! # use sha2::Sha256;
 //! # use hkdf::Hkdf;
 //! # use hex_literal::hex;
+//! # use hmac::Hmac;
 //! # let ikm = hex!("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b");
 //! # let salt = hex!("000102030405060708090a0b0c");
 //!
-//! let (prk, hk) = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
+//! let (prk, hk) = Hkdf::<Hmac<Sha256>>::extract(Some(&salt[..]), &ikm);
 //! let expected = hex!("
 //!     077709362c2e32df0ddc3f0dc47bba63
 //!     90b6c73bb50f9c3122ec844ad7c2b3e5
@@ -57,6 +59,7 @@
 //! # use sha2::Sha256;
 //! # use hkdf::Hkdf;
 //! # use hex_literal::hex;
+//! # use hmac::Hmac;
 //! # let salt = hex!("000102030405060708090a0b0c");
 //! # let info = hex!("f0f1f2f3f4f5f6f7f8f9");
 //! let prk = hex!("
@@ -64,7 +67,7 @@
 //!     90b6c73bb50f9c3122ec844ad7c2b3e5
 //! ");
 //!
-//! let hk = Hkdf::<Sha256>::from_prk(&prk).expect("PRK should be large enough");
+//! let hk = Hkdf::<Hmac<Sha256>>::from_prk(&prk).expect("PRK should be large enough");
 //! let mut okm = [0u8; 42];
 //! hk.expand(&info, &mut okm)
 //!     .expect("42 is a valid length for Sha256 to output");
@@ -93,11 +96,7 @@
 extern crate std;
 
 use core::fmt;
-use hmac::digest::{
-    core_api::BlockSizeUser, generic_array::typenum::Unsigned, Digest, FixedOutput, KeyInit,
-    Output, Update,
-};
-use hmac::SimpleHmac;
+use hmac::digest::{generic_array::typenum::Unsigned, FixedOutput, KeyInit, Output, Update};
 #[cfg(feature = "std")]
 use std::fmt::Debug;
 
@@ -113,25 +112,27 @@ pub struct InvalidLength;
 /// ```rust
 /// # use hkdf::{Hkdf, HkdfExtract};
 /// # use sha2::Sha256;
-/// let mut extract_ctx = HkdfExtract::<Sha256>::new(Some(b"mysalt"));
+/// # use hmac::Hmac;
+///
+/// let mut extract_ctx = HkdfExtract::<Hmac<Sha256>>::new(Some(b"mysalt"));
 /// extract_ctx.input_ikm(b"hello");
 /// extract_ctx.input_ikm(b" world");
 /// let (streamed_res, _) = extract_ctx.finalize();
 ///
-/// let (oneshot_res, _) = Hkdf::<Sha256>::extract(Some(b"mysalt"), b"hello world");
+/// let (oneshot_res, _) = Hkdf::<Hmac<Sha256>>::extract(Some(b"mysalt"), b"hello world");
 /// assert_eq!(streamed_res, oneshot_res);
 /// ```
 #[derive(Clone)]
-pub struct HkdfExtract<D: Digest + BlockSizeUser> {
-    hmac: SimpleHmac<D>,
+pub struct HkdfExtract<H: Update + KeyInit + FixedOutput + Clone> {
+    hmac: H,
 }
 
-impl<D: Digest + BlockSizeUser + Clone> HkdfExtract<D> {
+impl<H: Update + KeyInit + FixedOutput + Clone> HkdfExtract<H> {
     /// Initiates the HKDF-Extract context with the given optional salt
-    pub fn new(salt: Option<&[u8]>) -> HkdfExtract<D> {
-        let default_salt = Output::<D>::default();
+    pub fn new(salt: Option<&[u8]>) -> HkdfExtract<H> {
+        let default_salt = Output::<H>::default();
         let salt = salt.unwrap_or(&default_salt);
-        let hmac = SimpleHmac::<D>::new_from_slice(salt).expect("HMAC can take a key of any size");
+        let hmac = H::new_from_slice(salt).expect("HMAC can take a key of any size");
         HkdfExtract { hmac }
     }
 
@@ -142,52 +143,55 @@ impl<D: Digest + BlockSizeUser + Clone> HkdfExtract<D> {
 
     /// Completes the HKDF-Extract operation, returning both the generated pseudorandom key and
     /// `Hkdf` struct for expanding.
-    pub fn finalize(self) -> (Output<SimpleHmac<D>>, Hkdf<D>) {
+    pub fn finalize(self) -> (Output<H>, Hkdf<H>) {
         let prk = self.hmac.finalize_fixed();
         let hkdf = Hkdf::from_prk(&prk).expect("PRK size is correct");
         (prk, hkdf)
     }
 }
 
-impl<D: Digest + BlockSizeUser + fmt::Debug> fmt::Debug for HkdfExtract<D> {
+#[cfg(feature = "std")]
+impl<H: Update + KeyInit + FixedOutput + Clone + Debug> fmt::Debug for HkdfExtract<H> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("HkdfExtract<")?;
-        write!(f, "HkdfExtract<{:?}> {{ ... }}", &D::new())?;
-        f.write_str("> { ... }")
+        write!(
+            f,
+            "HkdfExtract<{:?}> {{ ... }}",
+            &H::new_from_slice(&Output::<H>::default())
+        )
     }
 }
 
 /// Structure representing the HKDF, capable of HKDF-Expand and HKDF-Extract operations.
 #[derive(Clone)]
-pub struct Hkdf<D: Digest + BlockSizeUser> {
-    hmac: SimpleHmac<D>,
+pub struct Hkdf<H: Update + KeyInit + FixedOutput + Clone> {
+    hmac: H,
 }
 
-impl<D: Digest + BlockSizeUser + Clone> Hkdf<D> {
+impl<H: Update + KeyInit + FixedOutput + Clone> Hkdf<H> {
     /// Convenience method for [`extract`][Hkdf::extract] when the generated
     /// pseudorandom key can be ignored and only HKDF-Expand operation is needed. This is the most
     /// common constructor.
-    pub fn new(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<D> {
+    pub fn new(salt: Option<&[u8]>, ikm: &[u8]) -> Hkdf<H> {
         let (_, hkdf) = Hkdf::extract(salt, ikm);
         hkdf
     }
 
     /// Create `Hkdf` from an already cryptographically strong pseudorandom key
     /// as per section 3.3 from RFC5869.
-    pub fn from_prk(prk: &[u8]) -> Result<Hkdf<D>, InvalidPrkLength> {
+    pub fn from_prk(prk: &[u8]) -> Result<Hkdf<H>, InvalidPrkLength> {
         // section 2.3 specifies that prk must be "at least HashLen octets"
-        if prk.len() < D::OutputSize::to_usize() {
+        if prk.len() < H::OutputSize::to_usize() {
             return Err(InvalidPrkLength);
         }
 
         Ok(Hkdf {
-            hmac: SimpleHmac::new_from_slice(prk).expect("HMAC can take a key of any size"),
+            hmac: H::new_from_slice(prk).expect("HMAC can take a key of any size"),
         })
     }
 
     /// The RFC5869 HKDF-Extract operation returning both the generated
     /// pseudorandom key and `Hkdf` struct for expanding.
-    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> (Output<SimpleHmac<D>>, Hkdf<D>) {
+    pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> (Output<H>, Hkdf<H>) {
         let mut extract_ctx = HkdfExtract::new(salt);
         extract_ctx.input_ikm(ikm);
         extract_ctx.finalize()
@@ -201,9 +205,9 @@ impl<D: Digest + BlockSizeUser + Clone> Hkdf<D> {
         info_components: &[&[u8]],
         okm: &mut [u8],
     ) -> Result<(), InvalidLength> {
-        let mut prev: Option<Output<D>> = None;
+        let mut prev: Option<Output<H>> = None;
 
-        let chunk_len = D::OutputSize::USIZE;
+        let chunk_len = H::OutputSize::USIZE;
         if okm.len() > chunk_len * 255 {
             return Err(InvalidLength);
         }
@@ -243,11 +247,13 @@ impl<D: Digest + BlockSizeUser + Clone> Hkdf<D> {
 }
 
 #[cfg(feature = "std")]
-impl<D: Digest + BlockSizeUser + Debug> fmt::Debug for Hkdf<D> {
+impl<H: Update + KeyInit + FixedOutput + Clone + Debug> fmt::Debug for Hkdf<H> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("Hkdf<")?;
-        D::fmt(&D::new(), f)?;
-        f.write_str("> { ... }")
+        write!(
+            f,
+            "HkdfExtract<{:?}> {{ ... }}",
+            &H::new_from_slice(&Output::<H>::default())
+        )
     }
 }
 

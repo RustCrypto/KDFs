@@ -3,7 +3,7 @@ extern crate test;
 
 use test::Bencher;
 
-type HkdfSha256 = hkdf::Hkdf<sha2::Sha256>;
+type HkdfSha256 = hkdf::Hkdf<hmac::Hmac<sha2::Sha256>>;
 
 #[bench]
 fn hkdf_sha256_10(b: &mut Bencher) {
