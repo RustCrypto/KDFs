@@ -153,11 +153,7 @@ impl<H: Update + KeyInit + FixedOutput + Clone> HkdfExtract<H> {
 #[cfg(feature = "std")]
 impl<H: Update + KeyInit + FixedOutput + Clone + Debug> fmt::Debug for HkdfExtract<H> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "HkdfExtract<{:?}> {{ ... }}",
-            &self.hmac
-        )
+        write!(f, "HkdfExtract<{:?}> {{ ... }}", &self.hmac)
     }
 }
 
@@ -249,11 +245,7 @@ impl<H: Update + KeyInit + FixedOutput + Clone> Hkdf<H> {
 #[cfg(feature = "std")]
 impl<H: Update + KeyInit + FixedOutput + Clone + Debug> fmt::Debug for Hkdf<H> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "HkdfExtract<{:?}> {{ ... }}",
-            &self.hmac
-        )
+        write!(f, "HkdfExtract<{:?}> {{ ... }}", &self.hmac)
     }
 }
 
