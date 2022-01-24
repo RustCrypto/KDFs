@@ -81,9 +81,9 @@
 
 #![no_std]
 #![doc(
-    html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
-    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
-    html_root_url = "https://docs.rs/hkdf/0.12.0"
+html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
+html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
+html_root_url = "https://docs.rs/hkdf/0.12.0"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
@@ -152,7 +152,7 @@ impl<D: Digest + BlockSizeUser + Clone> HkdfExtract<D> {
 impl<D: Digest + BlockSizeUser + fmt::Debug> fmt::Debug for HkdfExtract<D> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("HkdfExtract<")?;
-        write!(f, "HkdfExtract<{:?}> { ... } ", &D::new())
+        write!(f, "HkdfExtract<{:?}> {{ ... }}", &D::new())?;
         f.write_str("> { ... }")
     }
 }
