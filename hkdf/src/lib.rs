@@ -152,7 +152,7 @@ impl<D: Digest + BlockSizeUser + Clone> HkdfExtract<D> {
 impl<D: Digest + BlockSizeUser + fmt::Debug> fmt::Debug for HkdfExtract<D> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("HkdfExtract<")?;
-        D::fmt(&D::new(), f)?;
+        write!(f, "HkdfExtract<{:?}> { ... } ", &D::new())
         f.write_str("> { ... }")
     }
 }
