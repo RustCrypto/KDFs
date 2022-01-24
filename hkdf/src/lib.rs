@@ -156,7 +156,7 @@ impl<H: Update + KeyInit + FixedOutput + Clone + Debug> fmt::Debug for HkdfExtra
         write!(
             f,
             "HkdfExtract<{:?}> {{ ... }}",
-            &H::new_from_slice(&Output::<H>::default())
+            &self.hmac
         )
     }
 }
@@ -252,7 +252,7 @@ impl<H: Update + KeyInit + FixedOutput + Clone + Debug> fmt::Debug for Hkdf<H> {
         write!(
             f,
             "HkdfExtract<{:?}> {{ ... }}",
-            &H::new_from_slice(&Output::<H>::default())
+            &self.hmac
         )
     }
 }
