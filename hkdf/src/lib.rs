@@ -99,12 +99,19 @@ use core::marker::PhantomData;
 use hmac::digest::{
     crypto_common::AlgorithmName, generic_array::typenum::Unsigned, Output, OutputSizeUser,
 };
-use hmac::Hmac;
+use hmac::{Hmac, SimpleHmac};
 
 mod errors;
 mod sealed;
 
 use errors::{InvalidLength, InvalidPrkLength};
+
+/// [`HkdfExtract`] variant which uses [`SimpleHmac`] for underlying HMAC
+/// implementation.
+pub type SimpleHkdfExtract<H> = HkdfExtract<H, SimpleHmac<H>>;
+/// [`Hkdf`] variant which uses [`SimpleHmac`] for underlying HMAC
+/// implementation.
+pub type SimpleHkdf<H> = Hkdf<H, SimpleHmac<H>>;
 
 /// Structure representing the streaming context of an HKDF-Extract operation
 /// ```rust
@@ -267,7 +274,7 @@ where
     }
 }
 
-/// Sealed trait implemented for [`Hmac`] and [`SimpleHmac`][hmac::SimpleHmac].
+/// Sealed trait implemented for [`Hmac`] and [`SimpleHmac`].
 pub trait HmacImpl<H: OutputSizeUser>: sealed::Sealed<H> {}
 
 impl<H: OutputSizeUser, T: sealed::Sealed<H>> HmacImpl<H> for T {}
