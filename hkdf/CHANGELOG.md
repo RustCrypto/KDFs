@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.12.1 (2022-01-27)
 ### Added
-- Ability to switch HMAC implementation to `SimpleHmac` ([#57])
+- Ability to switch HMAC implementation to `SimpleHmac` with respective `SimpleHkdfExtract` and `SimpleHkdf` aliases ([#57])
 
 [#57]: https://github.com/RustCrypto/KDFs/pull/55
 
