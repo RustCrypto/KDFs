@@ -1,7 +1,7 @@
 use core::iter;
 
 use hex_literal::hex;
-use hkdf::{Hkdf, HkdfExtract};
+use hkdf::{Hkdf, HkdfExtract, SimpleHkdf, SimpleHkdfExtract};
 use sha1::Sha1;
 use sha2::{Sha256, Sha384, Sha512};
 
@@ -355,6 +355,30 @@ fn test_extract_streaming() {
 
         num_concatted += 1;
     }
+
+    let mut num_concatted = 0;
+    let mut ikm_head = Vec::new();
+
+    while num_concatted < ikm_components.len() {
+        ikm_head.extend(ikm_components[num_concatted]);
+
+        // Make a new extraction context and build the new input to be the IKM head followed by the
+        // remaining components
+        let mut extract_ctx = SimpleHkdfExtract::<Sha256>::new(Some(&salt[..]));
+        let input = iter::once(ikm_head.as_slice())
+            .chain(ikm_components.iter().cloned().skip(num_concatted + 1));
+
+        // Stream in the IKM input in the chunks specified
+        for ikm in input {
+            extract_ctx.input_ikm(ikm);
+        }
+
+        // Finalize and compare to the one-shot answer
+        let (multipart_res, _) = extract_ctx.finalize();
+        assert_eq!(multipart_res, oneshot_res);
+
+        num_concatted += 1;
+    }
 }
 
 /// Define test
@@ -401,3 +425,24 @@ new_test!(wycheproof_sha1, "wycheproof-sha1", Hkdf::<Sha1>);
 new_test!(wycheproof_sha256, "wycheproof-sha256", Hkdf::<Sha256>);
 new_test!(wycheproof_sha384, "wycheproof-sha384", Hkdf::<Sha384>);
 new_test!(wycheproof_sha512, "wycheproof-sha512", Hkdf::<Sha512>);
+
+new_test!(
+    wycheproof_sha1_simple,
+    "wycheproof-sha1",
+    SimpleHkdf::<Sha1>
+);
+new_test!(
+    wycheproof_sha256_simple,
+    "wycheproof-sha256",
+    SimpleHkdf::<Sha256>
+);
+new_test!(
+    wycheproof_sha384_simple,
+    "wycheproof-sha384",
+    SimpleHkdf::<Sha384>
+);
+new_test!(
+    wycheproof_sha512_simple,
+    "wycheproof-sha512",
+    SimpleHkdf::<Sha512>
+);
