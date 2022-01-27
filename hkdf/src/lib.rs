@@ -104,7 +104,7 @@ use hmac::{Hmac, SimpleHmac};
 mod errors;
 mod sealed;
 
-use errors::{InvalidLength, InvalidPrkLength};
+pub use errors::{InvalidLength, InvalidPrkLength};
 
 /// [`HkdfExtract`] variant which uses [`SimpleHmac`] for underlying HMAC
 /// implementation.
