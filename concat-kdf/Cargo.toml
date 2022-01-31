@@ -1,0 +1,19 @@
+[package]
+name = "concat-kdf"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+digest = "0.10.1"
+
+[dev-dependencies]
+hex-literal = "0.3.4"
+sha2 = "0.10.1"
+criterion = "0.3.5"
+
+[features]
+std = []
+
+[[bench]]
+name = "benchmark"
+harness = false
