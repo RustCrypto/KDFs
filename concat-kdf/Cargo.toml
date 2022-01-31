@@ -1,0 +1,31 @@
+[package]
+name = "concat-kdf"
+version = "0.1.0"
+authors = ["Ruslan Piasetskyi <ruslan.piasetskyi@gmail.com>"]
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/RustCrypto/KDFs/"
+repository = "https://github.com/RustCrypto/KDFs/"
+description = "Concatenation Key Derivation Function (Concat KDF)"
+keywords = ["crypto", "concat-kdf", "KDF", "NIST"]
+categories = ["cryptography", "no-std"]
+readme = "README.md"
+edition = "2018"
+
+[dependencies]
+digest = "0.10.1"
+
+[dev-dependencies]
+hex-literal = "0.3.4"
+sha2 = { version = "0.10.1", default-features = false }
+criterion = "0.3.5"
+
+[features]
+std = []
+
+[[bench]]
+name = "benchmark"
+harness = false
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

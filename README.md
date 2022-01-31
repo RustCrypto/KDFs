@@ -41,6 +41,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 [//]: # (crates)
 
 [`hkdf`]: ./hkdf
+[`concat-kdf`]: ./concat-kdf
 
 [//]: # (algorithms)
 
