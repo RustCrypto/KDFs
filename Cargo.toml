@@ -2,3 +2,6 @@
 members = [
     "hkdf",
 ]
+
+[profile.dev]
+opt-level = 2
