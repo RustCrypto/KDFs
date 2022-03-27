@@ -1,16 +1,16 @@
-name: hkdf
+name: concat-kdf
 
 on:
   pull_request:
     paths:
-      - "hkdf/**"
+      - "concat-kdf/**"
       - "Cargo.*"
   push:
     branches: master
 
 defaults:
   run:
-    working-directory: hkdf
+    working-directory: concat-kdf
 
 env:
   CARGO_INCREMENTAL: 0
@@ -28,8 +28,7 @@ jobs:
           - thumbv7em-none-eabi
           - wasm32-unknown-unknown
     steps:
-      - uses: actions/checkout@v2
-      - uses: RustCrypto/actions/cargo-cache@master
+      - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -37,11 +36,6 @@ jobs:
           target: ${{ matrix.target }}
           override: true
       - run: cargo build --no-default-features --target ${{ matrix.target }}
-
-  minimal-versions:
-    uses: RustCrypto/actions/.github/workflows/minimal-versions.yml@master
-    with:
-        working-directory: ${{ github.workflow }}
 
   test:
     runs-on: ubuntu-latest
@@ -51,8 +45,7 @@ jobs:
           - 1.58.1 # MSRV
           - stable
     steps:
-      - uses: actions/checkout@v2
-      - uses: RustCrypto/actions/cargo-cache@master
+      - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal

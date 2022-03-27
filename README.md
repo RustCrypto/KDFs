@@ -8,7 +8,7 @@ Collection of [Key Derivation Functions][KDF] (KDF) written in pure Rust.
 
 | Algorithm | Crate  | Crates.io     | Documentation | MSRV |
 |-----------|--------|:-------------:|:-------------:|:----:|
-| [HKDF]    | [`hkdf`] | [![crates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf) | [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf) | ![MSRV 1.41][msrv-1.41] |
+| [HKDF]    | [`hkdf`] | [![crates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf) | [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf) | ![MSRV 1.58.1][msrv-1.58.1] |
 
 *NOTE: for password-based KDFs (e.g. Argon2, PBKDF2, scrypt), please see [RustCrypto/password-hashes]*
 
@@ -36,11 +36,12 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
 [deps-image]: https://deps.rs/repo/github/RustCrypto/KDFs/status.svg
 [deps-link]: https://deps.rs/repo/github/RustCrypto/KDFs
-[msrv-1.41]: https://img.shields.io/badge/rustc-1.41.0+-blue.svg
+[msrv-1.58.1]: https://img.shields.io/badge/rustc-1.58.1+-blue.svg
 
 [//]: # (crates)
 
 [`hkdf`]: ./hkdf
+[`concat-kdf`]: ./concat-kdf
 
 [//]: # (algorithms)
 

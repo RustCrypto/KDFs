@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "hkdf",
+    "concat-kdf",
 ]
 
 [profile.dev]
