@@ -287,7 +287,7 @@ name = "hkdf"
 version = "0.12.3"
 dependencies = [
  "blobby",
- "hex-literal 0.2.1",
+ "hex-literal 0.2.2",
  "hmac",
  "sha-1",
  "sha2",

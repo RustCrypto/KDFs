@@ -26,7 +26,7 @@ concat_kdf::derive_key_into::<sha2::Sha256>(b"shared-secret", b"other-info", &mu
 [docs-image]: https://docs.rs/concat-kdf/badge.svg
 [docs-link]: https://docs.rs/concat-kdf/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.58.1+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.56+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs
 [build-image]: https://github.com/RustCrypto/KDFs/workflows/concat-kdf/badge.svg?branch=master&event=push
