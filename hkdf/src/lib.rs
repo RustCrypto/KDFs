@@ -7,8 +7,11 @@
 //! into some Output Key Material (OKM) bound to an "info" context string.
 //!
 //! There are two usage options for the salt:
+//!
 //! - [`None`] or static for domain separation in a private setting
 //! -  guaranteed to be uniformly-distributed and unique in a public setting
+//!
+//! Other non fitting data should be added to the `IKM` or `info`.
 //!
 //! ```rust
 //! use sha2::Sha256;
