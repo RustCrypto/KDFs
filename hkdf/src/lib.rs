@@ -6,6 +6,13 @@
 //! Material (IKM) and an optional salt, then you expand it (perhaps multiple times)
 //! into some Output Key Material (OKM) bound to an "info" context string.
 //!
+//! There are two usage options for the salt:
+//!
+//! - [`None`] or static for domain separation in a private setting
+//! -  guaranteed to be uniformly-distributed and unique in a public setting
+//!
+//! Other non fitting data should be added to the `IKM` or `info`.
+//!
 //! ```rust
 //! use sha2::Sha256;
 //! use hkdf::Hkdf;
@@ -177,6 +184,8 @@ where
 }
 
 /// Structure representing the HKDF, capable of HKDF-Expand and HKDF-Extract operations.
+/// Recommendations for the correct usage of the parameters can be found in the
+/// [crate root](index.html#usage).
 #[derive(Clone)]
 pub struct Hkdf<H: OutputSizeUser, I: HmacImpl<H> = Hmac<H>> {
     hmac: I::Core,
