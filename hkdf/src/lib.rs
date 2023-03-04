@@ -6,6 +6,10 @@
 //! Material (IKM) and an optional salt, then you expand it (perhaps multiple times)
 //! into some Output Key Material (OKM) bound to an "info" context string.
 //!
+//! There are two usage options for the salt:
+//! - [`None`] or static for domain separation in a private setting
+//! -  guaranteed to be uniformly-distributed and unique in a public setting
+//!
 //! ```rust
 //! use sha2::Sha256;
 //! use hkdf::Hkdf;
