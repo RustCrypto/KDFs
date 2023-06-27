@@ -1,9 +1,77 @@
 use core::iter;
 
 use hex_literal::hex;
+use hkdf::HmacImpl;
 use hkdf::{Hkdf, HkdfExtract, SimpleHkdf, SimpleHkdfExtract};
+use hmac::digest::KeyInit;
+use hmac::Hmac;
 use sha1::Sha1;
+use sha2::digest::{Digest, FixedOutput, Output};
 use sha2::{Sha256, Sha384, Sha512};
+use std::convert::TryInto;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+// Those functions are provided by hardware. We implement them for testing purposes only.
+fn hw_hash(input: &[u8], output: &mut [u8; 32]) {
+    output.copy_from_slice(&Sha256::digest(input));
+}
+fn hw_init(key: &[u8]) -> Result<(), ()> {
+    let ctxt = unsafe { &mut HW_CTXT };
+    *ctxt = Some(<Hmac<_> as KeyInit>::new_from_slice(key).map_err(|_| ())?);
+    Ok(())
+}
+fn hw_update(data: &[u8]) -> Result<(), ()> {
+    let ctxt = unsafe { &mut HW_CTXT }.as_mut().ok_or(())?;
+    ctxt.update(data);
+    Ok(())
+}
+fn hw_finalize(output: &mut [u8; 32]) -> Result<(), ()> {
+    let ctxt = unsafe { &mut HW_CTXT }.take().ok_or(())?;
+    ctxt.finalize_into(output.into());
+    Ok(())
+}
+// The hmac context is stored in hardware (unique and global). We need to run the tests with a
+// single thread because of that: `cargo test -- --test-threads=1`.
+static mut HW_CTXT: Option<Hmac<Sha256>> = None;
+
+// How the user would implement HmacImpl on top of hardware to be used in HKDF.
+struct HmacContext; // should not be publicly constructible
+static HMAC_INITIALIZED: AtomicBool = AtomicBool::new(false);
+impl HmacImpl<Sha256> for HmacContext {
+    type Core = [u8; 64];
+
+    fn new_from_slice(key: &[u8]) -> Self {
+        Self::from_core(&Self::new_core(key))
+    }
+
+    fn new_core(key: &[u8]) -> Self::Core {
+        let mut core = [0; 64];
+        if key.len() <= 64 {
+            core[..key.len()].copy_from_slice(key);
+        } else {
+            hw_hash(key, (&mut core[..32]).try_into().unwrap());
+        }
+        core
+    }
+
+    fn from_core(core: &Self::Core) -> Self {
+        assert!(!HMAC_INITIALIZED.swap(true, Ordering::SeqCst));
+        hw_init(core).unwrap(); // RustCrypto API does not support errors.
+        HmacContext
+    }
+
+    fn update(&mut self, data: &[u8]) {
+        assert!(HMAC_INITIALIZED.load(Ordering::SeqCst));
+        hw_update(data).unwrap(); // RustCrypto API does not support errors.
+    }
+
+    fn finalize(self) -> Output<Sha256> {
+        assert!(HMAC_INITIALIZED.swap(false, Ordering::SeqCst));
+        let mut output = [0; 32];
+        hw_finalize(&mut output).unwrap(); // RustCrypto API does not support errors.
+        output.into()
+    }
+}
 
 struct Test<'a> {
     ikm: &'a [u8],
@@ -91,7 +159,7 @@ fn test_rfc5869_sha256() {
         } else {
             Some(&salt[..])
         };
-        let (prk2, hkdf) = Hkdf::<Sha256>::extract(salt, ikm);
+        let (prk2, hkdf) = Hkdf::<Sha256, HmacContext>::extract(salt, ikm);
         let mut okm2 = vec![0u8; okm.len()];
         assert!(hkdf.expand(&info[..], &mut okm2).is_ok());
 
@@ -99,7 +167,7 @@ fn test_rfc5869_sha256() {
         assert_eq!(okm2[..], okm[..]);
 
         okm2.iter_mut().for_each(|b| *b = 0);
-        let hkdf = Hkdf::<Sha256>::from_prk(prk).unwrap();
+        let hkdf = Hkdf::<Sha256, HmacContext>::from_prk(prk).unwrap();
         assert!(hkdf.expand(&info[..], &mut okm2).is_ok());
         assert_eq!(okm2[..], okm[..]);
     }
@@ -203,7 +271,7 @@ const MAX_SHA256_LENGTH: usize = 255 * (256 / 8); // =8160
 
 #[test]
 fn test_lengths() {
-    let hkdf = Hkdf::<Sha256>::new(None, &[]);
+    let hkdf = Hkdf::<Sha256, HmacContext>::new(None, &[]);
     let mut longest = vec![0u8; MAX_SHA256_LENGTH];
     assert!(hkdf.expand(&[], &mut longest).is_ok());
     // Runtime is O(length), so exhaustively testing all legal lengths
@@ -222,21 +290,21 @@ fn test_lengths() {
 
 #[test]
 fn test_max_length() {
-    let hkdf = Hkdf::<Sha256>::new(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256, HmacContext>::new(Some(&[]), &[]);
     let mut okm = vec![0u8; MAX_SHA256_LENGTH];
     assert!(hkdf.expand(&[], &mut okm).is_ok());
 }
 
 #[test]
 fn test_max_length_exceeded() {
-    let hkdf = Hkdf::<Sha256>::new(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256, HmacContext>::new(Some(&[]), &[]);
     let mut okm = vec![0u8; MAX_SHA256_LENGTH + 1];
     assert!(hkdf.expand(&[], &mut okm).is_err());
 }
 
 #[test]
 fn test_unsupported_length() {
-    let hkdf = Hkdf::<Sha256>::new(Some(&[]), &[]);
+    let hkdf = Hkdf::<Sha256, HmacContext>::new(Some(&[]), &[]);
     let mut okm = vec![0u8; 90000];
     assert!(hkdf.expand(&[], &mut okm).is_err());
 }
@@ -247,7 +315,7 @@ fn test_prk_too_short() {
 
     let output_len = Sha256::output_size();
     let prk = vec![0; output_len - 1];
-    assert!(Hkdf::<Sha256>::from_prk(&prk).is_err());
+    assert!(Hkdf::<Sha256, HmacContext>::from_prk(&prk).is_err());
 }
 
 #[test]
@@ -284,7 +352,7 @@ fn test_expand_multi_info() {
         &b"1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d1d"[..],
     ];
 
-    let (_, hkdf_ctx) = Hkdf::<Sha256>::extract(None, b"some ikm here");
+    let (_, hkdf_ctx) = Hkdf::<Sha256, HmacContext>::extract(None, b"some ikm here");
 
     // Compute HKDF-Expand on the concatenation of all the info components
     let mut oneshot_res = [0u8; 16];
@@ -328,7 +396,8 @@ fn test_extract_streaming() {
     let salt = b"mysalt";
 
     // Compute HKDF-Extract on the concatenation of all the IKM components
-    let (oneshot_res, _) = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm_components.concat());
+    let (oneshot_res, _) =
+        Hkdf::<Sha256, HmacContext>::extract(Some(&salt[..]), &ikm_components.concat());
 
     // Now iteratively join the components of ikm_components until it's all 1 component. The value
     // of HKDF-Extract should be the same throughout
@@ -340,7 +409,7 @@ fn test_extract_streaming() {
 
         // Make a new extraction context and build the new input to be the IKM head followed by the
         // remaining components
-        let mut extract_ctx = HkdfExtract::<Sha256>::new(Some(&salt[..]));
+        let mut extract_ctx = HkdfExtract::<Sha256, HmacContext>::new(Some(&salt[..]));
         let input = iter::once(ikm_head.as_slice())
             .chain(ikm_components.iter().cloned().skip(num_concatted + 1));
 
@@ -422,7 +491,11 @@ macro_rules! new_test {
 }
 
 new_test!(wycheproof_sha1, "wycheproof-sha1", Hkdf::<Sha1>);
-new_test!(wycheproof_sha256, "wycheproof-sha256", Hkdf::<Sha256>);
+new_test!(
+    wycheproof_sha256,
+    "wycheproof-sha256",
+    Hkdf::<Sha256, HmacContext>
+);
 new_test!(wycheproof_sha384, "wycheproof-sha384", Hkdf::<Sha384>);
 new_test!(wycheproof_sha512, "wycheproof-sha512", Hkdf::<Sha512>);
 
