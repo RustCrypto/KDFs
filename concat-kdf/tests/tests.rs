@@ -191,10 +191,19 @@ fn test_errors() {
     );
 
     // key has a length that causes counter overflow.
-    assert_eq!(
-        concat_kdf::derive_key_into::<Sha224>(&[0u8; 42], &[], unsafe {
-            std::slice::from_raw_parts_mut(0 as *mut u8, Sha224::output_size() * u32::MAX as usize)
-        }),
-        Err(concat_kdf::Error::CounterOverflow)
-    );
+    #[cfg(target_pointer_width = "64")]
+    {
+        let size = Sha224::output_size() * u32::MAX as usize;
+        let layout = std::alloc::Layout::from_size_align(size, 1).unwrap();
+        unsafe {
+            // We assume that OS will not allocate physicall memory for this buffer
+            let p = std::alloc::alloc_zeroed(layout);
+            let buf = std::slice::from_raw_parts_mut(p, size);
+            assert_eq!(
+                concat_kdf::derive_key_into::<Sha224>(&[0u8; 42], &[], buf),
+                Err(concat_kdf::Error::CounterOverflow)
+            );
+            std::alloc::dealloc(p, layout)
+        };
+    }
 }
