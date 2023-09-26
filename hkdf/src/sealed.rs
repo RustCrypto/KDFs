@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use hmac::digest::{
     block_buffer::Eager,
     core_api::{
@@ -9,7 +11,7 @@ use hmac::digest::{
 };
 use hmac::{Hmac, HmacCore, SimpleHmac};
 
-pub trait Sealed<H: OutputSizeUser> {
+pub trait HmacImpl<H: OutputSizeUser> {
     type Core: Clone;
 
     fn new_from_slice(key: &[u8]) -> Self;
@@ -23,7 +25,7 @@ pub trait Sealed<H: OutputSizeUser> {
     fn finalize(self) -> Output<H>;
 }
 
-impl<H> Sealed<H> for Hmac<H>
+impl<H> HmacImpl<H> for Hmac<H>
 where
     H: CoreProxy + OutputSizeUser,
     H::Core: HashMarker
@@ -65,7 +67,7 @@ where
     }
 }
 
-impl<H: Digest + BlockSizeUser + Clone> Sealed<H> for SimpleHmac<H> {
+impl<H: Digest + BlockSizeUser + Clone> HmacImpl<H> for SimpleHmac<H> {
     type Core = Self;
 
     #[inline(always)]

@@ -100,6 +100,7 @@
 extern crate std;
 
 pub use hmac;
+pub use sealed::HmacImpl;
 
 use core::fmt;
 use core::marker::PhantomData;
@@ -282,8 +283,3 @@ where
         f.write_str("> { ... }")
     }
 }
-
-/// Sealed trait implemented for [`Hmac`] and [`SimpleHmac`].
-pub trait HmacImpl<H: OutputSizeUser>: sealed::Sealed<H> {}
-
-impl<H: OutputSizeUser, T: sealed::Sealed<H>> HmacImpl<H> for T {}
