@@ -1,0 +1,29 @@
+[package]
+name = "kbkdf"
+version = "0.1.0"
+edition = "2018"
+authors = ["RustCrypto Developers"]
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/RustCrypto/KDFs/"
+repository = "https://github.com/RustCrypto/KDFs/"
+description = "HMAC-based Extract-and-Expand Key Derivation Function (HKDF)"
+keywords = ["crypto", "HKDF", "KDF"]
+categories = ["cryptography", "no-std"]
+readme = "README.md"
+
+[dependencies]
+digest = "0.10"
+hmac = "0.12.1"
+# divrem can be dropped with MSRV >= 1.73
+divrem = "1.0.0"
+
+[dev-dependencies]
+hex-literal = "0.2.2"
+sha2 = "0.10"
+
+[features]
+std = ["hmac/std"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

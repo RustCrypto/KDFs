@@ -5,6 +5,7 @@ members = [
     "hkdf",
     "concat-kdf",
     "ansi-x963-kdf",
+    "kbkdf",
 ]
 
 [profile.dev]
