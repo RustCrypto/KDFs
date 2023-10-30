@@ -93,7 +93,8 @@ where
     /// Derives `key` from `kin` and other parameters.
     fn derive(
         &self,
-        kin: &GenericArray<u8, Prf::KeySize>,
+        //kin: &GenericArray<u8, Prf::KeySize>,
+        kin: &[u8],
         use_l: bool,
         use_separator: bool,
         label: &[u8],
@@ -116,9 +117,24 @@ where
 
         let mut ki = None;
         self.input_iv(&mut ki);
+        let mut a = {
+            let mut h = <Prf as Mac>::new_from_slice(kin).unwrap();
+            h.update(label);
+            h.update(&[0]);
+            h.update(context);
+            h.finalize().into_bytes()
+        };
 
         for counter in 1..=n {
-            let mut h = <Prf as Mac>::new(kin);
+            if counter > 1 {
+                a = {
+                    let mut h = <Prf as Mac>::new_from_slice(kin).unwrap();
+                    h.update(a.as_slice());
+                    h.finalize().into_bytes()
+                };
+            }
+
+            let mut h = <Prf as Mac>::new_from_slice(kin).unwrap();
 
             if Self::FEEDBACK_KI {
                 if let Some(ki) = ki {
@@ -126,13 +142,17 @@ where
                 }
             }
 
-            // counter encoded as big endian u32
-            // Type parameter R encodes how large the value is to be (either U8, U16, U24, or U32)
-            //
-            // counter = 1u32 ([0, 0, 0, 1])
-            //                     \-------/
-            //                      R = u24
-            h.update(&counter.to_be_bytes()[(4 - R::USIZE / 8)..]);
+            if Self::DOUBLE_PIPELINE {
+                h.update(a.as_slice());
+            } else {
+                // counter encoded as big endian u32
+                // Type parameter R encodes how large the value is to be (either U8, U16, U24, or U32)
+                //
+                // counter = 1u32 ([0, 0, 0, 1])
+                //                     \-------/
+                //                      R = u24
+                h.update(&counter.to_be_bytes()[(4 - R::USIZE / 8)..]);
+            }
 
             // Fixed input data
             h.update(label);
@@ -166,6 +186,8 @@ where
 
     /// Whether the KI should be reinjected every round.
     const FEEDBACK_KI: bool = false;
+
+    const DOUBLE_PIPELINE: bool = false;
 }
 
 pub struct Counter<Prf, K, R = U32> {
@@ -231,10 +253,41 @@ where
     const FEEDBACK_KI: bool = true;
 }
 
+pub struct DoublePipeline<Prf, K, R = U32>
+where
+    Prf: Mac,
+{
+    _marker: PhantomData<(Prf, K, R)>,
+}
+
+impl<Prf, K, R> Default for DoublePipeline<Prf, K, R>
+where
+    Prf: Mac,
+{
+    fn default() -> Self {
+        Self {
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<Prf, K, R> Kbkdf<Prf, K, R> for DoublePipeline<Prf, K, R>
+where
+    Prf: Mac + KeyInit,
+    K: KeySizeUser,
+    K::KeySize: ArrayLength<u8> + Mul<U8>,
+    <K::KeySize as Mul<U8>>::Output: Unsigned,
+    Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+    <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
+    R: sealed::R,
+{
+    const DOUBLE_PIPELINE: bool = true;
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Counter, Feedback, GenericArray, Kbkdf};
-    use digest::consts::*;
+    use super::{Counter, DoublePipeline, Feedback, GenericArray, Kbkdf};
+    use digest::{consts::*, crypto_common::KeySizeUser};
     use hex_literal::hex;
 
     #[derive(Debug)]
@@ -293,6 +346,44 @@ mod tests {
         },
     ];
 
+    #[test]
+    fn test_static_values_counter() {
+        type HmacSha256 = hmac::Hmac<sha2::Sha256>;
+        type HmacSha512 = hmac::Hmac<sha2::Sha512>;
+
+        let counter = Counter::<HmacSha256, HmacSha512>::default();
+        for (v, i) in KNOWN_VALUES_COUNTER_HMAC_SHA256.iter().zip(0..) {
+            assert_eq!(
+                counter.derive(v.key, v.use_l, v.use_separator, v.label, v.context,),
+                Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
+                "key derivation failed for (index: {i}):\n{v:x?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_counter_kbkdfvs() {
+        type HmacSha256 = hmac::Hmac<sha2::Sha256>;
+        struct MockOutput;
+
+        impl KeySizeUser for MockOutput {
+            type KeySize = U32;
+        }
+
+        let counter = Counter::<HmacSha256, MockOutput>::default();
+        // KDFCTR_gen.txt count 15
+        assert_eq!(
+            counter.derive(
+                &hex!("43eef6d824fd820405626ab9b6d79f1fd04e126ab8e17729e3afc7cb5af794f8"),
+                false,
+                false,
+                &hex!("5e269b5a7bdedcc3e875e2725693a257fc60011af7dcd68a3358507fe29b0659ca66951daa05a15032033650bc58a27840f8fbe9f4088b9030738f68"),
+                &[],
+            ),
+            Ok(GenericArray::<_, _>::from_slice(&hex!("f0a339ecbcae6add1afb27da3ba40a1320c6427a58afb9dc366b219b7eb29ecf")).clone()),
+        );
+    }
+
     static KNOWN_VALUES_FEEDBACK_HMAC_SHA256: &[KnownValue] = &[
         KnownValue {
             iv: Some(b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
@@ -339,27 +430,6 @@ mod tests {
     ];
 
     #[test]
-    fn test_static_values_counter() {
-        type HmacSha256 = hmac::Hmac<sha2::Sha256>;
-        type HmacSha512 = hmac::Hmac<sha2::Sha512>;
-
-        let counter = Counter::<HmacSha256, HmacSha512>::default();
-        for (v, i) in KNOWN_VALUES_COUNTER_HMAC_SHA256.iter().zip(0..) {
-            assert_eq!(
-                counter.derive(
-                    GenericArray::from_slice(v.key),
-                    v.use_l,
-                    v.use_separator,
-                    v.label,
-                    v.context,
-                ),
-                Ok(GenericArray::<_, U128>::from_slice(v.expected).clone()),
-                "key derivation failed for (index: {i}):\n{v:x?}"
-            );
-        }
-    }
-
-    #[test]
     fn test_static_values_feedback() {
         type HmacSha256 = hmac::Hmac<sha2::Sha256>;
         type HmacSha512 = hmac::Hmac<sha2::Sha512>;
@@ -368,14 +438,43 @@ mod tests {
             let feedback =
                 Feedback::<HmacSha256, HmacSha512>::new(v.iv.map(GenericArray::from_slice));
             assert_eq!(
-                feedback.derive(
-                    GenericArray::from_slice(v.key),
-                    v.use_l,
-                    v.use_separator,
-                    v.label,
-                    v.context,
-                ),
-                Ok(GenericArray::<_, U128>::from_slice(v.expected).clone()),
+                feedback.derive(v.key, v.use_l, v.use_separator, v.label, v.context,),
+                Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
+                "key derivation failed for (index: {i}):\n{v:x?}"
+            );
+        }
+    }
+
+    static KNOWN_VALUES_DOUBLE_PIPELINE_HMAC_SHA256: &[KnownValue] = &[KnownValue {
+        iv: None,
+        use_l: false, //true,
+        use_separator: true,
+        label: &hex!("921ab061920b191de12f746ac9de08"),
+        context: &hex!("4f2c20f01775e27bcacdc21ee4a5ff0387758f36d8ec71c7a8c8208284f650b611837e"),
+        key: &hex!("7d4f86fdfd1c4ba04c674a68d60316d12c99c1b1f44f0a8e02bd2601377ebcd9"),
+        expected: &hex!(
+            "
+                506bc2ba51410b2a6e7c05d33891520d dd5f702ad3d6203d76d8dae1216d0783
+                d8c59fae2e821d8eff2d8ddd93a6741c 8f144fb96e9ca7d7c532468f213f5efe
+            "
+        ),
+    }];
+
+    #[test]
+    fn test_static_values_double_pipeline() {
+        type HmacSha256 = hmac::Hmac<sha2::Sha256>;
+
+        struct MockOutput;
+
+        impl KeySizeUser for MockOutput {
+            type KeySize = U64;
+        }
+
+        for (v, i) in KNOWN_VALUES_DOUBLE_PIPELINE_HMAC_SHA256.iter().zip(0..) {
+            let dbl_pipeline = DoublePipeline::<HmacSha256, MockOutput>::default();
+            assert_eq!(
+                dbl_pipeline.derive(v.key, v.use_l, v.use_separator, v.label, v.context,),
+                Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
                 "key derivation failed for (index: {i}):\n{v:x?}"
             );
         }
