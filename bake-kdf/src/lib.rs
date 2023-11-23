@@ -3,8 +3,8 @@
 //! # Usage
 //! ```rust
 //! use bake_kdf::bake_kdf;
-//! let x = vec![0x00; 32];
-//! let s = vec![0x00; 8];
+//! let x = [0x00; 32];
+//! let s = [0x00; 8];
 //! let c = 0x00;
 //! let key = bake_kdf(&x, &s, c).unwrap();
 //! ```
