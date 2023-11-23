@@ -28,10 +28,11 @@ fn test_keyexpand() {
 
 #[test]
 fn test_keyrep() {
-    let mut x: [u32; 8] = [
-        0xE9DEE72C, 0x8F0C0FA6, 0x2DDB49F4, 0x6F739647, 0x06075316, 0xED247A37, 0x39CBA383,
-        0x03A98BF6,
-    ];
+    let mut x: [u32; 8] =
+        [
+            0xE9DEE72C, 0x8F0C0FA6, 0x2DDB49F4, 0x6F739647, 0x06075316, 0xED247A37, 0x39CBA383,
+            0x03A98BF6,
+        ];
     let d: [u32; 3] = [0x01000000, 0x00000000, 0x00000000];
     let i: [u32; 4] = [0x5BE3D612, 0x17B96181, 0xFE6786AD, 0x716B890B];
 
@@ -39,7 +40,6 @@ fn test_keyrep() {
     x.iter_mut().for_each(|x| *x = u32::to_be(*x));
     #[cfg(target_endian = "big")]
     x.iter_mut().for_each(|x| *x = u32::to_le(*x));
-
 
     let out: &mut [u32] = &mut [0; 4];
     belt_keyrep::<128>(&x, &d, &i, out).unwrap();
