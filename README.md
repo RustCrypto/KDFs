@@ -8,8 +8,9 @@ Collection of [Key Derivation Functions][KDF] (KDF) written in pure Rust.
 
 | Algorithm    | Crate          |                                              Crates.io                                              |                                    Documentation                                     |          MSRV           |
 |--------------|----------------|:---------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:-----------------------:|
-| [HKDF]       | [`hkdf`]       |       [![crates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf)       |       [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf)       | ![MSRV 1.41][msrv-1.72] |
-| [Concat-KDF] | [`concat-kdf`] | [![crates.io](https://img.shields.io/crates/v/concat-kdf.svg)](https://crates.io/crates/concat-kdf) | [![Documentation](https://docs.rs/concat-kdf/badge.svg)](https://docs.rs/concat-kdf) | ![MSRV 1.56][msrv-1.72] |
+| [HKDF]       | [`hkdf`]       |       [![crates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf)       |       [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf)       | ![MSRV 1.41][msrv-1.41] |
+| [Concat-KDF] | [`concat-kdf`] | [![crates.io](https://img.shields.io/crates/v/concat-kdf.svg)](https://crates.io/crates/concat-kdf) | [![Documentation](https://docs.rs/concat-kdf/badge.svg)](https://docs.rs/concat-kdf) | ![MSRV 1.56][msrv-1.56] |
+| [bake-kdf]   | [`bake-kdf`]   |   [![crates.io](https://img.shields.io/crates/v/bake-kdf.svg)](https://crates.io/crates/bake-kdf)   |   [![Documentation](https://docs.rs/bake-kdf/badge.svg)](https://docs.rs/bake-kdf)   | ![MSRV 1.57][msrv-1.57] |
 
 *NOTE: for password-based KDFs (e.g. Argon2, PBKDF2, scrypt), please see [RustCrypto/password-hashes]*
 
@@ -43,10 +44,13 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 [`hkdf`]: ./hkdf
 [`concat-kdf`]: ./concat-kdf
+[`bake-kdf`]: ./bake-kdf
 
 [//]: # (algorithms)
 
 [KDF]: https://en.wikipedia.org/wiki/Key_derivation_function
 [HKDF]: https://en.wikipedia.org/wiki/HKDF
 [Concat-KDF]: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-56ar.pdf
+[bake-kdf]: https://apmi.bsu.by/assets/files/std/bake-spec19.pdf
+
 [RustCrypto/password-hashes]: https://github.com/RustCrypto/password-hashes
