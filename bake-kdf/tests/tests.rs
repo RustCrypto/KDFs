@@ -36,10 +36,7 @@ fn test_keyrep() {
     let d: [u32; 3] = [0x01000000, 0x00000000, 0x00000000];
     let i: [u32; 4] = [0x5BE3D612, 0x17B96181, 0xFE6786AD, 0x716B890B];
 
-    #[cfg(target_endian = "little")]
-    x.iter_mut().for_each(|x| *x = u32::to_be(*x));
-    #[cfg(target_endian = "big")]
-    x.iter_mut().for_each(|x| *x = u32::to_le(*x));
+    x.iter_mut().for_each(|x| *x = u32::swap_bytes(*x));
 
     let out: &mut [u32] = &mut [0; 4];
     belt_keyrep::<128>(&x, &d, &i, out).unwrap();
