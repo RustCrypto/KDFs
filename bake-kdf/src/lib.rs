@@ -121,42 +121,25 @@ pub fn belt_keyrep<const M: usize>(
     let mut d = [d[0], d[1], d[2]];
     let mut i = [i[0], i[1], i[2], i[3]];
 
-    #[cfg(target_endian = "little")]
-    {
-        d.iter_mut().for_each(|x| *x = u32::to_be(*x));
-        i.iter_mut().for_each(|x| *x = u32::to_be(*x));
-    }
-    #[cfg(target_endian = "big")]
-    {
-        d.iter_mut().for_each(|x| *x = u32::to_le(*x));
-        i.iter_mut().for_each(|x| *x = u32::to_le(*x));
-    }
+    d.iter_mut().for_each(|x| *x = u32::swap_bytes(*x));
+    i.iter_mut().for_each(|x| *x = u32::swap_bytes(*x));
 
     let (_, s) = belt_compress([r, d[0], d[1], d[2]], i, s);
 
     match M {
         128 => {
             let mut y = [s[0], s[1], s[2], s[3]];
-            #[cfg(target_endian = "little")]
-            y.iter_mut().for_each(|x| *x = u32::to_be(*x));
-            #[cfg(target_endian = "big")]
-            y.iter_mut().for_each(|x| *x = u32::to_le(*x));
+            y.iter_mut().for_each(|x| *x = u32::swap_bytes(*x));
             out.copy_from_slice(&y);
         }
         192 => {
             let mut y = [s[0], s[1], s[2], s[3], s[4], s[5]];
-            #[cfg(target_endian = "little")]
-            y.iter_mut().for_each(|x| *x = u32::to_be(*x));
-            #[cfg(target_endian = "big")]
-            y.iter_mut().for_each(|x| *x = u32::to_le(*x));
+            y.iter_mut().for_each(|x| *x = u32::swap_bytes(*x));
             out.copy_from_slice(&y);
         }
         256 => {
             let mut y = [s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]];
-            #[cfg(target_endian = "little")]
-            y.iter_mut().for_each(|x| *x = u32::to_be(*x));
-            #[cfg(target_endian = "big")]
-            y.iter_mut().for_each(|x| *x = u32::to_le(*x));
+            y.iter_mut().for_each(|x| *x = u32::swap_bytes(*x));
             out.copy_from_slice(&y);
         }
         _ => unreachable!(),
@@ -178,7 +161,6 @@ pub fn bake_kdf(x: &[u8], s: &[u8], c: u128) -> Result<[u32; 8], Error> {
     c.reverse();
 
     let mut out = [0u32; 8];
-
     belt_keyrep::<256>(&to_u32::<8>(&y), &d, &c, &mut out)?;
     Ok(out)
 }
