@@ -89,8 +89,7 @@
 #![no_std]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
-    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
-    html_root_url = "https://docs.rs/hkdf/0.12.3"
+    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
@@ -173,12 +172,13 @@ where
 
 impl<H, I> fmt::Debug for HkdfExtract<H, I>
 where
-    H: OutputSizeUser + AlgorithmName,
+    H: OutputSizeUser,
     I: HmacImpl<H>,
+    I::Core: AlgorithmName,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("HkdfExtract<")?;
-        <H as AlgorithmName>::write_alg_name(f)?;
+        <I::Core as AlgorithmName>::write_alg_name(f)?;
         f.write_str("> { ... }")
     }
 }
@@ -273,12 +273,13 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
 
 impl<H, I> fmt::Debug for Hkdf<H, I>
 where
-    H: OutputSizeUser + AlgorithmName,
+    H: OutputSizeUser,
     I: HmacImpl<H>,
+    I::Core: AlgorithmName,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("Hkdf<")?;
-        <H as AlgorithmName>::write_alg_name(f)?;
+        <I::Core as AlgorithmName>::write_alg_name(f)?;
         f.write_str("> { ... }")
     }
 }

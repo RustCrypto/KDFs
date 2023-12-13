@@ -446,3 +446,10 @@ new_test!(
     "wycheproof-sha512",
     SimpleHkdf::<Sha512>
 );
+
+#[test]
+fn test_debug_impls() {
+    fn needs_debug<T: std::fmt::Debug>() {}
+    needs_debug::<Hkdf<Sha256>>();
+    needs_debug::<HkdfExtract<Sha256>>();
+}
