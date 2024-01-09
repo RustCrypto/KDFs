@@ -103,7 +103,7 @@ pub use hmac;
 use core::fmt;
 use core::marker::PhantomData;
 use hmac::digest::{
-    crypto_common::AlgorithmName, generic_array::typenum::Unsigned, Output, OutputSizeUser,
+    array::typenum::Unsigned, crypto_common::AlgorithmName, Output, OutputSizeUser,
 };
 use hmac::{Hmac, SimpleHmac};
 
