@@ -1,6 +1,6 @@
 [package]
 name = "hkdf"
-version = "0.13.0-pre"
+version = "0.13.0-pre.0"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/RustCrypto/KDFs/"
