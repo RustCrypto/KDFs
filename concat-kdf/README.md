@@ -21,12 +21,39 @@ let mut key = [0u8; 32];
 concat_kdf::derive_key_into::<sha2::Sha256>(b"shared-secret", b"other-info", &mut key).unwrap();
 ```
 
+## Minimum Supported Rust Version
+
+Rust **1.71** or higher.
+
+Minimum supported Rust version can be changed in the future, but it will be
+done with a minor version bump.
+
+## SemVer Policy
+
+- All on-by-default features of this library are covered by SemVer
+- MSRV is considered exempt from SemVer as noted above
+
+## License
+
+Licensed under either of:
+
+* [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+* [MIT license](http://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
 [crate-image]: https://img.shields.io/crates/v/concat-kdf.svg
 [crate-link]: https://crates.io/crates/concat-kdf
 [docs-image]: https://docs.rs/concat-kdf/badge.svg
 [docs-link]: https://docs.rs/concat-kdf/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.56+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.60+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs
 [build-image]: https://github.com/RustCrypto/KDFs/workflows/concat-kdf/badge.svg?branch=master&event=push

@@ -20,7 +20,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 use core::fmt;
-use digest::{generic_array::typenum::Unsigned, Digest, FixedOutputReset, Update};
+use digest::{array::typenum::Unsigned, Digest, FixedOutputReset, Update};
 
 #[cfg(feature = "std")]
 extern crate std;

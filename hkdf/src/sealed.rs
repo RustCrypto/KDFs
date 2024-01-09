@@ -1,13 +1,8 @@
 use hmac::digest::{
-    block_buffer::Eager,
-    core_api::{
-        BlockSizeUser, BufferKindUser, CoreProxy, CoreWrapper, FixedOutputCore, OutputSizeUser,
-        UpdateCore,
-    },
-    generic_array::typenum::{IsLess, Le, NonZero, U256},
-    Digest, FixedOutput, HashMarker, KeyInit, Output, Update,
+    core_api::{BlockSizeUser, CoreWrapper, OutputSizeUser},
+    Digest, FixedOutput, KeyInit, Output, Update,
 };
-use hmac::{Hmac, HmacCore, SimpleHmac};
+use hmac::{EagerHash, Hmac, HmacCore, SimpleHmac};
 
 pub trait Sealed<H: OutputSizeUser> {
     type Core: Clone;
@@ -25,15 +20,7 @@ pub trait Sealed<H: OutputSizeUser> {
 
 impl<H> Sealed<H> for Hmac<H>
 where
-    H: CoreProxy + OutputSizeUser,
-    H::Core: HashMarker
-        + UpdateCore
-        + FixedOutputCore
-        + BufferKindUser<BufferKind = Eager>
-        + Default
-        + Clone,
-    <H::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<H::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    H: EagerHash + OutputSizeUser,
 {
     type Core = HmacCore<H>;
 
