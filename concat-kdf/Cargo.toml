@@ -10,14 +10,14 @@ documentation = "https://docs.rs/concat-kdf"
 repository = "https://github.com/RustCrypto/KDFs"
 keywords = ["crypto", "concat-kdf", "KDF", "NIST"]
 categories = ["cryptography", "no-std"]
-rust-version = "1.71"
+rust-version = "1.72"
 
 [dependencies]
-digest = "=0.11.0-pre.4"
+digest = "=0.11.0-pre.7"
 
 [dev-dependencies]
 hex-literal = "0.4"
-sha2 = { version = "=0.11.0-pre.1", default-features = false }
+sha2 = { version = "=0.11.0-pre.2", default-features = false }
 
 [features]
 std = []
