@@ -1,6 +1,6 @@
 [package]
 name = "hkdf"
-version = "0.13.0-pre.2"
+version = "0.13.0-pre.3"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/RustCrypto/KDFs/"
@@ -13,13 +13,13 @@ edition = "2021"
 rust-version = "1.72"
 
 [dependencies]
-hmac = "=0.13.0-pre.2"
+hmac = "=0.13.0-pre.3"
 
 [dev-dependencies]
 blobby = "0.3"
 hex-literal = "0.4"
-sha1 = { version = "=0.11.0-pre.2", default-features = false }
-sha2 = { version = "=0.11.0-pre.2", default-features = false }
+sha1 = { version = "=0.11.0-pre.3", default-features = false }
+sha2 = { version = "=0.11.0-pre.3", default-features = false }
 
 [features]
 std = ["hmac/std"]
