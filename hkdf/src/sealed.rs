@@ -1,84 +1,61 @@
 use hmac::digest::{
-    core_api::{BlockSizeUser, CoreWrapper, OutputSizeUser},
-    Digest, FixedOutput, KeyInit, Output, Update,
+    block_buffer::{BufferKind, Eager, Lazy},
+    core_api::{BlockSizeUser, BufferKindUser, CoreWrapper, OutputSizeUser},
+    Digest, FixedOutput, KeyInit, Update,
 };
 use hmac::{EagerHash, Hmac, HmacCore, SimpleHmac};
 
-pub trait Sealed<H: OutputSizeUser> {
-    type Core: Clone;
+static EXPECT_MSG: &str = "HMAC can take a key of any size";
 
-    fn new_from_slice(key: &[u8]) -> Self;
+pub trait Sealed: OutputSizeUser + Sized {
+    type FullHmac: KeyInit + Update + FixedOutput;
+    type CoreHmac: KeyInit;
 
-    fn new_core(key: &[u8]) -> Self::Core;
+    fn core_to_full(core: &Self::CoreHmac) -> Self::FullHmac;
 
-    fn from_core(core: &Self::Core) -> Self;
+    fn new_core(key: &[u8]) -> Self::CoreHmac {
+        Self::CoreHmac::new_from_slice(key).expect(EXPECT_MSG)
+    }
 
-    fn update(&mut self, data: &[u8]);
-
-    fn finalize(self) -> Output<H>;
+    fn new_full(key: &[u8]) -> Self::FullHmac {
+        Self::FullHmac::new_from_slice(key).expect(EXPECT_MSG)
+    }
 }
 
-impl<H> Sealed<H> for Hmac<H>
+impl<C, K> Sealed for CoreWrapper<C>
 where
-    H: EagerHash + OutputSizeUser,
+    K: HmacKind<Self> + BufferKind,
+    C: BufferKindUser<BufferKind = K> + OutputSizeUser,
 {
-    type Core = HmacCore<H>;
+    type FullHmac = K::FullHmac;
+    type CoreHmac = K::CoreHmac;
 
-    #[inline(always)]
-    fn new_from_slice(key: &[u8]) -> Self {
-        KeyInit::new_from_slice(key).expect("HMAC can take a key of any size")
+    fn core_to_full(core: &Self::CoreHmac) -> Self::FullHmac {
+        K::core_to_full(core)
     }
+}
 
-    #[inline(always)]
-    fn new_core(key: &[u8]) -> Self::Core {
-        HmacCore::new_from_slice(key).expect("HMAC can take a key of any size")
-    }
+pub trait HmacKind<H> {
+    type FullHmac: OutputSizeUser + KeyInit + Update + FixedOutput;
+    type CoreHmac: KeyInit;
 
-    #[inline(always)]
-    fn from_core(core: &Self::Core) -> Self {
+    fn core_to_full(core: &Self::CoreHmac) -> Self::FullHmac;
+}
+
+impl<H: EagerHash> HmacKind<H> for Eager {
+    type FullHmac = Hmac<H>;
+    type CoreHmac = HmacCore<H>;
+
+    fn core_to_full(core: &Self::CoreHmac) -> Self::FullHmac {
         CoreWrapper::from_core(core.clone())
     }
-
-    #[inline(always)]
-    fn update(&mut self, data: &[u8]) {
-        Update::update(self, data);
-    }
-
-    #[inline(always)]
-    fn finalize(self) -> Output<H> {
-        // Output<H> and Output<H::Core> are always equal to each other,
-        // but we can not prove it at type level
-        Output::<H>::clone_from_slice(&self.finalize_fixed())
-    }
 }
 
-impl<H: Digest + BlockSizeUser + Clone> Sealed<H> for SimpleHmac<H> {
-    type Core = Self;
+impl<H: Digest + Clone + BlockSizeUser> HmacKind<H> for Lazy {
+    type FullHmac = SimpleHmac<H>;
+    type CoreHmac = SimpleHmac<H>;
 
-    #[inline(always)]
-    fn new_from_slice(key: &[u8]) -> Self {
-        KeyInit::new_from_slice(key).expect("HMAC can take a key of any size")
-    }
-
-    #[inline(always)]
-    fn new_core(key: &[u8]) -> Self::Core {
-        KeyInit::new_from_slice(key).expect("HMAC can take a key of any size")
-    }
-
-    #[inline(always)]
-    fn from_core(core: &Self::Core) -> Self {
+    fn core_to_full(core: &Self::CoreHmac) -> Self::FullHmac {
         core.clone()
-    }
-
-    #[inline(always)]
-    fn update(&mut self, data: &[u8]) {
-        Update::update(self, data);
-    }
-
-    #[inline(always)]
-    fn finalize(self) -> Output<H> {
-        // Output<H> and Output<H::Core> are always equal to each other,
-        // but we can not prove it at type level
-        Output::<H>::clone_from_slice(&self.finalize_fixed())
     }
 }

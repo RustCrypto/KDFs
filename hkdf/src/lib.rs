@@ -100,24 +100,13 @@ extern crate std;
 
 pub use hmac;
 
-use core::fmt;
 use core::marker::PhantomData;
-use hmac::digest::{
-    array::typenum::Unsigned, crypto_common::AlgorithmName, Output, OutputSizeUser,
-};
-use hmac::{Hmac, SimpleHmac};
+use hmac::digest::{array::typenum::Unsigned, FixedOutput, Output, OutputSizeUser, Update};
 
 mod errors;
 mod sealed;
 
 pub use errors::{InvalidLength, InvalidPrkLength};
-
-/// [`HkdfExtract`] variant which uses [`SimpleHmac`] for underlying HMAC
-/// implementation.
-pub type SimpleHkdfExtract<H> = HkdfExtract<H, SimpleHmac<H>>;
-/// [`Hkdf`] variant which uses [`SimpleHmac`] for underlying HMAC
-/// implementation.
-pub type SimpleHkdf<H> = Hkdf<H, SimpleHmac<H>>;
 
 /// Structure representing the streaming context of an HKDF-Extract operation
 /// ```rust
@@ -131,27 +120,19 @@ pub type SimpleHkdf<H> = Hkdf<H, SimpleHmac<H>>;
 /// let (oneshot_res, _) = Hkdf::<Sha256>::extract(Some(b"mysalt"), b"hello world");
 /// assert_eq!(streamed_res, oneshot_res);
 /// ```
-#[derive(Clone)]
-pub struct HkdfExtract<H, I = Hmac<H>>
-where
-    H: OutputSizeUser,
-    I: HmacImpl<H>,
-{
-    hmac: I,
+#[derive(Clone, Debug)]
+pub struct HkdfExtract<H: HmacHash> {
+    hmac: H::FullHmac,
     _pd: PhantomData<H>,
 }
 
-impl<H, I> HkdfExtract<H, I>
-where
-    H: OutputSizeUser,
-    I: HmacImpl<H>,
-{
+impl<H: HmacHash> HkdfExtract<H> {
     /// Initiates the HKDF-Extract context with the given optional salt
     pub fn new(salt: Option<&[u8]>) -> Self {
         let default_salt = Output::<H>::default();
         let salt = salt.unwrap_or(&default_salt);
         Self {
-            hmac: I::new_from_slice(salt),
+            hmac: H::new_full(salt),
             _pd: PhantomData,
         }
     }
@@ -163,36 +144,25 @@ where
 
     /// Completes the HKDF-Extract operation, returning both the generated pseudorandom key and
     /// `Hkdf` struct for expanding.
-    pub fn finalize(self) -> (Output<H>, Hkdf<H, I>) {
-        let prk = self.hmac.finalize();
+    pub fn finalize(self) -> (Output<H>, Hkdf<H>) {
+        let prk = self.hmac.finalize_fixed();
         let hkdf = Hkdf::from_prk(&prk).expect("PRK size is correct");
+        // Output size of HMAC is always equal to hash size
+        let prk = Output::<H>::clone_from_slice(&prk);
         (prk, hkdf)
-    }
-}
-
-impl<H, I> fmt::Debug for HkdfExtract<H, I>
-where
-    H: OutputSizeUser,
-    I: HmacImpl<H>,
-    I::Core: AlgorithmName,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("HkdfExtract<")?;
-        <I::Core as AlgorithmName>::write_alg_name(f)?;
-        f.write_str("> { ... }")
     }
 }
 
 /// Structure representing the HKDF, capable of HKDF-Expand and HKDF-Extract operations.
 /// Recommendations for the correct usage of the parameters can be found in the
 /// [crate root](index.html#usage).
-#[derive(Clone)]
-pub struct Hkdf<H: OutputSizeUser, I: HmacImpl<H> = Hmac<H>> {
-    hmac: I::Core,
+#[derive(Clone, Debug)]
+pub struct Hkdf<H: HmacHash> {
+    hmac: H::CoreHmac,
     _pd: PhantomData<H>,
 }
 
-impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
+impl<H: HmacHash> Hkdf<H> {
     /// Convenience method for [`extract`][Hkdf::extract] when the generated
     /// pseudorandom key can be ignored and only HKDF-Expand operation is needed. This is the most
     /// common constructor.
@@ -209,7 +179,7 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
             return Err(InvalidPrkLength);
         }
         Ok(Self {
-            hmac: I::new_core(prk),
+            hmac: H::new_core(prk),
             _pd: PhantomData,
         })
     }
@@ -230,7 +200,7 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
         info_components: &[&[u8]],
         okm: &mut [u8],
     ) -> Result<(), InvalidLength> {
-        let mut prev: Option<Output<H>> = None;
+        let mut prev: Option<Output<H::FullHmac>> = None;
 
         let chunk_len = <H as OutputSizeUser>::OutputSize::USIZE;
         if okm.len() > chunk_len * 255 {
@@ -238,10 +208,10 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
         }
 
         for (block_n, block) in okm.chunks_mut(chunk_len).enumerate() {
-            let mut hmac = I::from_core(&self.hmac);
+            let mut hmac = H::core_to_full(&self.hmac);
 
             if let Some(ref prev) = prev {
-                hmac.update(prev)
+                hmac.update(prev);
             };
 
             // Feed in the info components in sequence. This is equivalent to feeding in the
@@ -252,7 +222,7 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
 
             hmac.update(&[block_n as u8 + 1]);
 
-            let output = hmac.finalize();
+            let output = hmac.finalize_fixed();
 
             let block_len = block.len();
             block.copy_from_slice(&output[..block_len]);
@@ -271,20 +241,10 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
     }
 }
 
-impl<H, I> fmt::Debug for Hkdf<H, I>
-where
-    H: OutputSizeUser,
-    I: HmacImpl<H>,
-    I::Core: AlgorithmName,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("Hkdf<")?;
-        <I::Core as AlgorithmName>::write_alg_name(f)?;
-        f.write_str("> { ... }")
-    }
-}
+/// Sealed trait implemented for hash functions
+/// in the [RustCrypto/hashes] repository.
+///
+/// [RustCrypto/hashes]: https://github.com/RustCrypto/hashes
+pub trait HmacHash: sealed::Sealed {}
 
-/// Sealed trait implemented for [`Hmac`] and [`SimpleHmac`].
-pub trait HmacImpl<H: OutputSizeUser>: sealed::Sealed<H> {}
-
-impl<H: OutputSizeUser, T: sealed::Sealed<H>> HmacImpl<H> for T {}
+impl<T: sealed::Sealed> HmacHash for T {}
