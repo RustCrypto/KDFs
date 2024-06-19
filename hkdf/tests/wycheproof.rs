@@ -19,21 +19,19 @@ fn test<H: OutputSizeUser, I: HmacImpl<H>>(data: &[u8]) {
             err = Some("mismatch in okm");
         }
 
-        if let Some(desc) = err {
+        if let Some(err_desc) = err {
             panic!(
                 "\n\
-                 Failed test №{}: {}\n\
-                 ikm:\t{:?}\n\
-                 salt:\t{:?}\n\
-                 info:\t{:?}\n\
-                 okm:\t{:?}\n",
-                i, desc, ikm, salt, info, okm
+                 Failed test №{i}: {err_desc}\n\
+                 ikm:\t{ikm:?}\n\
+                 salt:\t{salt:?}\n\
+                 info:\t{info:?}\n\
+                 okm:\t{okm:?}\n"
             );
         }
     }
 }
 
-/// Define test
 macro_rules! new_test {
     ($name:ident, $test_name:expr, $hash:ty) => {
         #[test]
