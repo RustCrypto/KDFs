@@ -1,8 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "hkdf",
+    "bake-kdf",
     "concat-kdf",
+    "hkdf",
 ]
 
 [profile.dev]
