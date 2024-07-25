@@ -117,6 +117,12 @@ pub fn belt_keyrep<const M: usize>(
         _ => unreachable!(),
     };
 
+    let mut x_swapped = [0u32; 8];
+    for (i, &val) in x.iter().enumerate() {
+        x_swapped[i] = u32::swap_bytes(val);
+    }
+    let x = &x_swapped[..(n / 32)];
+
     let s = belt_keyexpand(x).map_err(|_| InvalidKeyLength)?;
     let mut d = [d[0], d[1], d[2]];
     let mut i = [i[0], i[1], i[2], i[3]];
@@ -155,12 +161,17 @@ pub fn bake_kdf(x: &[u8], s: &[u8], c: u128) -> Result<[u32; 8], Error> {
     hasher.update(s);
     let y = hasher.finalize_fixed();
 
+    let mut y = to_u32::<8>(&y);
+    for y in y.iter_mut() {
+        *y = u32::swap_bytes(*y);
+    }
+
     let d: [u32; 3] = [0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF];
 
     let mut c = to_u32::<4>(&c.to_be_bytes());
     c.reverse();
 
     let mut out = [0u32; 8];
-    belt_keyrep::<256>(&to_u32::<8>(&y), &d, &c, &mut out)?;
+    belt_keyrep::<256>(&y, &d, &c, &mut out)?;
     Ok(out)
 }
