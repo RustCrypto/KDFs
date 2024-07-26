@@ -13,13 +13,13 @@ edition = "2021"
 rust-version = "1.72"
 
 [dependencies]
-hmac = "=0.13.0-pre.3"
+hmac = "=0.13.0-pre.4"
 
 [dev-dependencies]
 blobby = "0.3"
 hex-literal = "0.4"
-sha1 = { version = "=0.11.0-pre.3", default-features = false }
-sha2 = { version = "=0.11.0-pre.3", default-features = false }
+sha1 = { version = "=0.11.0-pre.4", default-features = false }
+sha2 = { version = "=0.11.0-pre.4", default-features = false }
 
 [features]
 std = ["hmac/std"]

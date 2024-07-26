@@ -45,6 +45,7 @@ where
     }
 
     #[inline(always)]
+    #[allow(deprecated)] // clone_from_slice
     fn finalize(self) -> Output<H> {
         // Output<H> and Output<H::Core> are always equal to each other,
         // but we can not prove it at type level
@@ -76,6 +77,7 @@ impl<H: Digest + BlockSizeUser + Clone> Sealed<H> for SimpleHmac<H> {
     }
 
     #[inline(always)]
+    #[allow(deprecated)] // clone_from_slice
     fn finalize(self) -> Output<H> {
         // Output<H> and Output<H::Core> are always equal to each other,
         // but we can not prove it at type level
