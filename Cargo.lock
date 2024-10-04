@@ -3,6 +3,15 @@
 version = 3
 
 [[package]]
+name = "ansi-x963-kdf"
+version = "0.1.0"
+dependencies = [
+ "digest",
+ "hex-literal",
+ "sha2",
+]
+
+[[package]]
 name = "blobby"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -82,7 +91,7 @@ checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hkdf"
-version = "0.13.0-pre.3"
+version = "0.13.0-pre.4"
 dependencies = [
  "blobby",
  "hex-literal",

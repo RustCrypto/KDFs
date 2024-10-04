@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
     "hkdf",
-    "concat-kdf",
+    "concat-kdf", "ansi-x963-kdf",
 ]
 
 [profile.dev]
