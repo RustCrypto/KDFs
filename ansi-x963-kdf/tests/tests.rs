@@ -190,16 +190,15 @@ fn test_errors() {
     // other_info has a length that causes input overflow.
     #[cfg(target_pointer_width = "64")]
     {
-        let hashmaxlen = Sha224::output_size() * (u32::MAX as usize);
         // Secret
-        let secret = [0u8; 42]; // Empty secret
-                                // Calculate the required length for other_info to cause an input overflow.
-        let other_info_len = hashmaxlen - secret.len() - 4;
+        let secret = [0u8; 42];
+        // Calculate the required length for other_info to cause an input overflow.
+        let other_info_len = Sha224::output_size() * (u32::MAX as usize) - secret.len() - 4;
         // Create a layout for allocation.
         let layout = std::alloc::Layout::from_size_align(other_info_len, 1).unwrap();
         unsafe {
-            // Allocate memory without initializing.
-            let p = std::alloc::alloc(layout);
+            // We assume that OS will not allocate physical memory for this buffer
+            let p = std::alloc::alloc_zeroed(layout);
             if p.is_null() {
                 panic!("Failed to allocate memory");
             }
@@ -220,11 +219,10 @@ fn test_errors() {
 
             // Create a slice from the allocated memory.
             let other_info = std::slice::from_raw_parts(p, other_info_len);
-
-            // Attempt to derive the key, which should result in an InputOverflow error.
-            let res = ansi_x963_kdf::derive_key_into::<Sha224>(&secret, other_info, &mut [0u8; 42]);
-
-            assert_eq!(res, Err(ansi_x963_kdf::Error::InputOverflow));
+            assert_eq!(
+                ansi_x963_kdf::derive_key_into::<Sha224>(&secret, other_info, &mut [0u8; 42]),
+                Err(ansi_x963_kdf::Error::InputOverflow)
+            );
         }
     }
 
