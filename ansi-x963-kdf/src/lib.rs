@@ -52,12 +52,12 @@ impl fmt::Display for Error {
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 impl ::std::error::Error for Error {}
 
-/// Derives `key` in-place from `secret` and `other_info`.
+/// Derives `key` in-place from `secret` and `shared_info`.
 /// ```rust
 /// let mut key = [0u8; 42];
 /// ansi_x963_kdf::derive_key_into::<sha2::Sha256>(b"top-secret", b"info", &mut key).unwrap();
 /// ```
-pub fn derive_key_into<D>(secret: &[u8], other_info: &[u8], key: &mut [u8]) -> Result<(), Error>
+pub fn derive_key_into<D>(secret: &[u8], shared_info: &[u8], key: &mut [u8]) -> Result<(), Error>
 where
     D: Digest + FixedOutputReset,
 {
@@ -70,7 +70,7 @@ where
     }
 
     // 1. Check if |Z| + |SharedInfo| + 4 >= hashmaxlen
-    if secret.len() + other_info.len() + 4 >= D::OutputSize::USIZE * (u32::MAX as usize) {
+    if secret.len() + shared_info.len() + 4 >= D::OutputSize::USIZE * (u32::MAX as usize) {
         return Err(Error::InputOverflow);
     }
 
@@ -92,7 +92,7 @@ where
         // 4.1 Compute Ki = Hash(Z ‖ Counter ‖ [SharedInfo]) using the selected hash function
         Update::update(&mut digest, secret);
         Update::update(&mut digest, &counter.to_be_bytes());
-        Update::update(&mut digest, other_info);
+        Update::update(&mut digest, shared_info);
         chunk.copy_from_slice(&digest.finalize_reset()[..chunk.len()]);
         // 4.2. Increment Counter
         counter += 1;
@@ -101,7 +101,7 @@ where
     Ok(())
 }
 
-/// Derives and returns `length` bytes key from `secret` and `other_info`.
+/// Derives and returns `length` bytes key from `secret` and `shared_info`.
 /// ```rust
 /// let key = ansi_x963_kdf::derive_key::<sha2::Sha256>(b"top-secret", b"info", 42).unwrap();
 /// ```
@@ -109,13 +109,13 @@ where
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
 pub fn derive_key<D>(
     secret: &[u8],
-    other_info: &[u8],
+    shared_info: &[u8],
     length: usize,
 ) -> Result<std::vec::Vec<u8>, Error>
 where
     D: Digest + FixedOutputReset,
 {
     let mut key = std::vec![0u8; length];
-    derive_key_into::<D>(secret, other_info, &mut key)?;
+    derive_key_into::<D>(secret, shared_info, &mut key)?;
     Ok(key)
 }
