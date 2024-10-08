@@ -19,7 +19,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 use core::fmt;
-use digest::{array::typenum::Unsigned, Digest, FixedOutputReset, Update};
+use digest::{array::typenum::Unsigned, Digest, FixedOutputReset};
 
 #[cfg(feature = "std")]
 extern crate std;
@@ -90,9 +90,9 @@ where
     // 4. For i = 1 to keydatalen/hashlen,
     for chunk in key.chunks_mut(D::OutputSize::USIZE) {
         // 4.1 Compute Ki = Hash(Z ‖ Counter ‖ [SharedInfo]) using the selected hash function
-        Update::update(&mut digest, secret);
-        Update::update(&mut digest, &counter.to_be_bytes());
-        Update::update(&mut digest, shared_info);
+        Digest::update(&mut digest, secret);
+        Digest::update(&mut digest, &counter.to_be_bytes());
+        Digest::update(&mut digest, shared_info);
         chunk.copy_from_slice(&digest.finalize_reset()[..chunk.len()]);
         // 4.2. Increment Counter
         counter += 1;
