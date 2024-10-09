@@ -54,8 +54,10 @@ impl ::std::error::Error for Error {}
 
 /// Derives `key` in-place from `secret` and `shared_info`.
 /// ```rust
+/// use hex_literal::hex;
 /// let mut key = [0u8; 42];
 /// ansi_x963_kdf::derive_key_into::<sha2::Sha256>(b"top-secret", b"info", &mut key).unwrap();
+/// assert_eq!(key, hex!("85397c03b3894cdc12e7e042698d040f449dbff97a86d0a4dd2d0a4409b8d969e01e57091cf170dfd977"));
 /// ```
 pub fn derive_key_into<D>(secret: &[u8], shared_info: &[u8], key: &mut [u8]) -> Result<(), Error>
 where
@@ -103,7 +105,9 @@ where
 
 /// Derives and returns `length` bytes key from `secret` and `shared_info`.
 /// ```rust
+/// use hex_literal::hex;
 /// let key = ansi_x963_kdf::derive_key::<sha2::Sha256>(b"top-secret", b"info", 42).unwrap();
+/// assert_eq!(key, hex!("85397c03b3894cdc12e7e042698d040f449dbff97a86d0a4dd2d0a4409b8d969e01e57091cf170dfd977"));
 /// ```
 #[cfg(feature = "std")]
 #[cfg_attr(docsrs, doc(cfg(feature = "std")))]
