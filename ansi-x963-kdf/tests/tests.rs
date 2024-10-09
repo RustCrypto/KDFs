@@ -1,3 +1,8 @@
+//! Tests for ansi-x963-kdf
+//!
+//! Test vectors have been generated using the java-based Bouncy-Castle
+//! KDF2 implementation [KDF2BytesGenerator][1]
+//! [1]: https://downloads.bouncycastle.org/java/docs/bcprov-jdk18on-javadoc/
 use digest::{Digest, FixedOutputReset};
 use hex_literal::hex;
 use sha2::{Sha224, Sha256, Sha512};
@@ -21,7 +26,6 @@ where
         for key_length in 1..expected_key.len() {
             let mut key = vec![0u8; key_length];
             assert!(ansi_x963_kdf::derive_key_into::<D>(secret, other_info, &mut key).is_ok());
-            eprintln!("{}", expected_key.len());
             assert_eq!(&expected_key[..key_length], &key);
         }
     }
