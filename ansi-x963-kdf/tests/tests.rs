@@ -2,6 +2,7 @@
 //!
 //! Test vectors have been generated using the java-based Bouncy-Castle
 //! KDF2 implementation [KDF2BytesGenerator][1]
+//!
 //! [1]: https://downloads.bouncycastle.org/java/docs/bcprov-jdk18on-javadoc/
 use digest::{Digest, FixedOutputReset};
 use hex_literal::hex;
@@ -9,7 +10,7 @@ use sha2::{Sha224, Sha256, Sha512};
 
 struct Fixture<'a> {
     secret: &'a [u8],
-    other_info: &'a [u8],
+    shared_info: &'a [u8],
     expected_key: &'a [u8],
 }
 
@@ -19,13 +20,13 @@ where
 {
     for Fixture {
         secret,
-        other_info,
+        shared_info,
         expected_key,
     } in fixtures.iter()
     {
         for key_length in 1..expected_key.len() {
             let mut key = vec![0u8; key_length];
-            assert!(ansi_x963_kdf::derive_key_into::<D>(secret, other_info, &mut key).is_ok());
+            assert!(ansi_x963_kdf::derive_key_into::<D>(secret, shared_info, &mut key).is_ok());
             assert_eq!(&expected_key[..key_length], &key);
         }
     }
@@ -36,7 +37,7 @@ fn test_input_output_sha224() {
     let fixtures = [
         Fixture {
             secret: &hex!("00"),
-            other_info: &[],
+            shared_info: &[],
             expected_key: &hex!(
                 "4a6ebc83b8e2b19eea640500be6bcffdddaa07b8b2f81f2c533940e4e6ad6cfd
                  e680e5ba8eb25351402f0e75a6246cf006f6dd2187185af41d04abb648124e27
@@ -46,7 +47,7 @@ fn test_input_output_sha224() {
         },
         Fixture {
             secret: &hex!("00"),
-            other_info: &hex!("00"),
+            shared_info: &hex!("00"),
             expected_key: &hex!(
                 "4bfb11552c4bf91bce4833aa06f854ceb8a3f7e435f42907e6d86e7597b20789
                  aba17dccaf09d3e26bc3dd0ad6051f0e46b830cc57091bd0ba1da24a4ab96492
@@ -60,7 +61,7 @@ fn test_input_output_sha224() {
         },
         Fixture {
             secret: &hex!("ba5eba11bedabb1ebe5077edb0a710adb01dfacecab005eca11ab1eca55e77e011"),
-            other_info: &hex!("f005ba1100ddba11"),
+            shared_info: &hex!("f005ba1100ddba11"),
             expected_key: &hex!(
                 "20328557e258ecbe845fcde1002aa36dba5e29383d1b9813c2410819c09bd7d7
                  5b75f4d2ca71354080b64b3e8e3ef457f22517b074cbbbbf11d660b7b4706de1
@@ -82,7 +83,7 @@ fn test_input_output_sha256() {
     let fixtures = [
         Fixture {
             secret: &hex!("00"),
-            other_info: &[],
+            shared_info: &[],
             expected_key: &hex!(
                 "15f2f1a4339f5f2a313b95015cad8124d054a171ac2f31cf529dda7cfb6a38b4
                  89eefc18fa4b815bd1aded2f24eb28885993aa00b6d0171bf5005f9d39aaea10
@@ -96,7 +97,7 @@ fn test_input_output_sha256() {
         },
         Fixture {
             secret: &hex!("00"),
-            other_info: &hex!("00"),
+            shared_info: &hex!("00"),
             expected_key: &hex!(
                 "588611f65741c171a3d92c1d5343f5dd67f4fc472fc56f01c9bc568f5ac2a623
                  55af2e3db27cf364b9465ea89a489710da6c78ecc59ddf3ac6203261a6649d9e
@@ -110,7 +111,7 @@ fn test_input_output_sha256() {
         },
         Fixture {
             secret: &hex!("ba5eba11bedabb1ebe5077edb0a710adb01dfacecab005eca11ab1eca55e77e011"),
-            other_info: &hex!("f005ba1100ddba11"),
+            shared_info: &hex!("f005ba1100ddba11"),
             expected_key: &hex!(
                 "41bf219e0dedf77305f1f79739fd917b3311e61dd504150d6f3c40195837c75a
                  441fd05332d739a43fd70e11e4be66683eb05586c6c03bbf6d8030990e724a38
@@ -132,7 +133,7 @@ fn test_input_output_sha512() {
     let fixtures = [
         Fixture {
             secret: &hex!("00"),
-            other_info: &[],
+            shared_info: &[],
             expected_key: &hex!(
                 "b8eef223e484fe7a872e4db84711a01db365b205e477c3e3170f26623e2fa230
                  4d93f6c04337d0ea7454d1f2073f8eb8ee58b361438b61f363eb1037a77f716c
@@ -146,7 +147,7 @@ fn test_input_output_sha512() {
         },
         Fixture {
             secret: &hex!("00"),
-            other_info: &hex!("00"),
+            shared_info: &hex!("00"),
             expected_key: &hex!(
                 "74cc6e00677ea1683c3c3fbc6337101db4e2ffdd0053a8783fd4c9f5b53117db
                  9089ce3beef287cbe273a7c47ad1e88509842f9a70ff354280dc7a8e1c61214a
@@ -160,7 +161,7 @@ fn test_input_output_sha512() {
         },
         Fixture {
             secret: &hex!("ba5eba11bedabb1ebe5077edb0a710adb01dfacecab005eca11ab1eca55e77e011"),
-            other_info: &hex!("f005ba1100ddba11"),
+            shared_info: &hex!("f005ba1100ddba11"),
             expected_key: &hex!(
                 "ae21b84e638fc7de4d838d2a7232655c39d2794116f00e43891170c0a16df11c
                  15afbdb903c5722e22afc885c0f851c2ccacc2a0802437bc5bef6c18a0573246
@@ -191,15 +192,17 @@ fn test_errors() {
         Err(ansi_x963_kdf::Error::NoOutput)
     );
 
-    // other_info has a length that causes input overflow.
+    // shared_info has a length that causes input overflow.
     #[cfg(target_pointer_width = "64")]
     {
         // Secret
         let secret = [0u8; 42];
-        // Calculate the required length for other_info to cause an input overflow.
-        let other_info_len = Sha224::output_size() * (u32::MAX as usize) - secret.len() - 4;
+
+        // Calculate the required length for shared_info to cause an input overflow: |Z| + |SharedInfo| + 4 >= hashmaxlen
+        let shared_info_len = Sha224::output_size() * (u32::MAX as usize) - secret.len() - 4;
+
         // Create a layout for allocation.
-        let layout = std::alloc::Layout::from_size_align(other_info_len, 1).unwrap();
+        let layout = std::alloc::Layout::from_size_align(shared_info_len, 1).unwrap();
         unsafe {
             // We assume that OS will not allocate physical memory for this buffer
             let p = std::alloc::alloc_zeroed(layout);
@@ -222,9 +225,9 @@ fn test_errors() {
             let _guard = AllocGuard { ptr: p, layout };
 
             // Create a slice from the allocated memory.
-            let other_info = std::slice::from_raw_parts(p, other_info_len);
+            let shared_info = std::slice::from_raw_parts(p, shared_info_len);
             assert_eq!(
-                ansi_x963_kdf::derive_key_into::<Sha224>(&secret, other_info, &mut [0u8; 42]),
+                ansi_x963_kdf::derive_key_into::<Sha224>(&secret, shared_info, &mut [0u8; 42]),
                 Err(ansi_x963_kdf::Error::InputOverflow)
             );
         }
