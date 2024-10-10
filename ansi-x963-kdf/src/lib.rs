@@ -16,7 +16,7 @@
 //! [1]: https://www.secg.org/sec1-v2.pdf
 
 #![no_std]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 use core::fmt;
 use digest::{array::typenum::Unsigned, Digest, FixedOutputReset};
