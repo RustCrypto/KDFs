@@ -72,7 +72,8 @@ where
     }
 
     // 1. Check if |Z| + |SharedInfo| + 4 >= hashmaxlen
-    if secret.len() + shared_info.len() + 4 >= D::OutputSize::USIZE * (u32::MAX as usize) {
+    if secret.len() as u64 + shared_info.len() as u64 + 4 >= D::OutputSize::U64 * (u32::MAX as u64)
+    {
         return Err(Error::InputOverflow);
     }
 
@@ -80,7 +81,7 @@ where
     const OVERFLOW_IS_POSSIBLE: bool = core::mem::size_of::<usize>() > 4;
 
     // 2. Check that keydatalen < hashlen × (2^32 − 1)
-    if OVERFLOW_IS_POSSIBLE && (key.len() >= D::OutputSize::USIZE * (u32::MAX as usize)) {
+    if OVERFLOW_IS_POSSIBLE && (key.len() as u64 >= D::OutputSize::U64 * (u32::MAX as u64)) {
         return Err(Error::CounterOverflow);
     }
 
