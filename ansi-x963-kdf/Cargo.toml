@@ -10,7 +10,7 @@ documentation = "https://docs.rs/ansi-x963-kdf"
 repository = "https://github.com/RustCrypto/KDFs"
 keywords = ["crypto", "ansi-x963-kdf", "KDF", "SEC1"]
 categories = ["cryptography", "no-std"]
-rust-version = "1.72"
+rust-version = "1.81"
 
 [dependencies]
 digest = "=0.11.0-pre.9"
