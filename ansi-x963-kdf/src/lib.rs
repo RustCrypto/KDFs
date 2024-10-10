@@ -69,17 +69,16 @@ where
         return Err(Error::NoOutput);
     }
 
-    // 1. Check if |Z| + |SharedInfo| + 4 >= hashmaxlen
+    // 1. Check that |Z| + |SharedInfo| + 4 < hashmaxlen
+    // where "hashmaxlen denote the maximum length in octets of messages that can be hashed using Hash".
+    // N.B.: `D::OutputSize::U64 * (u32::MAX as u64)`` is currently used as an approximation of hashmaxlen.
     if secret.len() as u64 + shared_info.len() as u64 + 4 >= D::OutputSize::U64 * (u32::MAX as u64)
     {
         return Err(Error::InputOverflow);
     }
 
-    // Counter overflow is possible only on architectures with usize bigger than 4 bytes.
-    const OVERFLOW_IS_POSSIBLE: bool = core::mem::size_of::<usize>() > 4;
-
     // 2. Check that keydatalen < hashlen × (2^32 − 1)
-    if OVERFLOW_IS_POSSIBLE && (key.len() as u64 >= D::OutputSize::U64 * (u32::MAX as u64)) {
+    if key.len() as u64 >= D::OutputSize::U64 * (u32::MAX as u64) {
         return Err(Error::CounterOverflow);
     }
 
