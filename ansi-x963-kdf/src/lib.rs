@@ -92,7 +92,7 @@ where
     for chunk in key.chunks_mut(D::OutputSize::USIZE) {
         // 4.1 Compute Ki = Hash(Z ‖ Counter ‖ [SharedInfo]) using the selected hash function
         Digest::update(&mut digest, secret);
-        Digest::update(&mut digest, &counter.to_be_bytes());
+        Digest::update(&mut digest, counter.to_be_bytes());
         Digest::update(&mut digest, shared_info);
         chunk.copy_from_slice(&digest.finalize_reset()[..chunk.len()]);
         // 4.2. Increment Counter
