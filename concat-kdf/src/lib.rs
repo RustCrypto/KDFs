@@ -1,6 +1,5 @@
 #![no_std]
 #![doc = include_str!("../README.md")]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 use core::fmt;
 use digest::{array::typenum::Unsigned, Digest, FixedOutputReset, Update};
