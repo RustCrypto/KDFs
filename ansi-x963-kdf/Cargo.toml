@@ -1,7 +1,7 @@
 [package]
 name = "ansi-x963-kdf"
 version = "0.1.0"
-description = "ANSI X9.63 Key Derivation Function (ANSI-X9.63-KDF)"
+description = "ANSI X9.63 Key Derivation Function"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
@@ -20,7 +20,7 @@ hex-literal = "0.4"
 sha2 = { version = "=0.11.0-pre.4", default-features = false }
 
 [features]
-std = []
+alloc = []
 
 [package.metadata.docs.rs]
 all-features = true

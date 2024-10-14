@@ -1,28 +1,12 @@
-//! An implementation of ANSI-X9.63 KDF Key Derivation Function.
-//!
-//! This function is described in the section 3.6.1 of [SEC 1: Elliptic Curve Cryptography][1].
-//!
-//! # Usage
-//!
-//! The most common way to use ANSI-X9.63 KDF is as follows: you generate a shared secret
-//! with other party (e.g. via Diffie-Hellman algorithm) and use key derivation function
-//! to derive a shared key.
-//!
-//! ```rust
-//! let mut key = [0u8; 32];
-//! ansi_x963_kdf::derive_key_into::<sha2::Sha256>(b"shared-secret", b"other-info", &mut key).unwrap();
-//! ```
-//!
-//! [1]: https://www.secg.org/sec1-v2.pdf
-
 #![no_std]
+#![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 use core::fmt;
 use digest::{array::typenum::Unsigned, Digest, FixedOutputReset};
 
-#[cfg(feature = "std")]
-extern crate std;
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 /// ANSI-X9.63 KDF errors.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -51,12 +35,17 @@ impl fmt::Display for Error {
 impl ::core::error::Error for Error {}
 
 /// Derives `key` in-place from `secret` and `shared_info`.
-/// ```rust
-/// use hex_literal::hex;
-/// let mut key = [0u8; 42];
-/// ansi_x963_kdf::derive_key_into::<sha2::Sha256>(b"top-secret", b"info", &mut key).unwrap();
-/// assert_eq!(key, hex!("85397c03b3894cdc12e7e042698d040f449dbff97a86d0a4dd2d0a4409b8d969e01e57091cf170dfd977"));
+///
+/// # Example
 /// ```
+/// use hex_literal::hex;
+/// use sha2::Sha256;
+///
+/// let mut key = [0u8; 16];
+/// ansi_x963_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwrap();
+/// assert_eq!(key, hex!("8dbb1d50bcc7fc782abc9db5c64a2826"));
+/// ```
+#[inline]
 pub fn derive_key_into<D>(secret: &[u8], shared_info: &[u8], key: &mut [u8]) -> Result<(), Error>
 where
     D: Digest + FixedOutputReset,
@@ -102,22 +91,26 @@ where
 }
 
 /// Derives and returns `length` bytes key from `secret` and `shared_info`.
-/// ```rust
-/// use hex_literal::hex;
-/// let key = ansi_x963_kdf::derive_key::<sha2::Sha256>(b"top-secret", b"info", 42).unwrap();
-/// assert_eq!(key, hex!("85397c03b3894cdc12e7e042698d040f449dbff97a86d0a4dd2d0a4409b8d969e01e57091cf170dfd977"));
+///
+/// # Example
 /// ```
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+/// use hex_literal::hex;
+/// use sha2::Sha256;
+///
+/// let key = ansi_x963_kdf::derive_key::<Sha256>(b"secret", b"shared-info", 16).unwrap();
+/// assert_eq!(key[..], hex!("8dbb1d50bcc7fc782abc9db5c64a2826")[..]);
+/// ```
+#[cfg(feature = "alloc")]
+#[inline]
 pub fn derive_key<D>(
     secret: &[u8],
     shared_info: &[u8],
     length: usize,
-) -> Result<std::vec::Vec<u8>, Error>
+) -> Result<alloc::boxed::Box<[u8]>, Error>
 where
     D: Digest + FixedOutputReset,
 {
-    let mut key = std::vec![0u8; length];
+    let mut key = alloc::vec![0u8; length].into_boxed_slice();
     derive_key_into::<D>(secret, shared_info, &mut key)?;
     Ok(key)
 }
