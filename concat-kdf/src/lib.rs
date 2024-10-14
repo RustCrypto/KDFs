@@ -1,29 +1,12 @@
-//! An implementation of Concat KDF, the Concatenation Key Derivation Function.
-//!
-//! This function is described in the section 5.8.1 of [NIST SP 800-56A, Recommendation
-//! for Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography][1].
-//!
-//! # Usage
-//!
-//! The most common way to use Concat KDF is as follows: you generate a shared secret
-//! with other party (e.g. via Diffie-Hellman algorithm) and use key derivation function
-//! to derive a shared key.
-//!
-//! ```rust
-//! let mut key = [0u8; 32];
-//! concat_kdf::derive_key_into::<sha2::Sha256>(b"shared-secret", b"other-info", &mut key).unwrap();
-//! ```
-//!
-//! [1]: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-56ar.pdf
-
 #![no_std]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![doc = include_str!("../README.md")]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 use core::fmt;
 use digest::{array::typenum::Unsigned, Digest, FixedOutputReset, Update};
 
-#[cfg(feature = "std")]
-extern crate std;
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 /// Concat KDF errors.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -46,14 +29,18 @@ impl fmt::Display for Error {
     }
 }
 
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
-impl ::std::error::Error for Error {}
+impl ::core::error::Error for Error {}
 
 /// Derives `key` in-place from `secret` and `other_info`.
+///
+/// # Example
 /// ```rust
-/// let mut key = [0u8; 42];
-/// concat_kdf::derive_key_into::<sha2::Sha256>(b"top-secret", b"info", &mut key).unwrap();
+/// use hex_literal::hex;
+/// use sha2::Sha256;
+///
+/// let mut key = [0u8; 16];
+/// concat_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwrap();
+/// assert_eq!(key, hex!("960db2c549ab16d71a7b008e005c2bdc"));
 /// ```
 pub fn derive_key_into<D>(secret: &[u8], other_info: &[u8], key: &mut [u8]) -> Result<(), Error>
 where
@@ -67,11 +54,8 @@ where
         return Err(Error::NoOutput);
     }
 
-    // Counter overflow is possible only on architectures with usize bigger than 4 bytes.
-    const OVERFLOW_IS_POSSIBLE: bool = core::mem::size_of::<usize>() > 4;
-
     // Key length shall be less than or equal to hash output length * (2^32 - 1).
-    if OVERFLOW_IS_POSSIBLE && (key.len() >= D::OutputSize::USIZE * (u32::MAX as usize)) {
+    if (key.len() as u64) >= D::OutputSize::U64 * (u32::MAX as u64) {
         return Err(Error::CounterOverflow);
     }
 
@@ -90,20 +74,25 @@ where
 }
 
 /// Derives and returns `length` bytes key from `secret` and `other_info`.
+///
+/// # Example
 /// ```rust
-/// let key = concat_kdf::derive_key::<sha2::Sha256>(b"top-secret", b"info", 42).unwrap();
+/// use hex_literal::hex;
+/// use sha2::Sha256;
+///
+/// let key = concat_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", 32).unwrap();
+/// assert_eq!(key[..], hex!("960db2c549ab16d71a7b008e005c2bdc")[..]);
 /// ```
-#[cfg(feature = "std")]
-#[cfg_attr(docsrs, doc(cfg(feature = "std")))]
+#[cfg(feature = "alloc")]
 pub fn derive_key<D>(
     secret: &[u8],
     other_info: &[u8],
     length: usize,
-) -> Result<std::vec::Vec<u8>, Error>
+) -> Result<alloc::boxed::Box<[u8]>, Error>
 where
     D: Digest + FixedOutputReset,
 {
-    let mut key = std::vec![0u8; length];
+    let mut key = alloc::vec![0u8; length].into_boxed_slice();
     derive_key_into::<D>(secret, other_info, &mut key)?;
     Ok(key)
 }
