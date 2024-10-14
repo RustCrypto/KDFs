@@ -45,6 +45,7 @@ impl ::core::error::Error for Error {}
 /// ansi_x963_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwrap();
 /// assert_eq!(key, hex!("8dbb1d50bcc7fc782abc9db5c64a2826"));
 /// ```
+#[inline]
 pub fn derive_key_into<D>(secret: &[u8], shared_info: &[u8], key: &mut [u8]) -> Result<(), Error>
 where
     D: Digest + FixedOutputReset,
@@ -100,6 +101,7 @@ where
 /// assert_eq!(key, hex!("8dbb1d50bcc7fc782abc9db5c64a2826"));
 /// ```
 #[cfg(feature = "alloc")]
+#[inline]
 pub fn derive_key<D>(
     secret: &[u8],
     shared_info: &[u8],
