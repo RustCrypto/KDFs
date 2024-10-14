@@ -80,7 +80,7 @@ where
 /// use hex_literal::hex;
 /// use sha2::Sha256;
 ///
-/// let key = concat_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", 32).unwrap();
+/// let key = concat_kdf::derive_key::<Sha256>(b"secret", b"shared-info", 16).unwrap();
 /// assert_eq!(key[..], hex!("960db2c549ab16d71a7b008e005c2bdc")[..]);
 /// ```
 #[cfg(feature = "alloc")]
