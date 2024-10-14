@@ -97,7 +97,7 @@ where
 /// use hex_literal::hex;
 /// use sha2::Sha256;
 ///
-/// let key = ansi_x963_kdf::derive_key::<Sha256>(b"secret", b"shared-info", 42).unwrap();
+/// let key = ansi_x963_kdf::derive_key::<Sha256>(b"secret", b"shared-info", 16).unwrap();
 /// assert_eq!(key[..], hex!("8dbb1d50bcc7fc782abc9db5c64a2826")[..]);
 /// ```
 #[cfg(feature = "alloc")]
