@@ -6,8 +6,9 @@ Collection of [Key Derivation Functions][KDF] (KDF) written in pure Rust.
 
 ## Supported Algorithms
 
-| Algorithm    | Crate          |                                              Crates.io                                              |                                    Documentation                                     |          MSRV           |
-|--------------|----------------|:---------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:-----------------------:|
+| Algorithm    | Crate | Crates.io | Documentation | MSRV |
+|--------------|-------|:---------:|:-------------:|:----:|
+| [bake-kdf]   | [`bake-kdf`]   |   [![crates.io](https://img.shields.io/crates/v/bake-kdf.svg)](https://crates.io/crates/bake-kdf)   |   [![Documentation](https://docs.rs/bake-kdf/badge.svg)](https://docs.rs/bake-kdf)   | ![MSRV 1.81][msrv-1.81] |
 | [HKDF]       | [`hkdf`]       |       [![crates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf)       |       [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf)       | ![MSRV 1.81][msrv-1.81] |
 | [Concat-KDF] | [`concat-kdf`] | [![crates.io](https://img.shields.io/crates/v/concat-kdf.svg)](https://crates.io/crates/concat-kdf) | [![Documentation](https://docs.rs/concat-kdf/badge.svg)](https://docs.rs/concat-kdf) | ![MSRV 1.81][msrv-1.81] |
 | [ANSI-X9.63-KDF] | [`ansi-x963-kdf`] | [![crates.io](https://img.shields.io/crates/v/ansi-x963-kdf.svg)](https://crates.io/crates/ansi-x963-kdf) | [![Documentation](https://docs.rs/ansi-x963-kdf/badge.svg)](https://docs.rs/ansi-x963-kdf) | ![MSRV 1.81][msrv-1.81] |
