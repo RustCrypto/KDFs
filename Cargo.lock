@@ -12,6 +12,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "bake-kdf"
+version = "0.1.0"
+dependencies = [
+ "belt-hash",
+ "hex-literal",
+]
+
+[[package]]
+name = "belt-block"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9aa1eef3994e2ccd304a78fe3fea4a73e5792007f85f09b79bb82143ca5f82b"
+
+[[package]]
+name = "belt-hash"
+version = "0.2.0-pre.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee5982dbf7d2f719b4237cd796ee600e9dcbef1eef460ece65380f9192a54ab5"
+dependencies = [
+ "belt-block",
+ "digest",
+]
+
+[[package]]
 name = "blobby"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
