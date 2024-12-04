@@ -46,6 +46,7 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 [`hkdf`]: ./hkdf
 [`concat-kdf`]: ./concat-kdf
 [`ansi-x963-kdf`]: ./ansi-x963-kdf
+[`bake-kdf`]: ./bake-kdf
 
 [//]: # (algorithms)
 
@@ -54,3 +55,4 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 [Concat-KDF]: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-56ar.pdf
 [ANSI-X9.63-KDF]: https://www.secg.org/sec1-v2.pdf
 [RustCrypto/password-hashes]: https://github.com/RustCrypto/password-hashes
+[bake-kdf]: https://apmi.bsu.by/assets/files/std/bake-spec19.pdf
