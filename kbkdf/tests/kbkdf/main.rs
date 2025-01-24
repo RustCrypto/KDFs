@@ -1,6 +1,7 @@
 #[macro_use]
 mod macros;
 
+#[rustfmt::skip]
 mod counter_mode;
 
 struct CounterModeTestData {
@@ -16,9 +17,9 @@ type HmacSha256 = hmac::Hmac<sha2::Sha256>;
 type HmacSha384 = hmac::Hmac<sha2::Sha384>;
 type HmacSha512 = hmac::Hmac<sha2::Sha512>;
 
-type CmacAes128 = cmac::Cmac::<aes::Aes128>;
-type CmacAes192 = cmac::Cmac::<aes::Aes192>;
-type CmacAes256 = cmac::Cmac::<aes::Aes256>;
+type CmacAes128 = cmac::Cmac<aes::Aes128>;
+type CmacAes192 = cmac::Cmac<aes::Aes192>;
+type CmacAes256 = cmac::Cmac<aes::Aes256>;
 
 struct MockOutputU128;
 

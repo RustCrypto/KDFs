@@ -1,4 +1,3 @@
-
 macro_rules! test_counter_mode {
     ($name:ident, $prf:ty, $out_len:ty, $r:ty, $test_cases:expr) => {
         #[test]
@@ -7,7 +6,13 @@ macro_rules! test_counter_mode {
                 let counter = kbkdf::Counter::<$prf, $out_len, $r>::default();
 
                 let key = counter
-                    .derive(test_case.kin, false, false, test_case.label, test_case.context)
+                    .derive(
+                        test_case.kin,
+                        false,
+                        false,
+                        test_case.label,
+                        test_case.context,
+                    )
                     .unwrap();
 
                 assert_eq!(test_case.kout[..], key[..]);
