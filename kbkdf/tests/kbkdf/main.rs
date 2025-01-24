@@ -3,8 +3,18 @@ mod macros;
 
 #[rustfmt::skip]
 mod counter_mode;
+#[rustfmt::skip]
+mod feedback_mode_iv;
 
 struct CounterModeTestData {
+    kin: &'static [u8],
+    label: &'static [u8],
+    context: &'static [u8],
+    kout: &'static [u8],
+}
+
+struct FeedbackModeTestData {
+    iv: &'static [u8],
     kin: &'static [u8],
     label: &'static [u8],
     context: &'static [u8],
@@ -33,14 +43,38 @@ impl digest::crypto_common::KeySizeUser for MockOutputU160 {
     type KeySize = digest::consts::U20;
 }
 
+struct MockOutputU256;
+
+impl digest::crypto_common::KeySizeUser for MockOutputU256 {
+    type KeySize = digest::consts::U32;
+}
+
 struct MockOutputU320;
 
 impl digest::crypto_common::KeySizeUser for MockOutputU320 {
     type KeySize = digest::consts::U40;
 }
 
-struct MockOutputU256;
+struct MockOutputU512;
 
-impl digest::crypto_common::KeySizeUser for MockOutputU256 {
-    type KeySize = digest::consts::U32;
+impl digest::crypto_common::KeySizeUser for MockOutputU512 {
+    type KeySize = digest::consts::U64;
+}
+
+struct MockOutputU560;
+
+impl digest::crypto_common::KeySizeUser for MockOutputU560 {
+    type KeySize = digest::consts::U70;
+}
+
+struct MockOutputU2048;
+
+impl digest::crypto_common::KeySizeUser for MockOutputU2048 {
+    type KeySize = digest::consts::U256;
+}
+
+struct MockOutputU2400;
+
+impl digest::crypto_common::KeySizeUser for MockOutputU2400 {
+    type KeySize = digest::consts::U300;
 }
