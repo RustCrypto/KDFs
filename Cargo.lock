@@ -172,7 +172,7 @@ dependencies = [
  "blobby",
  "hex-literal 0.4.1",
  "hmac 0.13.0-pre.4",
- "sha1",
+ "sha1 0.11.0-pre.4",
  "sha2 0.11.0-pre.4",
 ]
 
@@ -211,6 +211,7 @@ dependencies = [
  "divrem",
  "hex-literal 0.2.2",
  "hmac 0.12.1",
+ "sha1 0.10.6",
  "sha2 0.10.8",
 ]
 
@@ -225,6 +226,17 @@ name = "proc-macro-hack"
 version = "0.5.20+deprecated"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
+
+[[package]]
+name = "sha1"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3bf829a2d51ab4a5ddf1352d8470c140cadc8301b2ae1789db023f01cedd6ba"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest 0.10.7",
+]
 
 [[package]]
 name = "sha1"
