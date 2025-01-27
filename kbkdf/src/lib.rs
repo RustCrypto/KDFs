@@ -120,7 +120,9 @@ where
         let mut a = {
             let mut h = <Prf as Mac>::new_from_slice(kin).unwrap();
             h.update(label);
-            h.update(&[0]);
+            if use_separator {
+                h.update(&[0]);
+            }
             h.update(context);
             h.finalize().into_bytes()
         };
@@ -345,6 +347,33 @@ mod tests {
             ),
         },
     ];
+
+    #[test]
+    fn double_pipeline_without_counter() {
+        type HmacSha256 = hmac::Hmac<sha2::Sha256>;
+
+        struct MockOutput;
+
+        impl KeySizeUser for MockOutput {
+            type KeySize = U64;
+        }
+
+        let counter = DoublePipeline::<HmacSha256, MockOutput, U24>::default();
+
+        let key = counter.derive(
+            &hex!("7d4f86fdfd1c4ba04c674a68d60316d12c99c1b1f44f0a8e02bd2601377ebcd9"),
+            false,
+            false,
+            &hex!("921ab061920b191de12f746ac9de08004f2c20f01775e27bcacdc21ee4a5ff0387758f36d8ec71c7a8c8208284f650b611837e"),
+            &[],
+        )
+        .unwrap();
+
+        assert_eq!(
+            hex!("506bc2ba51410b2a6e7c05d33891520ddd5f702ad3d6203d76d8dae1216d0783d8c59fae2e821d8eff2d8ddd93a6741c8f144fb96e9ca7d7c532468f213f5efe")[..],
+            key[..]
+        );
+    }
 
     #[test]
     fn test_static_values_counter() {
