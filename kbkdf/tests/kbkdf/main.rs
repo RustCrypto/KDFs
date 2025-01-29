@@ -1,17 +1,4 @@
-#[macro_use]
-mod macros;
-
-#[rustfmt::skip]
-mod counter_mode;
-#[rustfmt::skip]
-mod feedback_mode_iv;
-
-struct CounterModeTestData {
-    kin: &'static [u8],
-    label: &'static [u8],
-    context: &'static [u8],
-    kout: &'static [u8],
-}
+mod parser;
 
 struct FeedbackModeTestData {
     iv: &'static [u8],
@@ -31,50 +18,27 @@ type CmacAes128 = cmac::Cmac<aes::Aes128>;
 type CmacAes192 = cmac::Cmac<aes::Aes192>;
 type CmacAes256 = cmac::Cmac<aes::Aes256>;
 
-struct MockOutputU128;
+macro_rules! mock_output {
+    ($name:ident, $size:ident) => {
+        struct $name;
 
-impl digest::crypto_common::KeySizeUser for MockOutputU128 {
-    type KeySize = digest::consts::U16;
+        impl digest::crypto_common::KeySizeUser for $name {
+            type KeySize = digest::consts::$size;
+        }
+    };
 }
 
-struct MockOutputU160;
-
-impl digest::crypto_common::KeySizeUser for MockOutputU160 {
-    type KeySize = digest::consts::U20;
-}
-
-struct MockOutputU256;
-
-impl digest::crypto_common::KeySizeUser for MockOutputU256 {
-    type KeySize = digest::consts::U32;
-}
-
-struct MockOutputU320;
-
-impl digest::crypto_common::KeySizeUser for MockOutputU320 {
-    type KeySize = digest::consts::U40;
-}
-
-struct MockOutputU512;
-
-impl digest::crypto_common::KeySizeUser for MockOutputU512 {
-    type KeySize = digest::consts::U64;
-}
-
-struct MockOutputU560;
-
-impl digest::crypto_common::KeySizeUser for MockOutputU560 {
-    type KeySize = digest::consts::U70;
-}
-
-struct MockOutputU2048;
-
-impl digest::crypto_common::KeySizeUser for MockOutputU2048 {
-    type KeySize = digest::consts::U256;
-}
-
-struct MockOutputU2400;
-
-impl digest::crypto_common::KeySizeUser for MockOutputU2400 {
-    type KeySize = digest::consts::U300;
-}
+mock_output!(MockOutputU128, U16);
+mock_output!(MockOutputU160, U20);
+mock_output!(MockOutputU256, U32);
+mock_output!(MockOutputU320, U40);
+mock_output!(MockOutputU480, U60);
+mock_output!(MockOutputU512, U64);
+mock_output!(MockOutputU528, U66);
+mock_output!(MockOutputU560, U70);
+mock_output!(MockOutputU1024, U128);
+mock_output!(MockOutputU1040, U130);
+mock_output!(MockOutputU1600, U200);
+mock_output!(MockOutputU2048, U256);
+mock_output!(MockOutputU2064, U258);
+mock_output!(MockOutputU2400, U300);
