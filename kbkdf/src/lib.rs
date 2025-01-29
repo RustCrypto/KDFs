@@ -97,6 +97,7 @@ where
         kin: &[u8],
         use_l: bool,
         use_separator: bool,
+        use_counter: bool,
         label: &[u8],
         context: &[u8],
     ) -> Result<GenericArray<u8, K::KeySize>, Error> {
@@ -146,7 +147,8 @@ where
 
             if Self::DOUBLE_PIPELINE {
                 h.update(a.as_slice());
-            } else {
+            }
+            if use_counter {
                 // counter encoded as big endian u32
                 // Type parameter R encodes how large the value is to be (either U8, U16, U24, or U32)
                 //
@@ -349,6 +351,64 @@ mod tests {
     ];
 
     #[test]
+    fn feedback_mode_without_counter() {
+        type HmacSha256 = hmac::Hmac<sha2::Sha256>;
+
+        struct MockOutput;
+
+        impl KeySizeUser for MockOutput {
+            type KeySize = U64;
+        }
+
+        let feedback = crate::Feedback::<HmacSha256, MockOutput, U32>::new(Some(
+            hex!("5c2a2262d14994904c9c2de36d66c7ebdaed32b5cc441c222258857f5af29bea")
+                .as_slice()
+                .into(),
+        ));
+
+        let key = feedback
+            .derive(
+                &hex!("4b02ffb1cb9987496e19872597b026f7409d92433f9135068c29307985598586"),
+                false,
+                false,
+                false,
+                &hex!("a38f30844136c33e00d4254a8bc5f51e8473ac20e5628e77e4d91a704d58bf0d4d0fefb5f92d897f1958b0af188180b2e2d2f7"),
+                &[],
+            )
+            .unwrap();
+
+        assert_eq!(hex!("ef46a7cc3f2fd3aac2d55c7386b99279098ad8af07e113c683e43601d3e0c9a48165a580d60b9c2df75cdfc066855607c0dd51ad8fc0296c3f72e83d3d5742e2")[..], key[..]);
+    }
+
+    #[test]
+    fn double_pipeline_with_counter() {
+        type HmacSha256 = hmac::Hmac<sha2::Sha256>;
+
+        struct MockOutput;
+
+        impl KeySizeUser for MockOutput {
+            type KeySize = U64;
+        }
+
+        let counter = DoublePipeline::<HmacSha256, MockOutput, U24>::default();
+
+        let key = counter.derive(
+            &hex!("b9ae7bfefd01bd135efef7b58058d7a8be563b471124efa4eacca983cd56a921"),
+            false,
+            false,
+            true,
+            &hex!("d39a29c988bce8c616c9eed55d2a4b7c44337cb8afc4b72aaf0230ba9b31bbfd25bfe442ba1f1f341ab992c9db1b974efa86f4"),
+            &[],
+        )
+        .unwrap();
+
+        assert_eq!(
+            hex!("b4f293e997de0907df297aad03693bcca7623c12446c3efb45414271fb845574eb69065b5f4f23a0d61d22d03a94d6b72e545c2fcbfd102cf4dd757d4234f895")[..],
+            key[..]
+        );
+    }
+
+    #[test]
     fn double_pipeline_without_counter() {
         type HmacSha256 = hmac::Hmac<sha2::Sha256>;
 
@@ -362,6 +422,7 @@ mod tests {
 
         let key = counter.derive(
             &hex!("7d4f86fdfd1c4ba04c674a68d60316d12c99c1b1f44f0a8e02bd2601377ebcd9"),
+            false,
             false,
             false,
             &hex!("921ab061920b191de12f746ac9de08004f2c20f01775e27bcacdc21ee4a5ff0387758f36d8ec71c7a8c8208284f650b611837e"),
@@ -383,7 +444,7 @@ mod tests {
         let counter = Counter::<HmacSha256, HmacSha512>::default();
         for (v, i) in KNOWN_VALUES_COUNTER_HMAC_SHA256.iter().zip(0..) {
             assert_eq!(
-                counter.derive(v.key, v.use_l, v.use_separator, v.label, v.context,),
+                counter.derive(v.key, v.use_l, v.use_separator, true, v.label, v.context,),
                 Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
                 "key derivation failed for (index: {i}):\n{v:x?}"
             );
@@ -406,6 +467,7 @@ mod tests {
                 &hex!("43eef6d824fd820405626ab9b6d79f1fd04e126ab8e17729e3afc7cb5af794f8"),
                 false,
                 false,
+                true,
                 &hex!("5e269b5a7bdedcc3e875e2725693a257fc60011af7dcd68a3358507fe29b0659ca66951daa05a15032033650bc58a27840f8fbe9f4088b9030738f68"),
                 &[],
             ),
@@ -467,7 +529,7 @@ mod tests {
             let feedback =
                 Feedback::<HmacSha256, HmacSha512>::new(v.iv.map(GenericArray::from_slice));
             assert_eq!(
-                feedback.derive(v.key, v.use_l, v.use_separator, v.label, v.context,),
+                feedback.derive(v.key, v.use_l, v.use_separator, true, v.label, v.context,),
                 Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
                 "key derivation failed for (index: {i}):\n{v:x?}"
             );
@@ -502,7 +564,7 @@ mod tests {
         for (v, i) in KNOWN_VALUES_DOUBLE_PIPELINE_HMAC_SHA256.iter().zip(0..) {
             let dbl_pipeline = DoublePipeline::<HmacSha256, MockOutput>::default();
             assert_eq!(
-                dbl_pipeline.derive(v.key, v.use_l, v.use_separator, v.label, v.context,),
+                dbl_pipeline.derive(v.key, v.use_l, v.use_separator, false, v.label, v.context,),
                 Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
                 "key derivation failed for (index: {i}):\n{v:x?}"
             );

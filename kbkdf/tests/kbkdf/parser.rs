@@ -102,7 +102,7 @@ impl Rlen {
 trait TestData {
     fn l(&self) -> usize;
     fn read_test_data<'a>(lines: impl Iterator<Item = &'a str>, ctx: CounterLocation) -> Self;
-    fn test_kbkdf<Prf, K, R>(&self)
+    fn test_kbkdf<Prf, K, R>(&self, use_counter: bool)
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
@@ -161,7 +161,7 @@ impl TestData for CounterTestData {
         }
     }
 
-    fn test_kbkdf<Prf, K, R>(&self)
+    fn test_kbkdf<Prf, K, R>(&self, use_counter: bool)
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
@@ -180,6 +180,7 @@ impl TestData for CounterTestData {
                 self.ki.as_slice(),
                 false,
                 false,
+                use_counter,
                 label.as_slice(),
                 context.as_slice(),
             )
@@ -217,7 +218,7 @@ impl TestData for DoublePipelineTestData {
         }
     }
 
-    fn test_kbkdf<Prf, K, R>(&self)
+    fn test_kbkdf<Prf, K, R>(&self, use_counter: bool)
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
@@ -234,6 +235,7 @@ impl TestData for DoublePipelineTestData {
                 self.ki.as_slice(),
                 false,
                 false,
+                use_counter,
                 self.fixed_data.as_slice(),
                 &[],
             )
@@ -282,7 +284,7 @@ impl TestData for FeedbackTestData {
         }
     }
 
-    fn test_kbkdf<Prf, K, R>(&self)
+    fn test_kbkdf<Prf, K, R>(&self, use_counter: bool)
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
@@ -299,6 +301,7 @@ impl TestData for FeedbackTestData {
                 self.ki.as_slice(),
                 false,
                 false,
+                use_counter,
                 self.fixed_data.as_slice(),
                 &[],
             )
@@ -312,7 +315,13 @@ impl TestData for FeedbackTestData {
     }
 }
 
-fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, _counter_location: CounterLocation, r_len: Rlen) {
+fn test_kbkdf<T: TestData>(
+    test_data: T,
+    prf: Prf,
+    _counter_location: CounterLocation,
+    r_len: Rlen,
+    use_counter: bool,
+) {
     macro_rules! gen_inner {
         ($prf_ty:ident, { $($l_value:expr => $l_ty:ident,)* }, { $($r_value:expr => $r_ty:ident,)* }) => {
             gen_inner!(@inner $prf_ty : $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
@@ -321,7 +330,7 @@ fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, _counter_location: CounterLoc
             if test_data.l() == $next_l_value {
                 $(
                     if r_len == $r_value {
-                        test_data.test_kbkdf::<$prf_ty, $next_l_ty, $r_ty>();
+                        test_data.test_kbkdf::<$prf_ty, $next_l_ty, $r_ty>(use_counter);
                         return;
                     }
                 )*
@@ -435,7 +444,7 @@ fn eval_test_vectors<T: TestData>(data: &str, use_counter: bool) -> Option<()> {
                 let test_data = T::read_test_data(&mut data, counter_location);
 
                 // Test KBKDF.
-                test_kbkdf(test_data, prf, counter_location, r_len);
+                test_kbkdf(test_data, prf, counter_location, r_len, use_counter);
 
                 let next_line = next_line(&mut data)?;
 
