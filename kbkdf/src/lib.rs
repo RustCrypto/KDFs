@@ -8,9 +8,6 @@
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(feature = "std")]
-extern crate std;
-
 use core::{fmt, marker::PhantomData, ops::Mul};
 use digest::{
     array::{typenum::Unsigned, Array, ArraySize},
@@ -24,7 +21,6 @@ pub mod sealed;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-    // TODO(baloo): we can probably move that to a compilation error via use of typenum
     InvalidRequestSize,
 }
 
@@ -39,13 +35,7 @@ impl fmt::Display for Error {
     }
 }
 
-#[cfg(feature = "std")]
-mod std_error {
-    use super::Error;
-    use std::error;
-
-    impl error::Error for Error {}
-}
+impl core::error::Error for Error {}
 
 // Helper structure along with [`KbkdfUser`] to compute values of L and H.
 struct KbkdfCore<OutputLen, PrfOutputLen> {
@@ -92,7 +82,6 @@ where
     /// Derives `key` from `kin` and other parameters.
     fn derive(
         &self,
-        //kin: &GenericArray<u8, Prf::KeySize>,
         kin: &[u8],
         use_l: bool,
         use_separator: bool,

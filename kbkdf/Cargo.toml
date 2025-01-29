@@ -25,9 +25,6 @@ sha1 = { version = "0.11.0-pre.2", default-features = false }
 cmac = "0.8.0-pre.2"
 aes = "0.9.0-pre.2"
 
-[features]
-std = ["hmac/std"]
-
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
