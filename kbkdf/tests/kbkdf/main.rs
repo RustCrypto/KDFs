@@ -1,13 +1,5 @@
 mod parser;
 
-struct FeedbackModeTestData {
-    iv: &'static [u8],
-    kin: &'static [u8],
-    label: &'static [u8],
-    context: &'static [u8],
-    kout: &'static [u8],
-}
-
 type HmacSha1 = hmac::Hmac<sha1::Sha1>;
 type HmacSha224 = hmac::Hmac<sha2::Sha224>;
 type HmacSha256 = hmac::Hmac<sha2::Sha256>;

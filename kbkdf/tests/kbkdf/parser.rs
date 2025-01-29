@@ -2,14 +2,12 @@ use digest::consts::*;
 use hex;
 use kbkdf::Kbkdf;
 
-use core::{fmt, marker::PhantomData, num::Wrapping, ops::Mul};
+use core::ops::Mul;
 use digest::{
     crypto_common::KeySizeUser,
-    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
-    typenum::op,
+    generic_array::{typenum::Unsigned, ArrayLength},
     KeyInit, Mac,
 };
-use divrem::DivCeil;
 
 use crate::*;
 
@@ -26,8 +24,6 @@ enum Prf {
     HmacSha384,
     HmacSha512,
 }
-
-type Prff = Prf;
 
 impl Prf {
     fn from_str(s: &str) -> Self {
@@ -103,22 +99,10 @@ impl Rlen {
     }
 }
 
-fn next_line<'a>(mut data: impl Iterator<Item = &'a str>) -> Option<&'a str> {
-    Some(loop {
-        if let Some(l) = data.next() {
-            if !l.is_empty() {
-                break l;
-            }
-        } else {
-            return None;
-        }
-    })
-}
-
 trait TestData {
     fn l(&self) -> usize;
     fn read_test_data<'a>(lines: impl Iterator<Item = &'a str>, ctx: CounterLocation) -> Self;
-    fn test_kbkdf<Prf, K, R>(&self, prf: Prff, counter_location: CounterLocation, r_len: Rlen)
+    fn test_kbkdf<Prf, K, R>(&self)
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
@@ -177,7 +161,7 @@ impl TestData for CounterTestData {
         }
     }
 
-    fn test_kbkdf<Prf, K, R>(&self, prf: Prff, _counter_location: CounterLocation, r_len: Rlen)
+    fn test_kbkdf<Prf, K, R>(&self)
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
@@ -205,7 +189,130 @@ impl TestData for CounterTestData {
     }
 }
 
-fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, counter_location: CounterLocation, r_len: Rlen) {
+struct DoublePipelineTestData {
+    l: usize,
+    ki: Vec<u8>,
+    fixed_data: Vec<u8>,
+    ko: Vec<u8>,
+}
+
+impl TestData for DoublePipelineTestData {
+    fn read_test_data<'a>(mut data: impl Iterator<Item = &'a str>, _: CounterLocation) -> Self {
+        // L = ...
+        let l = data.next().unwrap()[4..].parse().unwrap();
+        // KI = ...
+        let ki = hex::decode(&data.next().unwrap()[5..]).unwrap();
+
+        // Skip "FixedInputDataByteLen".
+        data.next();
+        let fixed_data = hex::decode(&data.next().unwrap()[17..]).unwrap();
+
+        let ko = hex::decode(&data.next().unwrap()[5..]).unwrap();
+
+        Self {
+            l,
+            ki,
+            fixed_data,
+            ko,
+        }
+    }
+
+    fn test_kbkdf<Prf, K, R>(&self)
+    where
+        Prf: Mac + KeyInit,
+        K: KeySizeUser,
+        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        <K::KeySize as Mul<U8>>::Output: Unsigned,
+        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
+        R: kbkdf::sealed::R,
+    {
+        let double_pipeline = kbkdf::DoublePipeline::<Prf, K, R>::default();
+
+        let key = double_pipeline
+            .derive(
+                self.ki.as_slice(),
+                false,
+                false,
+                self.fixed_data.as_slice(),
+                &[],
+            )
+            .unwrap();
+
+        assert_eq!(self.ko[..], key[..]);
+    }
+
+    fn l(&self) -> usize {
+        self.l
+    }
+}
+
+struct FeedbackTestData {
+    l: usize,
+    ki: Vec<u8>,
+    iv: Vec<u8>,
+    fixed_data: Vec<u8>,
+    ko: Vec<u8>,
+}
+
+impl TestData for FeedbackTestData {
+    fn read_test_data<'a>(mut data: impl Iterator<Item = &'a str>, _: CounterLocation) -> Self {
+        // L = ...
+        let l = data.next().unwrap()[4..].parse().unwrap();
+        // KI = ...
+        let ki = hex::decode(&data.next().unwrap()[5..]).unwrap();
+
+        // Skip "IVlen"
+        data.next();
+        // IV = ...
+        let iv = hex::decode(&data.next().unwrap()[5..]).unwrap();
+
+        // Skip "FixedInputDataByteLen".
+        data.next();
+        let fixed_data = hex::decode(&data.next().unwrap()[17..]).unwrap();
+
+        let ko = hex::decode(&data.next().unwrap()[5..]).unwrap();
+
+        Self {
+            l,
+            ki,
+            iv,
+            fixed_data,
+            ko,
+        }
+    }
+
+    fn test_kbkdf<Prf, K, R>(&self)
+    where
+        Prf: Mac + KeyInit,
+        K: KeySizeUser,
+        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        <K::KeySize as Mul<U8>>::Output: Unsigned,
+        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
+        R: kbkdf::sealed::R,
+    {
+        let feedback = kbkdf::Feedback::<Prf, K, R>::new(Some(self.iv.as_slice().into()));
+
+        let key = feedback
+            .derive(
+                self.ki.as_slice(),
+                false,
+                false,
+                self.fixed_data.as_slice(),
+                &[],
+            )
+            .unwrap();
+
+        assert_eq!(self.ko[..], key[..]);
+    }
+
+    fn l(&self) -> usize {
+        self.l
+    }
+}
+
+fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, _counter_location: CounterLocation, r_len: Rlen) {
     macro_rules! gen_inner {
         ($prf_ty:ident, { $($l_value:expr => $l_ty:ident,)* }, { $($r_value:expr => $r_ty:ident,)* }) => {
             gen_inner!(@inner $prf_ty : $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
@@ -214,7 +321,7 @@ fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, counter_location: CounterLoca
             if test_data.l() == $next_l_value {
                 $(
                     if r_len == $r_value {
-                        test_data.test_kbkdf::<$prf_ty, $next_l_ty, $r_ty>(prf, counter_location, r_len);
+                        test_data.test_kbkdf::<$prf_ty, $next_l_ty, $r_ty>();
                         return;
                     }
                 )*
@@ -271,72 +378,19 @@ fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, counter_location: CounterLoca
     panic!("unhandled KBKDF parameters");
 }
 
-struct FeedbackTestData {
-    l: usize,
-    ki: Vec<u8>,
-    iv: Vec<u8>,
-    fixed_data: Vec<u8>,
-    ko: Vec<u8>,
-}
-
-impl TestData for FeedbackTestData {
-    fn read_test_data<'a>(mut data: impl Iterator<Item = &'a str>, _: CounterLocation) -> Self {
-        // L = ...
-        let l = data.next().unwrap()[4..].parse().unwrap();
-        // KI = ...
-        let ki = hex::decode(&data.next().unwrap()[5..]).unwrap();
-
-        // Skip "IVlen"
-        data.next();
-        // IV = ...
-        let iv = hex::decode(&data.next().unwrap()[5..]).unwrap();
-
-        // Skip "FixedInputDataByteLen".
-        data.next();
-        let fixed_data = hex::decode(&data.next().unwrap()[17..]).unwrap();
-
-        let ko = hex::decode(&data.next().unwrap()[5..]).unwrap();
-
-        Self {
-            l,
-            ki,
-            iv,
-            fixed_data,
-            ko,
+fn next_line<'a>(mut data: impl Iterator<Item = &'a str>) -> Option<&'a str> {
+    Some(loop {
+        if let Some(l) = data.next() {
+            if !l.is_empty() {
+                break l;
+            }
+        } else {
+            return None;
         }
-    }
-
-    fn test_kbkdf<Prf, K, R>(&self, prf: Prff, _counter_location: CounterLocation, r_len: Rlen)
-    where
-        Prf: Mac + KeyInit,
-        K: KeySizeUser,
-        K::KeySize: ArrayLength<u8> + Mul<U8>,
-        <K::KeySize as Mul<U8>>::Output: Unsigned,
-        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
-        <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
-        R: kbkdf::sealed::R,
-    {
-        let feedback = kbkdf::Feedback::<Prf, K, R>::new(Some(self.iv.as_slice().into()));
-
-        let key = feedback
-            .derive(
-                self.ki.as_slice(),
-                false,
-                false,
-                self.fixed_data.as_slice(),
-                &[],
-            )
-            .unwrap();
-
-        assert_eq!(self.ko[..], key[..]);
-    }
-
-    fn l(&self) -> usize {
-        self.l
-    }
+    })
 }
 
-fn eval_test_vectors<T: TestData>(data: &str) -> Option<()> {
+fn eval_test_vectors<T: TestData>(data: &str, use_counter: bool) -> Option<()> {
     let mut data = data.split("\r\n");
 
     let mut line = data.next();
@@ -349,11 +403,16 @@ fn eval_test_vectors<T: TestData>(data: &str) -> Option<()> {
 
         // Read and parse KBKDF configuration.
         let prf = Prf::from_str(&l);
-        let counter_location = CounterLocation::from_str(data.next().unwrap());
-        let r_len = Rlen::from_str(&data.next().unwrap());
-
-        // Skip empty line.
-        data.next();
+        let (counter_location, r_len) = if use_counter {
+            (
+                CounterLocation::from_str(data.next().unwrap()),
+                Rlen::from_str(&data.next().unwrap()),
+            )
+        } else {
+            // Counter location and r-len are not needed and do not present in a test file.
+            // We any use any value here, because it is ignored anyway
+            (CounterLocation::Before, Rlen::Bits8)
+        };
 
         if !prf.is_supported() || !counter_location.is_supported() {
             // Skip unsupported configuration.
@@ -366,15 +425,16 @@ fn eval_test_vectors<T: TestData>(data: &str) -> Option<()> {
                 }
             };
         } else {
-            // Read test cases data.
-            let mut count_data = data.next();
+            let mut count_data = next_line(&mut data);
             while let Some(count) = count_data {
                 if count.is_empty() {
                     break;
                 }
 
+                // Read test cases data.
                 let test_data = T::read_test_data(&mut data, counter_location);
 
+                // Test KBKDF.
                 test_kbkdf(test_data, prf, counter_location, r_len);
 
                 let next_line = next_line(&mut data)?;
@@ -398,12 +458,19 @@ fn eval_test_vectors<T: TestData>(data: &str) -> Option<()> {
 fn counter_mode() {
     let data = include_str!("../data/CounterMode/KDFCTR_gen.rsp");
 
-    eval_test_vectors::<CounterTestData>(data);
+    eval_test_vectors::<CounterTestData>(data, true);
 }
 
 #[test]
 fn feedback_mode_no_zero_iv() {
     let data = include_str!("../data/FeedbackModeNOzeroiv/KDFFeedback_gen.rsp");
 
-    eval_test_vectors::<FeedbackTestData>(data);
+    eval_test_vectors::<FeedbackTestData>(data, true);
+}
+
+#[test]
+fn pipeline_mode_without_counter() {
+    let data = include_str!("../data/PipelineModeWOCounterr/KDFDblPipeline_gen.rsp");
+
+    eval_test_vectors::<DoublePipelineTestData>(data, false);
 }
