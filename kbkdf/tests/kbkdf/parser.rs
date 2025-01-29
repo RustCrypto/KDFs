@@ -483,3 +483,10 @@ fn pipeline_mode_without_counter() {
 
     eval_test_vectors::<DoublePipelineTestData>(data, false);
 }
+
+#[test]
+fn pipeline_mode_with_counter() {
+    let data = include_str!("../data/PipelineModewithCounter/KDFDblPipeline_gen.rsp");
+
+    eval_test_vectors::<DoublePipelineTestData>(data, true);
+}
