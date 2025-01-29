@@ -2,6 +2,15 @@ use digest::consts::*;
 use hex;
 use kbkdf::Kbkdf;
 
+use core::{fmt, marker::PhantomData, num::Wrapping, ops::Mul};
+use digest::{
+    crypto_common::KeySizeUser,
+    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
+    typenum::op,
+    KeyInit, Mac,
+};
+use divrem::DivCeil;
+
 use crate::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,6 +26,8 @@ enum Prf {
     HmacSha384,
     HmacSha512,
 }
+
+type Prff = Prf;
 
 impl Prf {
     fn from_str(s: &str) -> Self {
@@ -105,14 +116,20 @@ fn next_line<'a>(mut data: impl Iterator<Item = &'a str>) -> Option<&'a str> {
 }
 
 trait TestData {
-    type Context;
-
-    fn read_test_data<'a>(lines: impl Iterator<Item = &'a str>, ctx: Self::Context) -> Self;
-    fn test_kbkdf(&self, prf: Prf, counter_location: CounterLocation, r_len: Rlen);
+    fn l(&self) -> usize;
+    fn read_test_data<'a>(lines: impl Iterator<Item = &'a str>, ctx: CounterLocation) -> Self;
+    fn test_kbkdf<Prf, K, R>(&self, prf: Prff, counter_location: CounterLocation, r_len: Rlen)
+    where
+        Prf: Mac + KeyInit,
+        K: KeySizeUser,
+        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        <K::KeySize as Mul<U8>>::Output: Unsigned,
+        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
+        R: kbkdf::sealed::R;
 }
 
 struct CounterTestData {
-    count: usize,
     l: usize,
     ki: Vec<u8>,
     fixed_data: (Vec<u8>, Vec<u8>),
@@ -120,14 +137,14 @@ struct CounterTestData {
 }
 
 impl TestData for CounterTestData {
-    type Context = (CounterLocation, String);
+    fn l(&self) -> usize {
+        self.l
+    }
 
     fn read_test_data<'a>(
         mut data: impl Iterator<Item = &'a str>,
-        (counter_location, count): Self::Context,
+        counter_location: CounterLocation,
     ) -> Self {
-        // COUNT=...
-        let count = count[6..].parse().unwrap();
         // L = ...
         let l = data.next().unwrap()[4..].parse().unwrap();
         // KI = ...
@@ -153,7 +170,6 @@ impl TestData for CounterTestData {
         let ko = hex::decode(&data.next().unwrap()[5..]).unwrap();
 
         Self {
-            count,
             l,
             ki,
             fixed_data,
@@ -161,88 +177,166 @@ impl TestData for CounterTestData {
         }
     }
 
-    fn test_kbkdf(&self, prf: Prf, _counter_location: CounterLocation, r_len: Rlen) {
-        macro_rules! gen_inner {
-            ($prf_ty:ident, { $($l_value:expr => $l_ty:ident,)* }, { $($r_value:expr => $r_ty:ident,)* }) => {
-                gen_inner!(@inner $prf_ty : $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
-            };
-            (@inner $prf_ty:ident : $next_l_value:expr => $next_l_ty:ident, $($l_value:expr => $l_ty:ident,)* ; $($r_value:expr => $r_ty:ident,)*) => {
-                if self.l == $next_l_value {
-                    $(
-                        if r_len == $r_value {
-                            let counter = kbkdf::Counter::<$prf_ty, $next_l_ty, $r_ty>::default();
+    fn test_kbkdf<Prf, K, R>(&self, prf: Prff, _counter_location: CounterLocation, r_len: Rlen)
+    where
+        Prf: Mac + KeyInit,
+        K: KeySizeUser,
+        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        <K::KeySize as Mul<U8>>::Output: Unsigned,
+        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
+        R: kbkdf::sealed::R,
+    {
+        let counter = kbkdf::Counter::<Prf, K, R>::default();
 
-                            let (label, context) = &self.fixed_data;
+        let (label, context) = &self.fixed_data;
 
-                            let key = counter
-                                .derive(
-                                    self.ki.as_slice(),
-                                    false,
-                                    false,
-                                    label.as_slice(),
-                                    context.as_slice(),
-                                )
-                                .unwrap();
+        let key = counter
+            .derive(
+                self.ki.as_slice(),
+                false,
+                false,
+                label.as_slice(),
+                context.as_slice(),
+            )
+            .unwrap();
 
-                            assert_eq!(self.ko[..], key[..]);
-                            return;
-                        }
-                    )*
-                }
-                gen_inner!(@inner $prf_ty : $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
-            };
-            (@inner $prf_ty:ident : ; $($r_value:expr => $r_ty:ident,)*) => {};
-        }
-
-        macro_rules! gen {
-            ({ $($prf_value:expr => $prf_ty:ident,)* }, { $($l_value:expr => $l_ty:ident,)* }, { $($r_value:expr => $r_ty:ident,)* }) => {
-                gen!(@inner $($prf_value => $prf_ty,)* ; $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
-            };
-            (@inner $next_prf_value:expr => $next_prf_ty:ident, $($prf_value:expr => $prf_ty:ident,)* ; $($l_value:expr => $l_ty:ident,)* ; $($r_value:expr => $r_ty:ident,)*) => {
-                if prf == $next_prf_value {
-                    gen_inner!($next_prf_ty, { $($l_value => $l_ty,)* }, { $($r_value => $r_ty,)* });
-                }
-                gen!(@inner $($prf_value => $prf_ty,)* ; $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
-            };
-            (@inner ; $($l_value:expr => $l_ty:ident,)* ; $($r_value:expr => $r_ty:ident,)*) => {};
-        }
-
-        gen!({
-            Prf::CmacAes128 => CmacAes128,
-            Prf::CmacAes192 => CmacAes192,
-            Prf::CmacAes256 => CmacAes256,
-            Prf::HmacSha1 => HmacSha1,
-            Prf::HmacSha224 => HmacSha224,
-            Prf::HmacSha256 => HmacSha256,
-            Prf::HmacSha384 => HmacSha384,
-            Prf::HmacSha512 => HmacSha512,
-        }, {
-            128 => MockOutputU128,
-            160 => MockOutputU160,
-            256 => MockOutputU256,
-            320 => MockOutputU320,
-            480 => MockOutputU480,
-            512 => MockOutputU512,
-            528 => MockOutputU528,
-            560 => MockOutputU560,
-            1024 => MockOutputU1024,
-            1040 => MockOutputU1040,
-            1600 => MockOutputU1600,
-            2048 => MockOutputU2048,
-            2064 => MockOutputU2064,
-            2400 => MockOutputU2400,
-        }, {
-            Rlen::Bits8 => U8,
-            Rlen::Bits16 => U16,
-            Rlen::Bits24 => U24,
-            Rlen::Bits32 => U32,
-        });
-
-        panic!("unhandled KBKDF parameters");
+        assert_eq!(self.ko[..], key[..]);
     }
 }
 
-fn parse_counter_mode(data: &str) -> Option<()> {
+fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, counter_location: CounterLocation, r_len: Rlen) {
+    macro_rules! gen_inner {
+        ($prf_ty:ident, { $($l_value:expr => $l_ty:ident,)* }, { $($r_value:expr => $r_ty:ident,)* }) => {
+            gen_inner!(@inner $prf_ty : $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
+        };
+        (@inner $prf_ty:ident : $next_l_value:expr => $next_l_ty:ident, $($l_value:expr => $l_ty:ident,)* ; $($r_value:expr => $r_ty:ident,)*) => {
+            if test_data.l() == $next_l_value {
+                $(
+                    if r_len == $r_value {
+                        test_data.test_kbkdf::<$prf_ty, $next_l_ty, $r_ty>(prf, counter_location, r_len);
+                        return;
+                    }
+                )*
+            }
+            gen_inner!(@inner $prf_ty : $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
+        };
+        (@inner $prf_ty:ident : ; $($r_value:expr => $r_ty:ident,)*) => {};
+    }
+
+    macro_rules! gen {
+        ({ $($prf_value:expr => $prf_ty:ident,)* }, { $($l_value:expr => $l_ty:ident,)* }, { $($r_value:expr => $r_ty:ident,)* }) => {
+            gen!(@inner $($prf_value => $prf_ty,)* ; $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
+        };
+        (@inner $next_prf_value:expr => $next_prf_ty:ident, $($prf_value:expr => $prf_ty:ident,)* ; $($l_value:expr => $l_ty:ident,)* ; $($r_value:expr => $r_ty:ident,)*) => {
+            if prf == $next_prf_value {
+                gen_inner!($next_prf_ty, { $($l_value => $l_ty,)* }, { $($r_value => $r_ty,)* });
+            }
+            gen!(@inner $($prf_value => $prf_ty,)* ; $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
+        };
+        (@inner ; $($l_value:expr => $l_ty:ident,)* ; $($r_value:expr => $r_ty:ident,)*) => {};
+    }
+
+    gen!({
+        Prf::CmacAes128 => CmacAes128,
+        Prf::CmacAes192 => CmacAes192,
+        Prf::CmacAes256 => CmacAes256,
+        Prf::HmacSha1 => HmacSha1,
+        Prf::HmacSha224 => HmacSha224,
+        Prf::HmacSha256 => HmacSha256,
+        Prf::HmacSha384 => HmacSha384,
+        Prf::HmacSha512 => HmacSha512,
+    }, {
+        128 => MockOutputU128,
+        160 => MockOutputU160,
+        256 => MockOutputU256,
+        320 => MockOutputU320,
+        480 => MockOutputU480,
+        512 => MockOutputU512,
+        528 => MockOutputU528,
+        560 => MockOutputU560,
+        1024 => MockOutputU1024,
+        1040 => MockOutputU1040,
+        1600 => MockOutputU1600,
+        2048 => MockOutputU2048,
+        2064 => MockOutputU2064,
+        2400 => MockOutputU2400,
+    }, {
+        Rlen::Bits8 => U8,
+        Rlen::Bits16 => U16,
+        Rlen::Bits24 => U24,
+        Rlen::Bits32 => U32,
+    });
+
+    panic!("unhandled KBKDF parameters");
+}
+
+struct FeedbackTestData {
+    l: usize,
+    ki: Vec<u8>,
+    iv: Vec<u8>,
+    fixed_data: Vec<u8>,
+    ko: Vec<u8>,
+}
+
+impl TestData for FeedbackTestData {
+    fn read_test_data<'a>(mut data: impl Iterator<Item = &'a str>, _: CounterLocation) -> Self {
+        // L = ...
+        let l = data.next().unwrap()[4..].parse().unwrap();
+        // KI = ...
+        let ki = hex::decode(&data.next().unwrap()[5..]).unwrap();
+
+        // Skip "IVlen"
+        data.next();
+        // IV = ...
+        let iv = hex::decode(&data.next().unwrap()[5..]).unwrap();
+
+        // Skip "FixedInputDataByteLen".
+        data.next();
+        let fixed_data = hex::decode(&data.next().unwrap()[17..]).unwrap();
+
+        let ko = hex::decode(&data.next().unwrap()[5..]).unwrap();
+
+        Self {
+            l,
+            ki,
+            iv,
+            fixed_data,
+            ko,
+        }
+    }
+
+    fn test_kbkdf<Prf, K, R>(&self, prf: Prff, _counter_location: CounterLocation, r_len: Rlen)
+    where
+        Prf: Mac + KeyInit,
+        K: KeySizeUser,
+        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        <K::KeySize as Mul<U8>>::Output: Unsigned,
+        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
+        R: kbkdf::sealed::R,
+    {
+        let feedback = kbkdf::Feedback::<Prf, K, R>::new(Some(self.iv.as_slice().into()));
+
+        let key = feedback
+            .derive(
+                self.ki.as_slice(),
+                false,
+                false,
+                self.fixed_data.as_slice(),
+                &[],
+            )
+            .unwrap();
+
+        assert_eq!(self.ko[..], key[..]);
+    }
+
+    fn l(&self) -> usize {
+        self.l
+    }
+}
+
+fn eval_test_vectors<T: TestData>(data: &str) -> Option<()> {
     let mut data = data.split("\r\n");
 
     let mut line = data.next();
@@ -279,12 +373,9 @@ fn parse_counter_mode(data: &str) -> Option<()> {
                     break;
                 }
 
-                let test_data = CounterTestData::read_test_data(
-                    &mut data,
-                    (counter_location, count.to_string()),
-                );
+                let test_data = T::read_test_data(&mut data, counter_location);
 
-                test_data.test_kbkdf(prf, counter_location, r_len);
+                test_kbkdf(test_data, prf, counter_location, r_len);
 
                 let next_line = next_line(&mut data)?;
 
@@ -307,5 +398,12 @@ fn parse_counter_mode(data: &str) -> Option<()> {
 fn counter_mode() {
     let data = include_str!("../data/CounterMode/KDFCTR_gen.rsp");
 
-    parse_counter_mode(data);
+    eval_test_vectors::<CounterTestData>(data);
+}
+
+#[test]
+fn feedback_mode_no_zero_iv() {
+    let data = include_str!("../data/FeedbackModeNOzeroiv/KDFFeedback_gen.rsp");
+
+    eval_test_vectors::<FeedbackTestData>(data);
 }

@@ -21,7 +21,7 @@ use digest::{
 };
 use divrem::DivCeil;
 
-mod sealed;
+pub mod sealed;
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
