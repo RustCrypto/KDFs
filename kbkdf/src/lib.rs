@@ -11,7 +11,7 @@
 #[cfg(feature = "std")]
 extern crate std;
 
-use core::{fmt, marker::PhantomData, num::Wrapping, ops::Mul};
+use core::{fmt, marker::PhantomData, ops::Mul};
 use digest::{
     array::{typenum::Unsigned, Array, ArraySize},
     consts::{U32, U8},
@@ -19,7 +19,6 @@ use digest::{
     typenum::op,
     KeyInit, Mac,
 };
-use divrem::DivCeil;
 
 pub mod sealed;
 
@@ -103,11 +102,8 @@ where
     ) -> Result<Array<u8, K::KeySize>, Error> {
         // n - An integer whose value is the number of iterations of the PRF needed to generate L
         // bits of keying material
-        let n: u32 = Wrapping(<KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32)
-            .div_ceil(Wrapping(
-                <KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::H::U32,
-            ))
-            .0;
+        let n: u32 = <KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32
+            .div_ceil(<KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::H::U32);
 
         if n as usize > 2usize.pow(R::U32) - 1 {
             return Err(Error::InvalidRequestSize);

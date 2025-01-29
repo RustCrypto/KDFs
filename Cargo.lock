@@ -18,7 +18,7 @@ name = "ansi-x963-kdf"
 version = "0.1.0"
 dependencies = [
  "digest",
- "hex-literal 0.4.1",
+ "hex-literal",
  "sha2",
 ]
 
@@ -27,7 +27,7 @@ name = "bake-kdf"
 version = "0.1.0"
 dependencies = [
  "belt-hash",
- "hex-literal 0.4.1",
+ "hex-literal",
 ]
 
 [[package]]
@@ -93,7 +93,7 @@ name = "concat-kdf"
 version = "0.2.0-pre"
 dependencies = [
  "digest",
- "hex-literal 0.4.1",
+ "hex-literal",
  "sha2",
 ]
 
@@ -138,12 +138,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "divrem"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69dde51e8fef5e12c1d65e0929b03d66e4c0c18282bc30ed2ca050ad6f44dd82"
-
-[[package]]
 name = "getrandom"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -162,35 +156,16 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hex-literal"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d70693199b3cf4552f3fa720b54163927a3ebed2aef240efaf556033ab336a11"
-dependencies = [
- "hex-literal-impl",
- "proc-macro-hack",
-]
-
-[[package]]
-name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
-
-[[package]]
-name = "hex-literal-impl"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59448fc2f82a5fb6907f78c3d69d843e82ff5b051923313cc4438cb0c7b745a8"
-dependencies = [
- "proc-macro-hack",
-]
 
 [[package]]
 name = "hkdf"
 version = "0.13.0-pre.4"
 dependencies = [
  "blobby",
- "hex-literal 0.4.1",
+ "hex-literal",
  "hmac",
  "sha1",
  "sha2",
@@ -230,9 +205,8 @@ dependencies = [
  "aes",
  "cmac",
  "digest",
- "divrem",
  "hex",
- "hex-literal 0.2.2",
+ "hex-literal",
  "hmac",
  "sha1",
  "sha2",
@@ -243,12 +217,6 @@ name = "libc"
 version = "0.2.169"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
-
-[[package]]
-name = "proc-macro-hack"
-version = "0.5.20+deprecated"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
 
 [[package]]
 name = "rand_core"
