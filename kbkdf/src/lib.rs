@@ -1,12 +1,5 @@
-//! An implementation of KBKDF, the (Key Based Key Derivation Function.
-//!
-//! This function is described in section 4 of [NIST SP 800-108r1, Recommendation
-//! for Key Derivation Using Pseudorandom Functions][1]
-//!
-//! [1]: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-108r1.pdf
-
 #![no_std]
-#![cfg_attr(docsrs, feature(doc_cfg))]
+#![doc = include_str!("../README.md")]
 
 use core::{fmt, marker::PhantomData, ops::Mul};
 use digest::{
