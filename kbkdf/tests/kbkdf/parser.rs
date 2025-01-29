@@ -99,9 +99,15 @@ impl Rlen {
     }
 }
 
+/// Each trait implementation represents one KBKDF mode and its data.
 trait TestData {
+    /// Returns the expected output length of the output key.
     fn l(&self) -> usize;
+
+    /// Reads test data from the iterator over test data file.
     fn read_test_data<'a>(lines: impl Iterator<Item = &'a str>, ctx: CounterLocation) -> Self;
+
+    /// Executes KBKDF key derivation.
     fn test_kbkdf<Prf, K, R>(&self, use_counter: bool)
     where
         Prf: Mac + KeyInit,
@@ -320,13 +326,11 @@ impl TestData for FeedbackTestData {
     }
 }
 
-fn test_kbkdf<T: TestData>(
-    test_data: T,
-    prf: Prf,
-    _counter_location: CounterLocation,
-    r_len: Rlen,
-    use_counter: bool,
-) {
+// This function tests KBKDF implementation against test vectors parsed from the file.
+//
+// All KDF parameters are obtained in runtime, but the implementation relies on generic type parameters which are compile-time.
+// Macros inside this function generate all possible KDF parameter configurations. A suitable KDF configuration will be selected during runtime.
+fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, r_len: Rlen, use_counter: bool) {
     macro_rules! gen_inner {
         ($prf_ty:ident, { $($l_value:expr => $l_ty:ident,)* }, { $($r_value:expr => $r_ty:ident,)* }) => {
             gen_inner!(@inner $prf_ty : $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
@@ -389,7 +393,12 @@ fn test_kbkdf<T: TestData>(
         Rlen::Bits32 => U32,
     });
 
-    panic!("unhandled KBKDF parameters");
+    panic!(
+        "unhandled KBKDF parameters: {:?} {} {:?}",
+        prf,
+        test_data.l(),
+        r_len
+    );
 }
 
 fn next_line<'a>(mut data: impl Iterator<Item = &'a str>) -> Option<&'a str> {
@@ -404,12 +413,17 @@ fn next_line<'a>(mut data: impl Iterator<Item = &'a str>) -> Option<&'a str> {
     })
 }
 
+/// Parses NIST test vectors and test the KBKDF implementation against them.
+///
+/// The return value should be ignored. It uses the `Option`type only to
+/// get out of the function conveniently when the end of the file is reached.
 fn eval_test_vectors<T: TestData>(data: &str, use_counter: bool) -> Option<()> {
     let mut data = data.split("\r\n");
 
     let mut line = data.next();
 
     while let Some(l) = line {
+        // Skip comments and empty lines.
         if l.starts_with("#") || l.is_empty() {
             line = data.next();
             continue;
@@ -424,7 +438,7 @@ fn eval_test_vectors<T: TestData>(data: &str, use_counter: bool) -> Option<()> {
             )
         } else {
             // Counter location and r-len are not needed and do not present in a test file.
-            // We any use any value here, because it is ignored anyway
+            // We any use any values here, because they are ignored anyway
             (CounterLocation::Before, Rlen::Bits8)
         };
 
@@ -449,7 +463,7 @@ fn eval_test_vectors<T: TestData>(data: &str, use_counter: bool) -> Option<()> {
                 let test_data = T::read_test_data(&mut data, counter_location);
 
                 // Test KBKDF.
-                test_kbkdf(test_data, prf, counter_location, r_len, use_counter);
+                test_kbkdf(test_data, prf, r_len, use_counter);
 
                 let next_line = next_line(&mut data)?;
 
