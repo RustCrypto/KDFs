@@ -294,7 +294,12 @@ impl TestData for FeedbackTestData {
         <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
         R: kbkdf::sealed::R,
     {
-        let feedback = kbkdf::Feedback::<Prf, K, R>::new(Some(self.iv.as_slice().into()));
+        let iv = if !self.iv.is_empty() {
+            Some(self.iv.as_slice().into())
+        } else {
+            None
+        };
+        let feedback = kbkdf::Feedback::<Prf, K, R>::new(iv);
 
         let key = feedback
             .derive(
@@ -475,6 +480,20 @@ fn feedback_mode_no_zero_iv() {
     let data = include_str!("../data/FeedbackModeNOzeroiv/KDFFeedback_gen.rsp");
 
     eval_test_vectors::<FeedbackTestData>(data, true);
+}
+
+#[test]
+fn feedback_mode_with_zero_iv() {
+    let data = include_str!("../data/FeedbackModewzeroiv/KDFFeedback_gen.rsp");
+
+    eval_test_vectors::<FeedbackTestData>(data, true);
+}
+
+#[test]
+fn feedback_mode_without_counter() {
+    let data = include_str!("../data/FeedbackModenocounter/KDFFeedback_gen.rsp");
+
+    eval_test_vectors::<FeedbackTestData>(data, false);
 }
 
 #[test]
