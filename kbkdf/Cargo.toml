@@ -13,19 +13,19 @@ readme = "README.md"
 rust-version = "1.65"
 
 [dependencies]
-digest = { version = "0.10", default-features = false, features = ["mac"] }
+digest = { version = "0.11.0-pre.9", default-features = false, features = ["mac"] }
 
 # divrem can be dropped with MSRV >= 1.73
 divrem = "1.0.0"
 
 [dev-dependencies]
-hex-literal = "0.2"
+hex-literal = "0.2.2"
 hex = "0.4"
-hmac = { version = "0.12", default-features = false }
-sha2 = { version = "0.10", default-features = false }
-sha1 = { version = "0.10", default-features = false }
-cmac = "0.7"
-aes = "0.8"
+hmac = { version = "0.13.0-pre.4", default-features = false }
+sha2 = { version = "0.11.0-pre.2", default-features = false }
+sha1 = { version = "0.11.0-pre.2", default-features = false }
+cmac = "0.8.0-pre.2"
+aes = "0.9.0-pre.2"
 
 [features]
 std = ["hmac/std"]

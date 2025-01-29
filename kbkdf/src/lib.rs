@@ -13,9 +13,9 @@ extern crate std;
 
 use core::{fmt, marker::PhantomData, num::Wrapping, ops::Mul};
 use digest::{
+    array::{typenum::Unsigned, Array, ArraySize},
     consts::{U32, U8},
     crypto_common::KeySizeUser,
-    generic_array::{typenum::Unsigned, ArrayLength, GenericArray},
     typenum::op,
     KeyInit, Mac,
 };
@@ -66,9 +66,9 @@ trait KbkdfUser {
 
 impl<OutputLen, PrfOutputLen> KbkdfUser for KbkdfCore<OutputLen, PrfOutputLen>
 where
-    OutputLen: ArrayLength<u8> + Mul<U8>,
+    OutputLen: ArraySize + Mul<U8>,
     <OutputLen as Mul<U8>>::Output: Unsigned,
-    PrfOutputLen: ArrayLength<u8> + Mul<U8>,
+    PrfOutputLen: ArraySize + Mul<U8>,
     <PrfOutputLen as Mul<U8>>::Output: Unsigned,
 {
     type L = op!(OutputLen * U8);
@@ -85,9 +85,9 @@ pub trait Kbkdf<Prf, K, R: sealed::R>
 where
     Prf: Mac + KeyInit,
     K: KeySizeUser,
-    K::KeySize: ArrayLength<u8> + Mul<U8>,
+    K::KeySize: ArraySize + Mul<U8>,
     <K::KeySize as Mul<U8>>::Output: Unsigned,
-    Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+    Prf::OutputSize: ArraySize + Mul<U8>,
     <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
 {
     /// Derives `key` from `kin` and other parameters.
@@ -100,7 +100,7 @@ where
         use_counter: bool,
         label: &[u8],
         context: &[u8],
-    ) -> Result<GenericArray<u8, K::KeySize>, Error> {
+    ) -> Result<Array<u8, K::KeySize>, Error> {
         // n - An integer whose value is the number of iterations of the PRF needed to generate L
         // bits of keying material
         let n: u32 = Wrapping(<KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32)
@@ -113,13 +113,13 @@ where
             return Err(Error::InvalidRequestSize);
         }
 
-        let mut output = GenericArray::<u8, K::KeySize>::default();
+        let mut output = Array::<u8, K::KeySize>::default();
         let mut builder = output.as_mut_slice();
 
         let mut ki = None;
         self.input_iv(&mut ki);
         let mut a = {
-            let mut h = <Prf as Mac>::new_from_slice(kin).unwrap();
+            let mut h = Prf::new_from_slice(kin).unwrap();
             h.update(label);
             if use_separator {
                 h.update(&[0]);
@@ -131,13 +131,13 @@ where
         for counter in 1..=n {
             if counter > 1 {
                 a = {
-                    let mut h = <Prf as Mac>::new_from_slice(kin).unwrap();
+                    let mut h = Prf::new_from_slice(kin).unwrap();
                     h.update(a.as_slice());
                     h.finalize().into_bytes()
                 };
             }
 
-            let mut h = <Prf as Mac>::new_from_slice(kin).unwrap();
+            let mut h = Prf::new_from_slice(kin).unwrap();
 
             if Self::FEEDBACK_KI {
                 if let Some(ki) = ki {
@@ -186,7 +186,7 @@ where
     }
 
     /// Input the IV in the PRF
-    fn input_iv(&self, _ki: &mut Option<GenericArray<u8, Prf::OutputSize>>) {}
+    fn input_iv(&self, _ki: &mut Option<Array<u8, Prf::OutputSize>>) {}
 
     /// Whether the KI should be reinjected every round.
     const FEEDBACK_KI: bool = false;
@@ -210,9 +210,9 @@ impl<Prf, K, R> Kbkdf<Prf, K, R> for Counter<Prf, K, R>
 where
     Prf: Mac + KeyInit,
     K: KeySizeUser,
-    K::KeySize: ArrayLength<u8> + Mul<U8>,
+    K::KeySize: ArraySize + Mul<U8>,
     <K::KeySize as Mul<U8>>::Output: Unsigned,
-    Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+    Prf::OutputSize: ArraySize + Mul<U8>,
     <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
     R: sealed::R,
 {
@@ -222,7 +222,7 @@ pub struct Feedback<'a, Prf, K, R = U32>
 where
     Prf: Mac,
 {
-    iv: Option<&'a GenericArray<u8, Prf::OutputSize>>,
+    iv: Option<&'a Array<u8, Prf::OutputSize>>,
     _marker: PhantomData<(Prf, K, R)>,
 }
 
@@ -230,7 +230,7 @@ impl<'a, Prf, K, R> Feedback<'a, Prf, K, R>
 where
     Prf: Mac,
 {
-    pub fn new(iv: Option<&'a GenericArray<u8, Prf::OutputSize>>) -> Self {
+    pub fn new(iv: Option<&'a Array<u8, Prf::OutputSize>>) -> Self {
         Self {
             iv,
             _marker: PhantomData,
@@ -242,13 +242,13 @@ impl<'a, Prf, K, R> Kbkdf<Prf, K, R> for Feedback<'a, Prf, K, R>
 where
     Prf: Mac + KeyInit,
     K: KeySizeUser,
-    K::KeySize: ArrayLength<u8> + Mul<U8>,
+    K::KeySize: ArraySize + Mul<U8>,
     <K::KeySize as Mul<U8>>::Output: Unsigned,
-    Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+    Prf::OutputSize: ArraySize + Mul<U8>,
     <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
     R: sealed::R,
 {
-    fn input_iv(&self, ki: &mut Option<GenericArray<u8, Prf::OutputSize>>) {
+    fn input_iv(&self, ki: &mut Option<Array<u8, Prf::OutputSize>>) {
         if let Some(iv) = self.iv {
             *ki = Some(iv.clone())
         }
@@ -279,9 +279,9 @@ impl<Prf, K, R> Kbkdf<Prf, K, R> for DoublePipeline<Prf, K, R>
 where
     Prf: Mac + KeyInit,
     K: KeySizeUser,
-    K::KeySize: ArrayLength<u8> + Mul<U8>,
+    K::KeySize: ArraySize + Mul<U8>,
     <K::KeySize as Mul<U8>>::Output: Unsigned,
-    Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+    Prf::OutputSize: ArraySize + Mul<U8>,
     <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
     R: sealed::R,
 {
@@ -290,7 +290,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{Counter, DoublePipeline, Feedback, GenericArray, Kbkdf};
+    use super::{Array, Counter, DoublePipeline, Feedback, Kbkdf};
+    use core::convert::TryFrom;
     use digest::{consts::*, crypto_common::KeySizeUser};
     use hex_literal::hex;
 
@@ -359,7 +360,7 @@ mod tests {
         for (v, i) in KNOWN_VALUES_COUNTER_HMAC_SHA256.iter().zip(0..) {
             assert_eq!(
                 counter.derive(v.key, v.use_l, v.use_separator, true, v.label, v.context,),
-                Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
+                Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
                 "key derivation failed for (index: {i}):\n{v:x?}"
             );
         }
@@ -385,7 +386,7 @@ mod tests {
                 &hex!("5e269b5a7bdedcc3e875e2725693a257fc60011af7dcd68a3358507fe29b0659ca66951daa05a15032033650bc58a27840f8fbe9f4088b9030738f68"),
                 &[],
             ),
-            Ok(GenericArray::<_, _>::from_slice(&hex!("f0a339ecbcae6add1afb27da3ba40a1320c6427a58afb9dc366b219b7eb29ecf")).clone()),
+            Ok(Array::<u8, U32>::from(hex!("f0a339ecbcae6add1afb27da3ba40a1320c6427a58afb9dc366b219b7eb29ecf")).clone()),
         );
     }
 
@@ -440,11 +441,11 @@ mod tests {
         type HmacSha512 = hmac::Hmac<sha2::Sha512>;
 
         for (v, i) in KNOWN_VALUES_FEEDBACK_HMAC_SHA256.iter().zip(0..) {
-            let feedback =
-                Feedback::<HmacSha256, HmacSha512>::new(v.iv.map(GenericArray::from_slice));
+            let iv = v.iv.map(|iv| Array::try_from(iv).unwrap());
+            let feedback = Feedback::<HmacSha256, HmacSha512>::new(iv.as_ref());
             assert_eq!(
                 feedback.derive(v.key, v.use_l, v.use_separator, true, v.label, v.context,),
-                Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
+                Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
                 "key derivation failed for (index: {i}):\n{v:x?}"
             );
         }
@@ -479,7 +480,7 @@ mod tests {
             let dbl_pipeline = DoublePipeline::<HmacSha256, MockOutput>::default();
             assert_eq!(
                 dbl_pipeline.derive(v.key, v.use_l, v.use_separator, false, v.label, v.context,),
-                Ok(GenericArray::<_, _>::from_slice(v.expected).clone()),
+                Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
                 "key derivation failed for (index: {i}):\n{v:x?}"
             );
         }

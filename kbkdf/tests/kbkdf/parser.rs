@@ -2,10 +2,10 @@ use digest::consts::*;
 use hex;
 use kbkdf::Kbkdf;
 
-use core::ops::Mul;
+use core::{convert::TryInto, ops::Mul};
 use digest::{
+    array::{typenum::Unsigned, ArraySize},
     crypto_common::KeySizeUser,
-    generic_array::{typenum::Unsigned, ArrayLength},
     KeyInit, Mac,
 };
 
@@ -112,9 +112,9 @@ trait TestData {
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
-        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        K::KeySize: ArraySize + Mul<U8>,
         <K::KeySize as Mul<U8>>::Output: Unsigned,
-        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        Prf::OutputSize: ArraySize + Mul<U8>,
         <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
         R: kbkdf::sealed::R;
 }
@@ -171,9 +171,9 @@ impl TestData for CounterTestData {
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
-        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        K::KeySize: ArraySize + Mul<U8>,
         <K::KeySize as Mul<U8>>::Output: Unsigned,
-        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        Prf::OutputSize: ArraySize + Mul<U8>,
         <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
         R: kbkdf::sealed::R,
     {
@@ -228,9 +228,9 @@ impl TestData for DoublePipelineTestData {
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
-        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        K::KeySize: ArraySize + Mul<U8>,
         <K::KeySize as Mul<U8>>::Output: Unsigned,
-        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        Prf::OutputSize: ArraySize + Mul<U8>,
         <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
         R: kbkdf::sealed::R,
     {
@@ -294,14 +294,14 @@ impl TestData for FeedbackTestData {
     where
         Prf: Mac + KeyInit,
         K: KeySizeUser,
-        K::KeySize: ArrayLength<u8> + Mul<U8>,
+        K::KeySize: ArraySize + Mul<U8>,
         <K::KeySize as Mul<U8>>::Output: Unsigned,
-        Prf::OutputSize: ArrayLength<u8> + Mul<U8>,
+        Prf::OutputSize: ArraySize + Mul<U8>,
         <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
         R: kbkdf::sealed::R,
     {
         let iv = if !self.iv.is_empty() {
-            Some(self.iv.as_slice().into())
+            Some(self.iv.as_slice().try_into().unwrap())
         } else {
             None
         };

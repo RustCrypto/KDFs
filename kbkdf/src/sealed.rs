@@ -1,6 +1,6 @@
 use digest::{
+    array::typenum::Unsigned,
     consts::{U16, U24, U32, U8},
-    generic_array::typenum::Unsigned,
 };
 
 mod private {
