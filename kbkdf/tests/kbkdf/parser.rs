@@ -1,6 +1,6 @@
 use digest::consts::*;
 use hex;
-use kbkdf::Kbkdf;
+use kbkdf::{Kbkdf, Params};
 
 use core::{convert::TryInto, ops::Mul};
 use digest::{
@@ -183,12 +183,13 @@ impl TestData for CounterTestData {
 
         let key = counter
             .derive(
-                self.ki.as_slice(),
-                false,
-                false,
-                use_counter,
-                label.as_slice(),
-                context.as_slice(),
+                Params::builder(self.ki.as_slice())
+                    .use_l(false)
+                    .use_separator(false)
+                    .use_counter(use_counter)
+                    .with_label(label.as_slice())
+                    .with_context(context.as_slice())
+                    .build(),
             )
             .unwrap();
 
@@ -238,12 +239,12 @@ impl TestData for DoublePipelineTestData {
 
         let key = double_pipeline
             .derive(
-                self.ki.as_slice(),
-                false,
-                false,
-                use_counter,
-                self.fixed_data.as_slice(),
-                &[],
+                Params::builder(self.ki.as_slice())
+                    .use_l(false)
+                    .use_separator(false)
+                    .use_counter(use_counter)
+                    .with_label(self.fixed_data.as_slice())
+                    .build(),
             )
             .unwrap();
 
@@ -309,12 +310,12 @@ impl TestData for FeedbackTestData {
 
         let key = feedback
             .derive(
-                self.ki.as_slice(),
-                false,
-                false,
-                use_counter,
-                self.fixed_data.as_slice(),
-                &[],
+                Params::builder(self.ki.as_slice())
+                    .use_l(false)
+                    .use_separator(false)
+                    .use_counter(use_counter)
+                    .with_label(self.fixed_data.as_slice())
+                    .build(),
             )
             .unwrap();
 

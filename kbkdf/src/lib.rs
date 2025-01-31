@@ -30,6 +30,71 @@ impl fmt::Display for Error {
 
 impl core::error::Error for Error {}
 
+/// Parameters used for KBKDF
+pub struct Params<'k, 'l, 'c> {
+    pub kin: &'k [u8],
+    pub label: &'l [u8],
+    pub context: &'c [u8],
+    pub use_l: bool,
+    pub use_separator: bool,
+    pub use_counter: bool,
+}
+
+impl<'k, 'l, 'c> Params<'k, 'l, 'c> {
+    /// Create a new builder for [`Params`]
+    pub fn builder(kin: &'k [u8]) -> ParamsBuilder<'k, 'l, 'c> {
+        let params = Params {
+            kin,
+            label: &[],
+            context: &[],
+            use_l: true,
+            use_separator: true,
+            use_counter: true,
+        };
+        ParamsBuilder(params)
+    }
+}
+
+/// Parameters builders for [`Params`]
+pub struct ParamsBuilder<'k, 'l, 'c>(Params<'k, 'l, 'c>);
+
+impl<'k, 'l, 'c> ParamsBuilder<'k, 'l, 'c> {
+    /// Return the built [`Params`]
+    pub fn build(self) -> Params<'k, 'l, 'c> {
+        self.0
+    }
+
+    /// Set the label for the parameters
+    pub fn with_label(mut self, label: &'l [u8]) -> Self {
+        self.0.label = label;
+        self
+    }
+
+    /// Set the context for the parameters
+    pub fn with_context(mut self, context: &'c [u8]) -> Self {
+        self.0.context = context;
+        self
+    }
+
+    /// During the iterations, append the length of the Prf
+    pub fn use_l(mut self, use_l: bool) -> Self {
+        self.0.use_l = use_l;
+        self
+    }
+
+    /// During the iterations, separate the label from the context with a NULL byte
+    pub fn use_separator(mut self, use_separator: bool) -> Self {
+        self.0.use_separator = use_separator;
+        self
+    }
+
+    /// During the iterations, update the Prf with the iteration counter
+    pub fn use_counter(mut self, use_counter: bool) -> Self {
+        self.0.use_counter = use_counter;
+        self
+    }
+}
+
 // Helper structure along with [`KbkdfUser`] to compute values of L and H.
 struct KbkdfCore<OutputLen, PrfOutputLen> {
     _marker: PhantomData<(OutputLen, PrfOutputLen)>,
@@ -73,15 +138,7 @@ where
     <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
 {
     /// Derives `key` from `kin` and other parameters.
-    fn derive(
-        &self,
-        kin: &[u8],
-        use_l: bool,
-        use_separator: bool,
-        use_counter: bool,
-        label: &[u8],
-        context: &[u8],
-    ) -> Result<Array<u8, K::KeySize>, Error> {
+    fn derive(&self, params: Params) -> Result<Array<u8, K::KeySize>, Error> {
         // n - An integer whose value is the number of iterations of the PRF needed to generate L
         // bits of keying material
         let n: u32 = <KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32
@@ -97,25 +154,25 @@ where
         let mut ki = None;
         self.input_iv(&mut ki);
         let mut a = {
-            let mut h = Prf::new_from_slice(kin).unwrap();
-            h.update(label);
-            if use_separator {
+            let mut h = Prf::new_from_slice(params.kin).unwrap();
+            h.update(params.label);
+            if params.use_separator {
                 h.update(&[0]);
             }
-            h.update(context);
+            h.update(params.context);
             h.finalize().into_bytes()
         };
 
         for counter in 1..=n {
             if counter > 1 {
                 a = {
-                    let mut h = Prf::new_from_slice(kin).unwrap();
+                    let mut h = Prf::new_from_slice(params.kin).unwrap();
                     h.update(a.as_slice());
                     h.finalize().into_bytes()
                 };
             }
 
-            let mut h = Prf::new_from_slice(kin).unwrap();
+            let mut h = Prf::new_from_slice(params.kin).unwrap();
 
             if Self::FEEDBACK_KI {
                 if let Some(ki) = ki {
@@ -126,7 +183,7 @@ where
             if Self::DOUBLE_PIPELINE {
                 h.update(a.as_slice());
             }
-            if use_counter {
+            if params.use_counter {
                 // counter encoded as big endian u32
                 // Type parameter R encodes how large the value is to be (either U8, U16, U24, or U32)
                 //
@@ -137,12 +194,12 @@ where
             }
 
             // Fixed input data
-            h.update(label);
-            if use_separator {
+            h.update(params.label);
+            if params.use_separator {
                 h.update(&[0]);
             }
-            h.update(context);
-            if use_l {
+            h.update(params.context);
+            if params.use_l {
                 h.update(
                     &(<KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32).to_be_bytes()
                         [..],

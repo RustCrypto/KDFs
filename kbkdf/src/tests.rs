@@ -1,4 +1,4 @@
-use super::{Array, Counter, DoublePipeline, Feedback, Kbkdf};
+use super::{Array, Counter, DoublePipeline, Feedback, Kbkdf, Params};
 use core::convert::TryFrom;
 use digest::{consts::*, crypto_common::KeySizeUser};
 use hex_literal::hex;
@@ -71,7 +71,14 @@ fn test_static_values_counter() {
     let counter = Counter::<HmacSha256, HmacSha512>::default();
     for (v, i) in KNOWN_VALUES_COUNTER_HMAC_SHA256.iter().zip(0..) {
         assert_eq!(
-            counter.derive(v.key, v.use_l, v.use_separator, true, v.label, v.context,),
+            counter.derive(
+                Params::builder(v.key)
+                    .use_l(v.use_l)
+                    .use_separator(v.use_separator)
+                    .with_label(v.label)
+                    .with_context(v.context)
+                    .build()
+            ),
             Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
             "key derivation failed for (index: {i}):\n{v:x?}"
         );
@@ -90,13 +97,10 @@ fn test_counter_kbkdfvs() {
     let counter = Counter::<HmacSha256, MockOutput>::default();
     // KDFCTR_gen.txt count 15
     assert_eq!(
-            counter.derive(
-                &hex!("43eef6d824fd820405626ab9b6d79f1fd04e126ab8e17729e3afc7cb5af794f8"),
-                false,
-                false,
-                true,
-                &hex!("5e269b5a7bdedcc3e875e2725693a257fc60011af7dcd68a3358507fe29b0659ca66951daa05a15032033650bc58a27840f8fbe9f4088b9030738f68"),
-                &[],
+            counter.derive(Params::builder(
+                &hex!("43eef6d824fd820405626ab9b6d79f1fd04e126ab8e17729e3afc7cb5af794f8")).use_l(false).use_separator(
+                false).with_label(
+                &hex!("5e269b5a7bdedcc3e875e2725693a257fc60011af7dcd68a3358507fe29b0659ca66951daa05a15032033650bc58a27840f8fbe9f4088b9030738f68")).build()
             ),
             Ok(Array::<u8, U32>::from(hex!("f0a339ecbcae6add1afb27da3ba40a1320c6427a58afb9dc366b219b7eb29ecf")).clone()),
         );
@@ -160,7 +164,14 @@ fn test_static_values_feedback() {
         let iv = v.iv.map(|iv| Array::try_from(iv).unwrap());
         let feedback = Feedback::<HmacSha256, HmacSha512>::new(iv.as_ref());
         assert_eq!(
-            feedback.derive(v.key, v.use_l, v.use_separator, true, v.label, v.context,),
+            feedback.derive(
+                Params::builder(v.key)
+                    .use_l(v.use_l)
+                    .use_separator(v.use_separator)
+                    .with_label(v.label)
+                    .with_context(v.context)
+                    .build()
+            ),
             Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
             "key derivation failed for (index: {i}):\n{v:x?}"
         );
@@ -195,7 +206,15 @@ fn test_static_values_double_pipeline() {
     for (v, i) in KNOWN_VALUES_DOUBLE_PIPELINE_HMAC_SHA256.iter().zip(0..) {
         let dbl_pipeline = DoublePipeline::<HmacSha256, MockOutput>::default();
         assert_eq!(
-            dbl_pipeline.derive(v.key, v.use_l, v.use_separator, false, v.label, v.context,),
+            dbl_pipeline.derive(
+                Params::builder(v.key)
+                    .use_l(v.use_l)
+                    .use_separator(v.use_separator)
+                    .use_counter(false)
+                    .with_label(v.label)
+                    .with_context(v.context)
+                    .build(),
+            ),
             Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
             "key derivation failed for (index: {i}):\n{v:x?}"
         );

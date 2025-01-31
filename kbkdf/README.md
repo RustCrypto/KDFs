@@ -19,13 +19,13 @@ The most common way to use KBKDF is as follows: you generate a shared secret wit
 ```rust
 use hex_literal::hex;
 use hmac::Hmac;
-use kbkdf::{Counter, Kbkdf};
+use kbkdf::{Counter, Kbkdf, Params};
 use sha2::Sha256;
 
 type HmacSha256 = Hmac<Sha256>;
 let counter = Counter::<HmacSha256, HmacSha256>::default();
 let key = counter
-    .derive(b"secret", true, true, true, b"label", b"")
+    .derive(Params::builder(b"secret").with_label(b"label").build())
     .unwrap();
 assert_eq!(
     key,
