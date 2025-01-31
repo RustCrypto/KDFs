@@ -1,6 +1,11 @@
 # RustCrypto: KBKDF
 
-[![crate][crate-image]][crate-link] [![Docs][docs-image]][docs-link] ![Apache2/MIT licensed][license-image] ![Rust Version][rustc-image] [![Project Chat][chat-image]][chat-link] [![Build Status][build-image]][build-link]
+[![crate][crate-image]][crate-link]
+[![Docs][docs-image]][docs-link]
+![Apache2/MIT licensed][license-image]
+![Rust Version][rustc-image]
+[![Project Chat][chat-image]][chat-link]
+[![Build Status][build-image]][build-link]
 
 Pure Rust implementation of the Key Based Key Derivation Function (KBKDF).
 This function is described in section 4 of [NIST SP 800-108r1, Recommendation
