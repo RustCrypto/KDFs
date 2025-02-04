@@ -2,10 +2,10 @@
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
+[![Build Status][build-image]][build-link]
 ![Apache2/MIT licensed][license-image]
 ![Rust Version][rustc-image]
 [![Project Chat][chat-image]][chat-link]
-[![Build Status][build-image]][build-link]
 
 Pure Rust implementation of the Key Based Key Derivation Function (KBKDF).
 This function is described in section 4 of [NIST SP 800-108r1, Recommendation
@@ -69,9 +69,10 @@ dual licensed as above, without any additional terms or conditions.
 [crate-link]: https://crates.io/crates/kbkdf
 [docs-image]: https://docs.rs/kbkdf/badge.svg
 [docs-link]: https://docs.rs/kbkdf/
+[build-image]: https://github.com/RustCrypto/KDFs/actions/workflows/kbkdf.yml/badge.svg
+[build-link]: https://github.com/RustCrypto/KDFs/actions/workflows/kbkdf.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
 [rustc-image]: https://img.shields.io/badge/rustc-1.81+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs
-[build-image]: https://github.com/RustCrypto/KDFs/workflows/kbkdf/badge.svg?branch=master&event=push
-[build-link]: https://github.com/RustCrypto/KDFs/actions?query=workflow:kbkdf
+
