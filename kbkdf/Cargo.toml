@@ -1,10 +1,10 @@
 [package]
 name = "kbkdf"
-version = "0.1.0"
-edition = "2018"
+version = "0.0.1"
+edition = "2021"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
-homepage = "https://github.com/RustCrypto/KDFs/"
+homepage = "https://github.com/RustCrypto/KDFs/tree/master/kbkdf"
 repository = "https://github.com/RustCrypto/KDFs/"
 description = "Key Derivation Using Pseudorandom Function (KBKDF)"
 keywords = ["crypto", "KBKDF", "KDF"]
