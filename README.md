@@ -8,10 +8,11 @@ Collection of [Key Derivation Functions][KDF] (KDF) written in pure Rust.
 
 | Algorithm    | Crate | Crates.io | Documentation | MSRV |
 |--------------|-------|:---------:|:-------------:|:----:|
-| [bake-kdf]   | [`bake-kdf`]   |   [![crates.io](https://img.shields.io/crates/v/bake-kdf.svg)](https://crates.io/crates/bake-kdf)   |   [![Documentation](https://docs.rs/bake-kdf/badge.svg)](https://docs.rs/bake-kdf)   | ![MSRV 1.81][msrv-1.81] |
-| [HKDF]       | [`hkdf`]       |       [![crates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf)       |       [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf)       | ![MSRV 1.81][msrv-1.81] |
-| [Concat-KDF] | [`concat-kdf`] | [![crates.io](https://img.shields.io/crates/v/concat-kdf.svg)](https://crates.io/crates/concat-kdf) | [![Documentation](https://docs.rs/concat-kdf/badge.svg)](https://docs.rs/concat-kdf) | ![MSRV 1.81][msrv-1.81] |
 | [ANSI-X9.63-KDF] | [`ansi-x963-kdf`] | [![crates.io](https://img.shields.io/crates/v/ansi-x963-kdf.svg)](https://crates.io/crates/ansi-x963-kdf) | [![Documentation](https://docs.rs/ansi-x963-kdf/badge.svg)](https://docs.rs/ansi-x963-kdf) | ![MSRV 1.81][msrv-1.81] |
+| [bake-kdf]   | [`bake-kdf`]   |   [![crates.io](https://img.shields.io/crates/v/bake-kdf.svg)](https://crates.io/crates/bake-kdf)   |   [![Documentation](https://docs.rs/bake-kdf/badge.svg)](https://docs.rs/bake-kdf)   | ![MSRV 1.81][msrv-1.81] |
+| [Concat-KDF] | [`concat-kdf`] | [![crates.io](https://img.shields.io/crates/v/concat-kdf.svg)](https://crates.io/crates/concat-kdf) | [![Documentation](https://docs.rs/concat-kdf/badge.svg)](https://docs.rs/concat-kdf) | ![MSRV 1.81][msrv-1.81] |
+| [HKDF]       | [`hkdf`]       |       [![crates.io](https://img.shields.io/crates/v/hkdf.svg)](https://crates.io/crates/hkdf)       |       [![Documentation](https://docs.rs/hkdf/badge.svg)](https://docs.rs/hkdf)       | ![MSRV 1.81][msrv-1.81] |
+| [KBKDF]      | [`kbkdf`]      | [![crates.io](https://img.shields.io/crates/v/kbkdf.svg)](https://crates.io/crates/kbkdf)       |       [![Documentation](https://docs.rs/kbkdf/badge.svg)](https://docs.rs/kbkdf)         | ![MSRV 1.81][msrv-1.81] |
 
 *NOTE: for password-based KDFs (e.g. Argon2, PBKDF2, scrypt), please see [RustCrypto/password-hashes]*
 
@@ -43,16 +44,18 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 [//]: # (crates)
 
-[`hkdf`]: ./hkdf
-[`concat-kdf`]: ./concat-kdf
 [`ansi-x963-kdf`]: ./ansi-x963-kdf
 [`bake-kdf`]: ./bake-kdf
+[`concat-kdf`]: ./concat-kdf
+[`hkdf`]: ./hkdf
+[`kbkdf`]: ./kbkdf
 
 [//]: # (algorithms)
 
 [KDF]: https://en.wikipedia.org/wiki/Key_derivation_function
 [HKDF]: https://en.wikipedia.org/wiki/HKDF
-[Concat-KDF]: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-56ar.pdf
 [ANSI-X9.63-KDF]: https://www.secg.org/sec1-v2.pdf
-[RustCrypto/password-hashes]: https://github.com/RustCrypto/password-hashes
 [bake-kdf]: https://apmi.bsu.by/assets/files/std/bake-spec19.pdf
+[Concat-KDF]: https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-56ar.pdf
+[KBKDF]: https://csrc.nist.gov/projects/cryptographic-algorithm-validation-program/key-derivation
+[RustCrypto/password-hashes]: https://github.com/RustCrypto/password-hashes
