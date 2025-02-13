@@ -2,10 +2,10 @@
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
+[![Build Status][build-image]][build-link]
 ![Apache2/MIT licensed][license-image]
 ![Rust Version][rustc-image]
 [![Project Chat][chat-image]][chat-link]
-[![Build Status][build-image]][build-link]
 
 Pure Rust implementation of the ANSI X9.63 Key Derivation Function (ANSI-X9.63-KDF) generic over hash function. 
 This function is described in the section 3.6.1 of [SEC 1: Elliptic Curve Cryptography](http://www.secg.org/sec1-v2.pdf).
@@ -55,9 +55,9 @@ dual licensed as above, without any additional terms or conditions.
 [crate-link]: https://crates.io/crates/ansi-x963-kdf
 [docs-image]: https://docs.rs/ansi-x963-kdf/badge.svg
 [docs-link]: https://docs.rs/ansi-x963-kdf/
+[build-image]: https://github.com/RustCrypto/KDFs/actions/workflows/ansi-x963-kdf.yml/badge.svg
+[build-link]: https://github.com/RustCrypto/KDFs/actions/workflows/ansi-x963-kdf.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
 [rustc-image]: https://img.shields.io/badge/rustc-1.81+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs
-[build-image]: https://github.com/RustCrypto/KDFs/workflows/ansi-x963-kdf/badge.svg?branch=master&event=push
-[build-link]: https://github.com/RustCrypto/KDFs/actions?query=workflow:ansi-x963-kdf
