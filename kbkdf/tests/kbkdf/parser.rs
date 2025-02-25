@@ -4,9 +4,9 @@ use kbkdf::{Kbkdf, Params};
 
 use core::{convert::TryInto, ops::Mul};
 use digest::{
-    array::{typenum::Unsigned, ArraySize},
-    crypto_common::KeySizeUser,
     KeyInit, Mac,
+    array::{ArraySize, typenum::Unsigned},
+    crypto_common::KeySizeUser,
 };
 
 use crate::*;

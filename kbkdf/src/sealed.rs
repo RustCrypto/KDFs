@@ -1,10 +1,10 @@
 use digest::{
     array::typenum::Unsigned,
-    consts::{U16, U24, U32, U8},
+    consts::{U8, U16, U24, U32},
 };
 
 mod private {
-    use digest::consts::{U16, U24, U32, U8};
+    use digest::consts::{U8, U16, U24, U32};
 
     pub trait Sealed {}
 
