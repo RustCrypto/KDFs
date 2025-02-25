@@ -16,5 +16,5 @@ rust-version = "1.85"
 digest = "=0.11.0-pre.10"
 
 [dev-dependencies]
-hex-literal = "0.4"
+hex-literal = "1"
 sha2 = { version = "=0.11.0-pre.4", default-features = false }
