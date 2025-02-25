@@ -25,13 +25,6 @@ concat_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwra
 assert_eq!(key, hex!("960db2c549ab16d71a7b008e005c2bdc"));
 ```
 
-## Minimum Supported Rust Version
-
-Rust **1.81** or higher.
-
-Minimum supported Rust version can be changed in the future, but it will be
-done with a minor version bump.
-
 ## SemVer Policy
 
 - All on-by-default features of this library are covered by SemVer
@@ -57,7 +50,7 @@ dual licensed as above, without any additional terms or conditions.
 [docs-image]: https://docs.rs/concat-kdf/badge.svg
 [docs-link]: https://docs.rs/concat-kdf/
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.81+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs
 [build-image]: https://github.com/RustCrypto/KDFs/workflows/concat-kdf/badge.svg?branch=master&event=push
