@@ -273,7 +273,7 @@ where
     }
 }
 
-impl<'a, Prf, K, R> Kbkdf<Prf, K, R> for Feedback<'a, Prf, K, R>
+impl<Prf, K, R> Kbkdf<Prf, K, R> for Feedback<'_, Prf, K, R>
 where
     Prf: Mac + KeyInit,
     K: KeySizeUser,
