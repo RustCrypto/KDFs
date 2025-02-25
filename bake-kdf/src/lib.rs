@@ -10,7 +10,7 @@
 #![warn(missing_docs, rust_2018_idioms)]
 
 use belt_hash::digest::FixedOutput;
-use belt_hash::{belt_compress, BeltHash, Digest};
+use belt_hash::{BeltHash, Digest, belt_compress};
 
 /// `belt-keyexpand` key expansion algorithm described in STB 34.101.34-2020 8.1.2.
 ///
