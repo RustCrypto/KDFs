@@ -2,7 +2,7 @@ use blobby::Blob4Iterator;
 use hkdf::{Hkdf, HmacImpl};
 use hmac::{Hmac, SimpleHmac};
 use sha1::Sha1;
-use sha2::{digest::OutputSizeUser, Sha256, Sha384, Sha512};
+use sha2::{Sha256, Sha384, Sha512, digest::OutputSizeUser};
 
 fn test<H: OutputSizeUser, I: HmacImpl<H>>(data: &[u8]) {
     for (i, row) in Blob4Iterator::new(data).unwrap().enumerate() {

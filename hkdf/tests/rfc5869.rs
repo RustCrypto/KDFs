@@ -1,7 +1,7 @@
 use hex_literal::hex;
-use hkdf::{hmac::EagerHash, Hkdf};
+use hkdf::{Hkdf, hmac::EagerHash};
 use sha1::Sha1;
-use sha2::{digest::OutputSizeUser, Sha256};
+use sha2::{Sha256, digest::OutputSizeUser};
 
 struct Test<'a> {
     ikm: &'a [u8],
