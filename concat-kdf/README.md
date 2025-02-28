@@ -25,11 +25,6 @@ concat_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwra
 assert_eq!(key, hex!("960db2c549ab16d71a7b008e005c2bdc"));
 ```
 
-## SemVer Policy
-
-- All on-by-default features of this library are covered by SemVer
-- MSRV is considered exempt from SemVer as noted above
-
 ## License
 
 Licensed under either of:

@@ -24,11 +24,6 @@ ansi_x963_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).un
 assert_eq!(key, hex!("8dbb1d50bcc7fc782abc9db5c64a2826"));
 ```
 
-## SemVer Policy
-
-- All on-by-default features of this library are covered by SemVer
-- MSRV is considered exempt from SemVer as noted above
-
 ## License
 
 Licensed under either of:
