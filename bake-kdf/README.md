@@ -25,6 +25,21 @@ let key = bake_kdf(&x, &s, c);
 assert_eq!(key, hex!("bbd7ece0080bee33c776a140f8d807a113a119a4e4d4270f9f2018fbd5e6292e"));
 ```
 
+## License
+
+Licensed under either of:
+
+* [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+* [MIT license](http://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
 
 [//]: # (badges)
 
