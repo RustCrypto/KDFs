@@ -3,11 +3,11 @@
 
 use core::{fmt, marker::PhantomData, ops::Mul};
 use digest::{
-    array::{typenum::Unsigned, Array, ArraySize},
-    consts::{U32, U8},
+    KeyInit, Mac,
+    array::{Array, ArraySize, typenum::Unsigned},
+    consts::{U8, U32},
     crypto_common::KeySizeUser,
     typenum::op,
-    KeyInit, Mac,
 };
 
 pub mod sealed;
@@ -273,7 +273,7 @@ where
     }
 }
 
-impl<'a, Prf, K, R> Kbkdf<Prf, K, R> for Feedback<'a, Prf, K, R>
+impl<Prf, K, R> Kbkdf<Prf, K, R> for Feedback<'_, Prf, K, R>
 where
     Prf: Mac + KeyInit,
     K: KeySizeUser,

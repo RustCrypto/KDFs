@@ -2,7 +2,7 @@
 #![doc = include_str!("../README.md")]
 
 use core::fmt;
-use digest::{array::typenum::Unsigned, Digest, FixedOutputReset};
+use digest::{Digest, FixedOutputReset, array::typenum::Unsigned};
 
 /// Derives `key` in-place from `secret` and `shared_info`.
 ///

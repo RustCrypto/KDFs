@@ -24,18 +24,6 @@ ansi_x963_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).un
 assert_eq!(key, hex!("8dbb1d50bcc7fc782abc9db5c64a2826"));
 ```
 
-## Minimum Supported Rust Version
-
-Rust **1.81** or higher.
-
-Minimum supported Rust version can be changed in the future, but it will be
-done with a minor version bump.
-
-## SemVer Policy
-
-- All on-by-default features of this library are covered by SemVer
-- MSRV is considered exempt from SemVer as noted above
-
 ## License
 
 Licensed under either of:
@@ -58,6 +46,6 @@ dual licensed as above, without any additional terms or conditions.
 [build-image]: https://github.com/RustCrypto/KDFs/actions/workflows/ansi-x963-kdf.yml/badge.svg
 [build-link]: https://github.com/RustCrypto/KDFs/actions/workflows/ansi-x963-kdf.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.81+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs

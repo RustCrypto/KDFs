@@ -1,6 +1,6 @@
 use hmac::digest::{
-    core_api::{BlockSizeUser, CoreWrapper, OutputSizeUser},
     Digest, FixedOutput, KeyInit, Output, Update,
+    core_api::{BlockSizeUser, CoreWrapper, OutputSizeUser},
 };
 use hmac::{EagerHash, Hmac, HmacCore, SimpleHmac};
 

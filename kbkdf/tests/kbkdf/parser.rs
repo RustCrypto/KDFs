@@ -4,9 +4,9 @@ use kbkdf::{Kbkdf, Params};
 
 use core::{convert::TryInto, ops::Mul};
 use digest::{
-    array::{typenum::Unsigned, ArraySize},
-    crypto_common::KeySizeUser,
     KeyInit, Mac,
+    array::{ArraySize, typenum::Unsigned},
+    crypto_common::KeySizeUser,
 };
 
 use crate::*;
@@ -350,20 +350,20 @@ fn test_kbkdf<T: TestData>(test_data: T, prf: Prf, r_len: Rlen, use_counter: boo
         (@inner $prf_ty:ident : ; $($r_value:expr => $r_ty:ident,)*) => {};
     }
 
-    macro_rules! gen {
+    macro_rules! gen_test {
         ({ $($prf_value:expr => $prf_ty:ident,)* }, { $($l_value:expr => $l_ty:ident,)* }, { $($r_value:expr => $r_ty:ident,)* }) => {
-            gen!(@inner $($prf_value => $prf_ty,)* ; $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
+            gen_test!(@inner $($prf_value => $prf_ty,)* ; $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
         };
         (@inner $next_prf_value:expr => $next_prf_ty:ident, $($prf_value:expr => $prf_ty:ident,)* ; $($l_value:expr => $l_ty:ident,)* ; $($r_value:expr => $r_ty:ident,)*) => {
             if prf == $next_prf_value {
                 gen_inner!($next_prf_ty, { $($l_value => $l_ty,)* }, { $($r_value => $r_ty,)* });
             }
-            gen!(@inner $($prf_value => $prf_ty,)* ; $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
+            gen_test!(@inner $($prf_value => $prf_ty,)* ; $($l_value => $l_ty,)* ; $($r_value => $r_ty,)*);
         };
         (@inner ; $($l_value:expr => $l_ty:ident,)* ; $($r_value:expr => $r_ty:ident,)*) => {};
     }
 
-    gen!({
+    gen_test!({
         Prf::CmacAes128 => CmacAes128,
         Prf::CmacAes192 => CmacAes192,
         Prf::CmacAes256 => CmacAes256,

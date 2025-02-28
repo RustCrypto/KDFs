@@ -5,8 +5,8 @@ description = "bake-kdf function (STB 34.101.66-2014)"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-edition = "2021"
-rust-version = "1.72"
+edition = "2024"
+rust-version = "1.85"
 documentation = "https://docs.rs/bake-kdf"
 repository = "https://github.com/RustCrypto/KDFs"
 keywords = ["crypto", "bake", "stb", "kdf"]
@@ -16,7 +16,7 @@ categories = ["cryptography", "no-std"]
 belt-hash = { version = "0.2.0-pre.4", default-features = false }
 
 [dev-dependencies]
-hex-literal = "0.4.1"
+hex-literal = "1"
 
 [package.metadata.docs.rs]
 all-features = true

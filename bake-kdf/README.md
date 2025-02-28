@@ -25,6 +25,21 @@ let key = bake_kdf(&x, &s, c);
 assert_eq!(key, hex!("bbd7ece0080bee33c776a140f8d807a113a119a4e4d4270f9f2018fbd5e6292e"));
 ```
 
+## License
+
+Licensed under either of:
+
+* [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+* [MIT license](http://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
 
 [//]: # (badges)
 
@@ -35,6 +50,6 @@ assert_eq!(key, hex!("bbd7ece0080bee33c776a140f8d807a113a119a4e4d4270f9f2018fbd5
 [build-image]: https://github.com/RustCrypto/KDFs/actions/workflows/bake-kdf.yml/badge.svg
 [build-link]: https://github.com/RustCrypto/KDFs/actions/workflows/bake-kdf.yml
 [license-image]: https://img.shields.io/badge/license-Apache2.0/MIT-blue.svg
-[rustc-image]: https://img.shields.io/badge/rustc-1.41+-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs

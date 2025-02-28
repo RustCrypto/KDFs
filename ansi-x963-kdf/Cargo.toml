@@ -5,16 +5,16 @@ description = "ANSI X9.63 Key Derivation Function"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-edition = "2021"
+edition = "2024"
 documentation = "https://docs.rs/ansi-x963-kdf"
 repository = "https://github.com/RustCrypto/KDFs"
 keywords = ["crypto", "ansi-x963-kdf", "KDF", "SEC1"]
 categories = ["cryptography", "no-std"]
-rust-version = "1.81"
+rust-version = "1.85"
 
 [dependencies]
-digest = "=0.11.0-pre.9"
+digest = "=0.11.0-pre.10"
 
 [dev-dependencies]
-hex-literal = "0.4"
+hex-literal = "1"
 sha2 = { version = "=0.11.0-pre.4", default-features = false }
