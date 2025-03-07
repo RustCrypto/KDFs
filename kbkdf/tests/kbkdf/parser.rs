@@ -1,5 +1,4 @@
 use digest::consts::*;
-use hex;
 use kbkdf::{Kbkdf, Params};
 
 use core::{convert::TryInto, ops::Mul};
@@ -43,10 +42,8 @@ impl Prf {
     }
 
     fn is_supported(&self) -> bool {
-        match self {
-            Self::CmacTdes2 | Self::CmacTdes3 => false,
-            _ => true,
-        }
+        let not_supported = matches!(self, Self::CmacTdes2 | Self::CmacTdes3);
+        !not_supported
     }
 }
 
@@ -72,10 +69,7 @@ impl CounterLocation {
     }
 
     fn is_supported(&self) -> bool {
-        match self {
-            Self::Before | Self::AfterIter => true,
-            _ => false,
-        }
+        matches!(self, Self::Before | Self::AfterIter)
     }
 }
 
@@ -431,11 +425,11 @@ fn eval_test_vectors<T: TestData>(data: &str, use_counter: bool) -> Option<()> {
         }
 
         // Read and parse KBKDF configuration.
-        let prf = Prf::from_str(&l);
+        let prf = Prf::from_str(l);
         let (counter_location, r_len) = if use_counter {
             (
                 CounterLocation::from_str(data.next().unwrap()),
-                Rlen::from_str(&data.next().unwrap()),
+                Rlen::from_str(data.next().unwrap()),
             )
         } else {
             // Counter location and r-len are not needed and do not present in a test file.

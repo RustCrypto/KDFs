@@ -79,7 +79,7 @@ fn test_static_values_counter() {
                     .with_context(v.context)
                     .build()
             ),
-            Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
+            Ok(Array::<_, _>::try_from(v.expected).unwrap()),
             "key derivation failed for (index: {i}):\n{v:x?}"
         );
     }
@@ -97,13 +97,22 @@ fn test_counter_kbkdfvs() {
     let counter = Counter::<HmacSha256, MockOutput>::default();
     // KDFCTR_gen.txt count 15
     assert_eq!(
-            counter.derive(Params::builder(
-                &hex!("43eef6d824fd820405626ab9b6d79f1fd04e126ab8e17729e3afc7cb5af794f8")).use_l(false).use_separator(
-                false).with_label(
-                &hex!("5e269b5a7bdedcc3e875e2725693a257fc60011af7dcd68a3358507fe29b0659ca66951daa05a15032033650bc58a27840f8fbe9f4088b9030738f68")).build()
-            ),
-            Ok(Array::<u8, U32>::from(hex!("f0a339ecbcae6add1afb27da3ba40a1320c6427a58afb9dc366b219b7eb29ecf")).clone()),
-        );
+        counter.derive(
+            Params::builder(&hex!(
+                "43eef6d824fd820405626ab9b6d79f1fd04e126ab8e17729e3afc7cb5af794f8"
+            ))
+            .use_l(false)
+            .use_separator(false)
+            .with_label(&hex!(
+                "5e269b5a7bdedcc3e875e2725693a257fc60011af7dcd68a3358507fe29b0659"
+                "ca66951daa05a15032033650bc58a27840f8fbe9f4088b9030738f68"
+            ))
+            .build()
+        ),
+        Ok(Array::<u8, U32>::from(hex!(
+            "f0a339ecbcae6add1afb27da3ba40a1320c6427a58afb9dc366b219b7eb29ecf"
+        ))),
+    );
 }
 
 static KNOWN_VALUES_FEEDBACK_HMAC_SHA256: &[KnownValue] = &[
@@ -172,7 +181,7 @@ fn test_static_values_feedback() {
                     .with_context(v.context)
                     .build()
             ),
-            Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
+            Ok(Array::<_, _>::try_from(v.expected).unwrap()),
             "key derivation failed for (index: {i}):\n{v:x?}"
         );
     }
@@ -215,7 +224,7 @@ fn test_static_values_double_pipeline() {
                     .with_context(v.context)
                     .build(),
             ),
-            Ok(Array::<_, _>::try_from(v.expected).unwrap().clone()),
+            Ok(Array::<_, _>::try_from(v.expected).unwrap()),
             "key derivation failed for (index: {i}):\n{v:x?}"
         );
     }
