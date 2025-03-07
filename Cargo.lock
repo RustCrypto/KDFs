@@ -17,7 +17,7 @@ name = "ansi-x963-kdf"
 version = "0.0.1"
 dependencies = [
  "digest",
- "hex-literal",
+ "hex-literal 1.0.0",
  "sha2",
 ]
 
@@ -26,7 +26,7 @@ name = "bake-kdf"
 version = "0.0.1"
 dependencies = [
  "belt-hash",
- "hex-literal",
+ "hex-literal 1.0.0",
 ]
 
 [[package]]
@@ -37,8 +37,9 @@ checksum = "d9aa1eef3994e2ccd304a78fe3fea4a73e5792007f85f09b79bb82143ca5f82b"
 
 [[package]]
 name = "belt-hash"
-version = "0.2.0-pre.4"
-source = "git+https://github.com/RustCrypto/hashes.git#0d0369ff7dab69e98acfb8a08f4724dbda285e04"
+version = "0.2.0-pre.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92eecb3b8b1afdc0ea8eaa6f947ef9ebb0effdee09ea0a1b254d05d082bcb2a3"
 dependencies = [
  "belt-block",
  "digest",
@@ -78,7 +79,7 @@ dependencies = [
 [[package]]
 name = "cmac"
 version = "0.8.0-pre.2"
-source = "git+https://github.com/RustCrypto/MACs.git#c7cbed0bd3f7026cc01251cd4602d0db4d0495b9"
+source = "git+https://github.com/RustCrypto/MACs.git#f2bcad467c06f16cc422e8b99edb6b90c622a76b"
 dependencies = [
  "cipher",
  "dbl",
@@ -90,15 +91,15 @@ name = "concat-kdf"
 version = "0.2.0-pre"
 dependencies = [
  "digest",
- "hex-literal",
+ "hex-literal 1.0.0",
  "sha2",
 ]
 
 [[package]]
 name = "cpufeatures"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16b80225097f2e5ae4e7179dd2266824648f3e2f49d9134d584b76389d31c4c3"
+checksum = "59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280"
 dependencies = [
  "libc",
 ]
@@ -140,6 +141,12 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
+name = "hex-literal"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
@@ -149,7 +156,7 @@ name = "hkdf"
 version = "0.13.0-pre.4"
 dependencies = [
  "blobby",
- "hex-literal",
+ "hex-literal 0.4.1",
  "hmac",
  "sha1",
  "sha2",
@@ -157,8 +164,9 @@ dependencies = [
 
 [[package]]
 name = "hmac"
-version = "0.13.0-pre.4"
-source = "git+https://github.com/RustCrypto/MACs.git#c7cbed0bd3f7026cc01251cd4602d0db4d0495b9"
+version = "0.13.0-pre.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62c11fc82c6b89c906b4d26b7b5a305d0b3aebd4b458dd1bd0a7ed98c548a28e"
 dependencies = [
  "digest",
 ]
@@ -189,7 +197,7 @@ dependencies = [
  "cmac",
  "digest",
  "hex",
- "hex-literal",
+ "hex-literal 1.0.0",
  "hmac",
  "sha1",
  "sha2",
@@ -197,14 +205,15 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.169"
+version = "0.2.170"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
+checksum = "875b3680cb2f8f71bdcf9a30f38d48282f5d3c95cbf9b3fa57269bb5d5c06828"
 
 [[package]]
 name = "sha1"
-version = "0.11.0-pre.4"
-source = "git+https://github.com/RustCrypto/hashes.git#0d0369ff7dab69e98acfb8a08f4724dbda285e04"
+version = "0.11.0-pre.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55f44e40722caefdd99383c25d3ae52a1094a1951215ae76f68837ece4e7f566"
 dependencies = [
  "cfg-if",
  "cpufeatures",
@@ -213,8 +222,9 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.11.0-pre.4"
-source = "git+https://github.com/RustCrypto/hashes.git#0d0369ff7dab69e98acfb8a08f4724dbda285e04"
+version = "0.11.0-pre.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19b4241d1a56954dce82cecda5c8e9c794eef6f53abe5e5216bac0a0ea71ffa7"
 dependencies = [
  "cfg-if",
  "cpufeatures",
@@ -229,6 +239,6 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "typenum"
-version = "1.17.0"
+version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
+checksum = "1dccffe3ce07af9386bfd29e80c0ab1a8205a2fc34e4bcd40364df902cfa8f3f"
