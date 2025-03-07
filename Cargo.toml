@@ -10,9 +10,3 @@ members = [
 
 [profile.dev]
 opt-level = 2
-
-[patch.crates-io]
-cmac = { git = "https://github.com/RustCrypto/MACs.git" }
-
-# https://github.com/RustCrypto/block-ciphers/pull/472
-aes = { git = "https://github.com/RustCrypto/block-ciphers.git" }
