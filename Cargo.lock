@@ -191,7 +191,7 @@ dependencies = [
 
 [[package]]
 name = "kbkdf"
-version = "0.0.1"
+version = "0.1.0-pre.0"
 dependencies = [
  "aes",
  "cmac",

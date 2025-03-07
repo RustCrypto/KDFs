@@ -1,6 +1,6 @@
 [package]
 name = "kbkdf"
-version = "0.0.1"
+version = "0.1.0-pre.0"
 edition = "2024"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
