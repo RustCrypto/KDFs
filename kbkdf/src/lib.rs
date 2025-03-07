@@ -127,7 +127,7 @@ where
 ///  - Prf - the Pseudorandom Function to derive keys from
 ///  - K - the expected output length of the newly derived key
 ///  - R - An integer (1 <= r <= 32) that indicates the length of the binary encoding of the counter i
-///        as an integer in the interval [1, 2r − 1].
+///    as an integer in the interval [1, 2r − 1].
 pub trait Kbkdf<Prf, K, R: sealed::R>
 where
     Prf: Mac + KeyInit,
