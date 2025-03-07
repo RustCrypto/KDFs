@@ -4,8 +4,9 @@ version = 4
 
 [[package]]
 name = "aes"
-version = "0.9.0-pre.2"
-source = "git+https://github.com/RustCrypto/block-ciphers.git#bb7623cf85b416c8c61d89dd11573e6e7f961720"
+version = "0.9.0-pre.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38e4da00d9978020ddaa556c1747cfcafc3f375cfadb109acfe8b752cfc373bf"
 dependencies = [
  "cfg-if",
  "cipher",
@@ -78,8 +79,9 @@ dependencies = [
 
 [[package]]
 name = "cmac"
-version = "0.8.0-pre.2"
-source = "git+https://github.com/RustCrypto/MACs.git#f2bcad467c06f16cc422e8b99edb6b90c622a76b"
+version = "0.8.0-pre.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5965a19674a22507a478bb9fc6db32b1a397cd0d91c4a7f8facc1b2547e9de54"
 dependencies = [
  "cipher",
  "dbl",
