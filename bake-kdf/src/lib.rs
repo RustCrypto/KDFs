@@ -21,7 +21,7 @@ use belt_hash::{BeltHash, Digest, belt_compress};
 pub fn belt_keyexpand<const N: usize>(k: &[u8; N]) -> [u32; 8] {
     let mut t = [0u32; 8];
     // TODO: move this conversion into `belt_keyrep` when we will be able
-    // to use generic paramaters as `[u32; N / 4]`.
+    // to use generic parameters as `[u32; N / 4]`.
     for (src, dst) in k.chunks_exact(4).zip(t.iter_mut()) {
         *dst = u32::from_le_bytes(src.try_into().unwrap());
     }
