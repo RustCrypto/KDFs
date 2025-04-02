@@ -1,4 +1,5 @@
 [files]
 extend-exclude = [
-    ".git/"
+    ".git/",
+    "kbkdf/tests/data/"
 ]
