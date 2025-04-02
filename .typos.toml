@@ -1,0 +1,11 @@
+[files]
+extend-exclude = [
+    ".git/",
+    "kbkdf/tests/data/"
+]
+
+[default]
+extend-ignore-re = [
+    # Patterns which appear to be 16 or more characters of Base16
+    '"[0-9A-Fa-f +]{16,}"',
+]
