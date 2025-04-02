@@ -7,5 +7,5 @@ extend-exclude = [
 [default]
 extend-ignore-re = [
     # Patterns which appear to be 16 or more characters of Base16
-    '\b[0-9A-Fa-f+]{16,}\b',
+    '"[0-9A-Fa-f +]{16,}"',
 ]
