@@ -170,12 +170,11 @@ where
 impl<H, I> fmt::Debug for HkdfExtract<H, I>
 where
     H: OutputSizeUser,
-    I: HmacImpl<H>,
-    I::Core: AlgorithmName,
+    I: HmacImpl<H> + AlgorithmName,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("HkdfExtract<")?;
-        <I::Core as AlgorithmName>::write_alg_name(f)?;
+        <I as AlgorithmName>::write_alg_name(f)?;
         f.write_str("> { ... }")
     }
 }
@@ -185,7 +184,7 @@ where
 /// [crate root](index.html#usage).
 #[derive(Clone)]
 pub struct Hkdf<H: OutputSizeUser, I: HmacImpl<H> = Hmac<H>> {
-    hmac: I::Core,
+    hmac: I,
     _pd: PhantomData<H>,
 }
 
@@ -206,7 +205,7 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
             return Err(InvalidPrkLength);
         }
         Ok(Self {
-            hmac: I::new_core(prk),
+            hmac: I::new_from_slice(prk),
             _pd: PhantomData,
         })
     }
@@ -235,7 +234,7 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
         }
 
         for (block_n, block) in okm.chunks_mut(chunk_len).enumerate() {
-            let mut hmac = I::from_core(&self.hmac);
+            let mut hmac = self.hmac.clone();
 
             if let Some(ref prev) = prev {
                 hmac.update(prev)
@@ -272,16 +271,16 @@ impl<H, I> fmt::Debug for Hkdf<H, I>
 where
     H: OutputSizeUser,
     I: HmacImpl<H>,
-    I::Core: AlgorithmName,
+    I: AlgorithmName,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("Hkdf<")?;
-        <I::Core as AlgorithmName>::write_alg_name(f)?;
+        <I as AlgorithmName>::write_alg_name(f)?;
         f.write_str("> { ... }")
     }
 }
 
 /// Sealed trait implemented for [`Hmac`] and [`SimpleHmac`].
-pub trait HmacImpl<H: OutputSizeUser>: sealed::Sealed<H> {}
+pub trait HmacImpl<H: OutputSizeUser>: sealed::Sealed<H> + Clone {}
 
-impl<H: OutputSizeUser, T: sealed::Sealed<H>> HmacImpl<H> for T {}
+impl<H: OutputSizeUser, T: sealed::Sealed<H> + Clone> HmacImpl<H> for T {}
