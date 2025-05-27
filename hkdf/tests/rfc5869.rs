@@ -1,5 +1,5 @@
 use hex_literal::hex;
-use hkdf::{Hkdf, hmac::EagerHash};
+use hkdf::{Hkdf, hmac::block_api::EagerHash};
 use sha1::Sha1;
 use sha2::{Sha256, digest::OutputSizeUser};
 
