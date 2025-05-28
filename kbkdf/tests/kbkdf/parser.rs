@@ -37,7 +37,7 @@ impl Prf {
             "[PRF=HMAC_SHA256]" => Self::HmacSha256,
             "[PRF=HMAC_SHA384]" => Self::HmacSha384,
             "[PRF=HMAC_SHA512]" => Self::HmacSha512,
-            _ => panic!("Invalid prf: {}", s),
+            _ => panic!("Invalid prf: {s}"),
         }
     }
 
@@ -64,7 +64,7 @@ impl CounterLocation {
             "[CTRLOCATION=AFTER_FIXED]" => Self::After,
             "[CTRLOCATION=AFTER_ITER]" => Self::AfterIter,
             "[CTRLOCATION=BEFORE_ITER]" => Self::BeforeIter,
-            _ => panic!("Invalid counter_location: {}", s),
+            _ => panic!("Invalid counter_location: {s}"),
         }
     }
 
@@ -88,7 +88,7 @@ impl Rlen {
             "[RLEN=16_BITS]" => Self::Bits16,
             "[RLEN=24_BITS]" => Self::Bits24,
             "[RLEN=32_BITS]" => Self::Bits32,
-            _ => panic!("Invalid r_len: {}", s),
+            _ => panic!("Invalid r_len: {s}"),
         }
     }
 }
