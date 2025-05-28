@@ -1,7 +1,7 @@
 use hex_literal::hex;
-use hkdf::{Hkdf, hmac::block_api::EagerHash};
+use hkdf::{Hkdf, hmac::EagerHash};
 use sha1::Sha1;
-use sha2::{Sha256, digest::OutputSizeUser};
+use sha2::Sha256;
 
 struct Test<'a> {
     ikm: &'a [u8],
@@ -11,7 +11,7 @@ struct Test<'a> {
     okm: &'a [u8],
 }
 
-fn rfc_test<H: OutputSizeUser + EagerHash>(tests: &[Test]) {
+fn rfc_test<H: EagerHash>(tests: &[Test]) {
     let mut buf = [0u8; 128];
     for test in tests.iter() {
         let salt = if test.salt.is_empty() {

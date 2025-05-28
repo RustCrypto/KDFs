@@ -2,7 +2,7 @@ use hmac::digest::{
     Digest, FixedOutput, KeyInit, Output, Update,
     block_api::{BlockSizeUser, OutputSizeUser},
 };
-use hmac::{Hmac, SimpleHmac, block_api::EagerHash};
+use hmac::{EagerHash, Hmac, SimpleHmac};
 
 pub trait Sealed<H: OutputSizeUser> {
     fn new_from_slice(key: &[u8]) -> Self;
@@ -12,10 +12,7 @@ pub trait Sealed<H: OutputSizeUser> {
     fn finalize(self) -> Output<H>;
 }
 
-impl<H> Sealed<H> for Hmac<H>
-where
-    H: EagerHash + OutputSizeUser,
-{
+impl<H: EagerHash> Sealed<H> for Hmac<H> {
     #[inline(always)]
     fn new_from_slice(key: &[u8]) -> Self {
         KeyInit::new_from_slice(key).expect("HMAC can take a key of any size")
