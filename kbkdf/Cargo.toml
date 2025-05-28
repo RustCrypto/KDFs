@@ -27,4 +27,3 @@ aes = "0.9.0-pre.3"
 
 [package.metadata.docs.rs]
 all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
