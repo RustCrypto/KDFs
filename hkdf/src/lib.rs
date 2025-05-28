@@ -1,99 +1,12 @@
-//! An implementation of HKDF, the [HMAC-based Extract-and-Expand Key Derivation Function][1].
-//!
-//! # Usage
-//!
-//! The most common way to use HKDF is as follows: you provide the Initial Key
-//! Material (IKM) and an optional salt, then you expand it (perhaps multiple times)
-//! into some Output Key Material (OKM) bound to an "info" context string.
-//!
-//! There are two usage options for the salt:
-//!
-//! - [`None`] or static for domain separation in a private setting
-//! -  guaranteed to be uniformly-distributed and unique in a public setting
-//!
-//! Other non fitting data should be added to the `IKM` or `info`.
-//!
-//! ```rust
-//! use sha2::Sha256;
-//! use hkdf::Hkdf;
-//! use hex_literal::hex;
-//!
-//! let ikm = hex!("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b");
-//! let salt = hex!("000102030405060708090a0b0c");
-//! let info = hex!("f0f1f2f3f4f5f6f7f8f9");
-//!
-//! let hk = Hkdf::<Sha256>::new(Some(&salt[..]), &ikm);
-//! let mut okm = [0u8; 42];
-//! hk.expand(&info, &mut okm)
-//!     .expect("42 is a valid length for Sha256 to output");
-//!
-//! let expected = hex!("
-//!     3cb25f25faacd57a90434f64d0362f2a
-//!     2d2d0a90cf1a5a4c5db02d56ecc4c5bf
-//!     34007208d5b887185865
-//! ");
-//! assert_eq!(okm[..], expected[..]);
-//! ```
-//!
-//! Normally the PRK (Pseudo-Random Key) remains hidden within the HKDF
-//! object, but if you need to access it, use [`Hkdf::extract`] instead of
-//! [`Hkdf::new`].
-//!
-//! ```rust
-//! # use sha2::Sha256;
-//! # use hkdf::Hkdf;
-//! # use hex_literal::hex;
-//! # let ikm = hex!("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b");
-//! # let salt = hex!("000102030405060708090a0b0c");
-//!
-//! let (prk, hk) = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
-//! let expected = hex!("
-//!     077709362c2e32df0ddc3f0dc47bba63
-//!     90b6c73bb50f9c3122ec844ad7c2b3e5
-//! ");
-//! assert_eq!(prk[..], expected[..]);
-//! ```
-//!
-//! If you already have a strong key to work from (uniformly-distributed and
-//! long enough), you can save a tiny amount of time by skipping the extract
-//! step. In this case, you pass a Pseudo-Random Key (PRK) into the
-//! [`Hkdf::from_prk`] constructor, then use the resulting [`Hkdf`] object
-//! as usual.
-//!
-//! ```rust
-//! # use sha2::Sha256;
-//! # use hkdf::Hkdf;
-//! # use hex_literal::hex;
-//! # let salt = hex!("000102030405060708090a0b0c");
-//! # let info = hex!("f0f1f2f3f4f5f6f7f8f9");
-//! let prk = hex!("
-//!     077709362c2e32df0ddc3f0dc47bba63
-//!     90b6c73bb50f9c3122ec844ad7c2b3e5
-//! ");
-//!
-//! let hk = Hkdf::<Sha256>::from_prk(&prk).expect("PRK should be large enough");
-//! let mut okm = [0u8; 42];
-//! hk.expand(&info, &mut okm)
-//!     .expect("42 is a valid length for Sha256 to output");
-//!
-//! let expected = hex!("
-//!     3cb25f25faacd57a90434f64d0362f2a
-//!     2d2d0a90cf1a5a4c5db02d56ecc4c5bf
-//!     34007208d5b887185865
-//! ");
-//! assert_eq!(okm[..], expected[..]);
-//! ```
-//!
-//! [1]: https://tools.ietf.org/html/rfc5869
-
 #![no_std]
+#![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![forbid(unsafe_code)]
-#![warn(missing_docs, rust_2018_idioms)]
+#![warn(missing_docs)]
 
 pub use hmac;
 
