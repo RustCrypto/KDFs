@@ -12,10 +12,7 @@ pub trait Sealed<H: OutputSizeUser> {
     fn finalize(self) -> Output<H>;
 }
 
-impl<H> Sealed<H> for Hmac<H>
-where
-    H: EagerHash + OutputSizeUser,
-{
+impl<H: EagerHash> Sealed<H> for Hmac<H> {
     #[inline(always)]
     fn new_from_slice(key: &[u8]) -> Self {
         KeyInit::new_from_slice(key).expect("HMAC can take a key of any size")
