@@ -6,6 +6,7 @@
 )]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![forbid(unsafe_code)]
+#![warn(missing_docs, rust_2018_idioms)]
 
 use core::{fmt, marker::PhantomData, ops::Mul};
 use digest::{
@@ -18,8 +19,10 @@ use digest::{
 
 pub mod sealed;
 
+/// KBKDF error type.
 #[derive(Debug, PartialEq)]
 pub enum Error {
+    /// Indicates that the requested length of the derived key is too large for the value of R specified.
     InvalidRequestSize,
 }
 
@@ -36,13 +39,28 @@ impl fmt::Display for Error {
 
 impl core::error::Error for Error {}
 
-/// Parameters used for KBKDF
+/// Parameters used for KBKDF.
+///
+/// For more details, read the official specification: [NIST SP 800-108r1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-108r1.pdf).
 pub struct Params<'k, 'l, 'c> {
+    /// Key-derivation key.
+    ///
+    /// key that is used as an input to a key-derivation function (along with other input data) to derive keying material.
     pub kin: &'k [u8],
+    /// A string that identifies the purpose for the derived keying material, which is encoded as a bit string.
+    ///
+    /// The encoding method for the Label is defined in a larger context, for example, in the protocol that uses a KDF.
     pub label: &'l [u8],
+    /// A bit string containing the information related to the derived keying material.
+    ///
+    /// It may include the identities of the parties who are deriving and/or using the derived keying material and,
+    /// optionally, a nonce known by the parties who derive the keys.
     pub context: &'c [u8],
+    /// A flag indicating whether to update the Prf with the requested key length.
     pub use_l: bool,
+    /// A flag indicating whether to separate the label from the context with a NULL byte.
     pub use_separator: bool,
+    /// A flag indicating whether to update the Prf with the iteration counter.
     pub use_counter: bool,
 }
 
@@ -61,7 +79,7 @@ impl<'k, 'l, 'c> Params<'k, 'l, 'c> {
     }
 }
 
-/// Parameters builders for [`Params`]
+/// Parameters builders for [`Params`].
 pub struct ParamsBuilder<'k, 'l, 'c>(Params<'k, 'l, 'c>);
 
 impl<'k, 'l, 'c> ParamsBuilder<'k, 'l, 'c> {
@@ -144,7 +162,7 @@ where
     <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
 {
     /// Derives `key` from `kin` and other parameters.
-    fn derive(&self, params: Params) -> Result<Array<u8, K::KeySize>, Error> {
+    fn derive(&self, params: Params<'_, '_, '_>) -> Result<Array<u8, K::KeySize>, Error> {
         // n - An integer whose value is the number of iterations of the PRF needed to generate L
         // bits of keying material
         let n: u32 = <KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32
@@ -226,15 +244,19 @@ where
         Ok(output)
     }
 
-    /// Input the IV in the PRF
+    /// Input the IV in the PRF.
     fn input_iv(&self, _ki: &mut Option<Array<u8, Prf::OutputSize>>) {}
 
     /// Whether the KI should be reinjected every round.
+    ///
+    /// Or, in other words, whether the KBKDF is in Feedback Mode.
     const FEEDBACK_KI: bool = false;
 
+    /// Whether the KBKDF is in Double-Pipeline Mode.
     const DOUBLE_PIPELINE: bool = false;
 }
 
+/// KBKDF in Counter Mode.
 pub struct Counter<Prf, K, R = U32> {
     _marker: PhantomData<(Prf, K, R)>,
 }
@@ -259,6 +281,7 @@ where
 {
 }
 
+/// KBKDF in Feedback Mode.
 pub struct Feedback<'a, Prf, K, R = U32>
 where
     Prf: Mac,
@@ -271,6 +294,7 @@ impl<'a, Prf, K, R> Feedback<'a, Prf, K, R>
 where
     Prf: Mac,
 {
+    /// Creates a new [`Feedback`] instance with an optional IV.
     pub fn new(iv: Option<&'a Array<u8, Prf::OutputSize>>) -> Self {
         Self {
             iv,
@@ -298,6 +322,7 @@ where
     const FEEDBACK_KI: bool = true;
 }
 
+/// KBKDF in Double-Pipeline Mode.
 pub struct DoublePipeline<Prf, K, R = U32>
 where
     Prf: Mac,

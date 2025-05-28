@@ -1,3 +1,5 @@
+//! The module provides the sealed trait [R].
+
 use digest::{
     array::typenum::Unsigned,
     consts::{U8, U16, U24, U32},
@@ -14,7 +16,7 @@ mod private {
     impl Sealed for U32 {}
 }
 
-/// Marker used to register valid values for R in the KBKDF
+/// Marker used to register valid values for R in the KBKDF.
 pub trait R: Unsigned + private::Sealed {}
 
 impl R for U8 {}
