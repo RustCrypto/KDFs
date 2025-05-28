@@ -2,7 +2,7 @@ use hmac::digest::{
     Digest, FixedOutput, KeyInit, Output, Update,
     block_api::{BlockSizeUser, OutputSizeUser},
 };
-use hmac::{Hmac, SimpleHmac, block_api::EagerHash};
+use hmac::{EagerHash, Hmac, SimpleHmac};
 
 pub trait Sealed<H: OutputSizeUser> {
     fn new_from_slice(key: &[u8]) -> Self;
