@@ -38,6 +38,13 @@ assert_eq!(okm, expected);
 Normally the PRK (Pseudo-Random Key) remains hidden within the HKDF object, but if you need to access it, use `Hkdf::extract` instead of `Hkdf::new`.
 
 ```rust
+use sha2::Sha256;
+use hkdf::Hkdf;
+use hex_literal::hex;
+
+let ikm = hex!("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b");
+let salt = hex!("000102030405060708090a0b0c");
+
 let (prk, hk) = Hkdf::<Sha256>::extract(Some(&salt[..]), &ikm);
 let expected = hex!("
     077709362c2e32df0ddc3f0dc47bba63
@@ -53,6 +60,13 @@ step. In this case, you pass a Pseudo-Random Key (PRK) into the
 as usual.
 
 ```rust
+use sha2::Sha256;
+use hkdf::Hkdf;
+use hex_literal::hex;
+
+let salt = hex!("000102030405060708090a0b0c");
+let info = hex!("f0f1f2f3f4f5f6f7f8f9");
+ 
 let prk = hex!("
     077709362c2e32df0ddc3f0dc47bba63
     90b6c73bb50f9c3122ec844ad7c2b3e5

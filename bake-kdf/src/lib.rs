@@ -1,13 +1,12 @@
 #![no_std]
+#![doc = include_str!("../README.md")]
 #![doc(
     html_logo_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
-    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg",
-    html_root_url = "https://docs.rs/bake-kdf/0.0.0"
+    html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg"
 )]
-#![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![forbid(unsafe_code)]
-#![warn(missing_docs, rust_2018_idioms)]
+#![warn(missing_docs)]
 
 use belt_hash::digest::FixedOutput;
 use belt_hash::{BeltHash, Digest, block_api::belt_compress};
