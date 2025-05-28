@@ -3,6 +3,7 @@ name: bake-kdf
 on:
   pull_request:
     paths:
+      - ".github/workflows/bake-kdf.yml"
       - "bake-kdf/**"
       - "Cargo.*"
   push:

@@ -3,6 +3,7 @@ name: kbkdf
 on:
   pull_request:
     paths:
+      - ".github/workflows/kbkdf.yml"
       - "kbkdf/**"
       - "Cargo.*"
   push:

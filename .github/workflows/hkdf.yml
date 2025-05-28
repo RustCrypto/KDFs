@@ -3,6 +3,7 @@ name: hkdf
 on:
   pull_request:
     paths:
+      - ".github/workflows/hkdf.yml"
       - "hkdf/**"
       - "Cargo.*"
   push:

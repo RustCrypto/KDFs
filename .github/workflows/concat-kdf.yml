@@ -3,6 +3,7 @@ name: concat-kdf
 on:
   pull_request:
     paths:
+      - ".github/workflows/concat-kdf.yml"
       - "concat-kdf/**"
       - "Cargo.*"
   push:

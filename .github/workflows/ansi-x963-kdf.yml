@@ -3,6 +3,7 @@ name: ansi-x963-kdf
 on:
   pull_request:
     paths:
+      - ".github/workflows/ansi-x963-kdf.yml"
       - "ansi-x963-kdf/**"
       - "Cargo.*"
   push:
