@@ -10,15 +10,3 @@ members = [
 
 [profile.dev]
 opt-level = 2
-
-[patch.crates-io]
-cipher        = { git = "https://github.com/RustCrypto/traits.git" }
-crypto-common = { git = "https://github.com/RustCrypto/traits.git" }
-digest        = { git = "https://github.com/RustCrypto/traits.git" }
-
-cmac = { git = "https://github.com/RustCrypto/MACs.git" }
-hmac = { git = "https://github.com/RustCrypto/MACs.git" }
-
-belt-hash = { git = "https://github.com/RustCrypto/hashes.git" }
-sha1      = { git = "https://github.com/RustCrypto/hashes.git" }
-sha2      = { git = "https://github.com/RustCrypto/hashes.git" }
