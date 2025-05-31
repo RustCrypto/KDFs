@@ -15,7 +15,7 @@ dependencies = [
 
 [[package]]
 name = "ansi-x963-kdf"
-version = "0.0.1"
+version = "0.1.0-rc.0"
 dependencies = [
  "digest",
  "hex-literal",
