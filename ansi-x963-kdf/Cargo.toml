@@ -13,7 +13,7 @@ categories = ["cryptography", "no-std"]
 rust-version = "1.85"
 
 [dependencies]
-digest = "0.11.0-rc.0"
+digest = "0.11.0-rc.1"
 
 [dev-dependencies]
 hex-literal = "1"
