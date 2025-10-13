@@ -32,7 +32,7 @@ impl<H: EagerHash> HmacImpl<H> for Hmac<H> {
     #[inline(always)]
     fn finalize(self) -> Output<H> {
         Output::<H>::try_from(&self.finalize_fixed()[..])
-            .expect("Output<H> and Output<H::Core> are always equal to each other")
+            .expect("Output<H> and Output<Hmac<H>> are always equal to each other")
     }
 }
 
@@ -53,6 +53,6 @@ where
     #[inline(always)]
     fn finalize(self) -> Output<H> {
         Output::<H>::try_from(&self.finalize_fixed()[..])
-            .expect("Output<H> and Output<H::Core> are always equal to each other")
+            .expect("Output<H> and Output<SimpleHmac<H>> are always equal to each other")
     }
 }
