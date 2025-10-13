@@ -8,63 +8,44 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
-pub use hmac;
-
-use core::fmt;
-use core::marker::PhantomData;
-use hmac::digest::{
-    Output, OutputSizeUser, array::typenum::Unsigned, crypto_common::AlgorithmName,
+use hmac::{
+    Hmac, SimpleHmac,
+    digest::{Output, OutputSizeUser, array::typenum::Unsigned},
 };
-use hmac::{Hmac, SimpleHmac};
 
 mod errors;
 mod hmac_impl;
 
 pub use errors::{InvalidLength, InvalidPrkLength};
+pub use hmac;
 pub use hmac_impl::HmacImpl;
 
-/// [`HkdfExtract`] variant which uses [`SimpleHmac`] for underlying HMAC
-/// implementation.
-pub type SimpleHkdfExtract<H> = HkdfExtract<H, SimpleHmac<H>>;
-/// [`Hkdf`] variant which uses [`SimpleHmac`] for underlying HMAC
-/// implementation.
-pub type SimpleHkdf<H> = Hkdf<H, SimpleHmac<H>>;
+/// [`GenericHkdfExtract`] variant which uses [`Hmac`] for the underlying HMAC implementation.
+pub type HkdfExtract<H> = GenericHkdfExtract<Hmac<H>>;
+/// [`GenericHkdf`] variant which uses [`Hmac`] for the underlying HMAC implementation.
+pub type Hkdf<H> = GenericHkdf<Hmac<H>>;
 
-/// Structure representing the streaming context of an HKDF-Extract operation
-/// ```rust
-/// # use hkdf::{Hkdf, HkdfExtract};
-/// # use sha2::Sha256;
-/// let mut extract_ctx = HkdfExtract::<Sha256>::new(Some(b"mysalt"));
-/// extract_ctx.input_ikm(b"hello");
-/// extract_ctx.input_ikm(b" world");
-/// let (streamed_res, _) = extract_ctx.finalize();
+/// [`GenericHkdfExtract`] variant which uses [`SimpleHmac`] for the underlying HMAC implementation.
+pub type SimpleHkdfExtract<H> = GenericHkdfExtract<SimpleHmac<H>>;
+/// [`GenericHkdf`] variant which uses [`SimpleHmac`] for the underlying HMAC implementation.
+pub type SimpleHkdf<H> = GenericHkdf<SimpleHmac<H>>;
+
+/// Structure representing the streaming context of an HKDF-Extract operation.
 ///
-/// let (oneshot_res, _) = Hkdf::<Sha256>::extract(Some(b"mysalt"), b"hello world");
-/// assert_eq!(streamed_res, oneshot_res);
-/// ```
-#[derive(Clone)]
-pub struct HkdfExtract<H, I = Hmac<H>>
-where
-    H: OutputSizeUser,
-    I: HmacImpl<H>,
-{
-    hmac: I,
-    _pd: PhantomData<H>,
+/// This type is generic over HMAC implementation. Most users should use
+/// [`HkdfExtract`] or [`SimpleHkdfExtract`] type aliases.
+#[derive(Clone, Debug)]
+pub struct GenericHkdfExtract<H: HmacImpl> {
+    hmac: H,
 }
 
-impl<H, I> HkdfExtract<H, I>
-where
-    H: OutputSizeUser,
-    I: HmacImpl<H>,
-{
+impl<H: HmacImpl> GenericHkdfExtract<H> {
     /// Initiates the HKDF-Extract context with the given optional salt
     pub fn new(salt: Option<&[u8]>) -> Self {
         let default_salt = Output::<H>::default();
         let salt = salt.unwrap_or(&default_salt);
-        Self {
-            hmac: I::new_from_slice(salt),
-            _pd: PhantomData,
-        }
+        let hmac = H::new_from_slice(salt);
+        Self { hmac }
     }
 
     /// Feeds in additional input key material to the HKDF-Extract context
@@ -74,35 +55,25 @@ where
 
     /// Completes the HKDF-Extract operation, returning both the generated pseudorandom key and
     /// `Hkdf` struct for expanding.
-    pub fn finalize(self) -> (Output<H>, Hkdf<H, I>) {
+    pub fn finalize(self) -> (Output<H>, GenericHkdf<H>) {
         let prk = self.hmac.finalize();
-        let hkdf = Hkdf::from_prk(&prk).expect("PRK size is correct");
+        let hkdf = GenericHkdf::<H>::from_prk(&prk).expect("PRK size is correct");
         (prk, hkdf)
-    }
-}
-
-impl<H, I> fmt::Debug for HkdfExtract<H, I>
-where
-    H: OutputSizeUser,
-    I: HmacImpl<H> + AlgorithmName,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("HkdfExtract<")?;
-        <I as AlgorithmName>::write_alg_name(f)?;
-        f.write_str("> { ... }")
     }
 }
 
 /// Structure representing the HKDF, capable of HKDF-Expand and HKDF-Extract operations.
 /// Recommendations for the correct usage of the parameters can be found in the
 /// [crate root](index.html#usage).
-#[derive(Clone)]
-pub struct Hkdf<H: OutputSizeUser, I: HmacImpl<H> = Hmac<H>> {
-    hmac: I,
-    _pd: PhantomData<H>,
+///
+/// This type is generic over HMAC implementation. Most users should use
+/// [`Hkdf`] or [`SimpleHkdf`] type aliases.
+#[derive(Clone, Debug)]
+pub struct GenericHkdf<H: HmacImpl> {
+    hmac: H,
 }
 
-impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
+impl<H: HmacImpl> GenericHkdf<H> {
     /// Convenience method for [`extract`][Hkdf::extract] when the generated
     /// pseudorandom key can be ignored and only HKDF-Expand operation is needed. This is the most
     /// common constructor.
@@ -114,20 +85,19 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
     /// Create `Hkdf` from an already cryptographically strong pseudorandom key
     /// as per section 3.3 from RFC5869.
     pub fn from_prk(prk: &[u8]) -> Result<Self, InvalidPrkLength> {
-        // section 2.3 specifies that prk must be "at least HashLen octets"
-        if prk.len() < <H as OutputSizeUser>::OutputSize::to_usize() {
+        // section 2.3 specifies that `prk` must be "at least HashLen octets"
+        let hash_len = <H as OutputSizeUser>::OutputSize::to_usize();
+        if prk.len() < hash_len {
             return Err(InvalidPrkLength);
         }
-        Ok(Self {
-            hmac: I::new_from_slice(prk),
-            _pd: PhantomData,
-        })
+        let hmac = H::new_from_slice(prk);
+        Ok(Self { hmac })
     }
 
     /// The RFC5869 HKDF-Extract operation returning both the generated
     /// pseudorandom key and `Hkdf` struct for expanding.
     pub fn extract(salt: Option<&[u8]>, ikm: &[u8]) -> (Output<H>, Self) {
-        let mut extract_ctx = HkdfExtract::new(salt);
+        let mut extract_ctx = GenericHkdfExtract::<H>::new(salt);
         extract_ctx.input_ikm(ikm);
         extract_ctx.finalize()
     }
@@ -178,18 +148,5 @@ impl<H: OutputSizeUser, I: HmacImpl<H>> Hkdf<H, I> {
     /// If you don't have any `info` to pass, use an empty slice.
     pub fn expand(&self, info: &[u8], okm: &mut [u8]) -> Result<(), InvalidLength> {
         self.expand_multi_info(&[info], okm)
-    }
-}
-
-impl<H, I> fmt::Debug for Hkdf<H, I>
-where
-    H: OutputSizeUser,
-    I: HmacImpl<H>,
-    I: AlgorithmName,
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("Hkdf<")?;
-        <I as AlgorithmName>::write_alg_name(f)?;
-        f.write_str("> { ... }")
     }
 }
