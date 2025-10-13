@@ -18,9 +18,10 @@ use hmac::digest::{
 use hmac::{Hmac, SimpleHmac};
 
 mod errors;
-mod sealed;
+mod hmac_impl;
 
 pub use errors::{InvalidLength, InvalidPrkLength};
+pub use hmac_impl::HmacImpl;
 
 /// [`HkdfExtract`] variant which uses [`SimpleHmac`] for underlying HMAC
 /// implementation.
@@ -192,8 +193,3 @@ where
         f.write_str("> { ... }")
     }
 }
-
-/// Sealed trait implemented for [`Hmac`] and [`SimpleHmac`].
-pub trait HmacImpl<H: OutputSizeUser>: sealed::Sealed<H> + Clone {}
-
-impl<H: OutputSizeUser, T: sealed::Sealed<H> + Clone> HmacImpl<H> for T {}
