@@ -19,7 +19,7 @@ use digest::{Digest, FixedOutputReset, Update, array::typenum::Unsigned};
 /// use sha2::Sha256;
 ///
 /// let mut key = [0u8; 16];
-/// concat_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwrap();
+/// one_step_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwrap();
 /// assert_eq!(key, hex!("960db2c549ab16d71a7b008e005c2bdc"));
 /// ```
 pub fn derive_key_into<D>(secret: &[u8], other_info: &[u8], key: &mut [u8]) -> Result<(), Error>
@@ -53,7 +53,7 @@ where
     Ok(())
 }
 
-/// Concat KDF errors.
+/// One-Step KDF errors.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Error {
     /// The length of the secret is zero.

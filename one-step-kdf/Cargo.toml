@@ -1,14 +1,14 @@
 [package]
-name = "concat-kdf"
-version = "0.2.0-pre"
-description = "Concatenation Key Derivation Function (Concat KDF)"
+name = "one-step-kdf"
+version = "0.1.0-pre"
+description = "One-Step Key Derivation Function as defined in NIST SP 800-56C R2"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 edition = "2024"
-documentation = "https://docs.rs/concat-kdf"
+documentation = "https://docs.rs/one-step-kdf"
 repository = "https://github.com/RustCrypto/KDFs"
-keywords = ["crypto", "concat-kdf", "KDF", "NIST"]
+keywords = ["crypto", "one-step-kdf", "KDF", "NIST"]
 categories = ["cryptography", "no-std"]
 rust-version = "1.85"
 

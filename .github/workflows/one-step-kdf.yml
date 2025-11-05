@@ -1,17 +1,17 @@
-name: concat-kdf
+name: one-step-kdf
 
 on:
   pull_request:
     paths:
-      - ".github/workflows/concat-kdf.yml"
-      - "concat-kdf/**"
+      - ".github/workflows/one-step-kdf.yml"
+      - "one-step-kdf/**"
       - "Cargo.*"
   push:
     branches: master
 
 defaults:
   run:
-    working-directory: concat-kdf
+    working-directory: one-step-kdf
 
 env:
   CARGO_INCREMENTAL: 0
