@@ -16,7 +16,7 @@ where
         let mut buf = [0u8; 256];
         for key_length in 1..f.expected_key.len() {
             let key = &mut buf[..key_length];
-            concat_kdf::derive_key_into::<D>(f.secret, f.other_info, key).unwrap();
+            one_step_kdf::derive_key_into::<D>(f.secret, f.other_info, key).unwrap();
             assert_eq!(&f.expected_key[..key_length], key);
         }
     }
@@ -175,15 +175,15 @@ fn test_input_output_sha512() {
 #[test]
 fn test_no_secret() {
     assert_eq!(
-        concat_kdf::derive_key_into::<Sha512>(&[], &[], &mut [0u8; 42]),
-        Err(concat_kdf::Error::NoSecret)
+        one_step_kdf::derive_key_into::<Sha512>(&[], &[], &mut [0u8; 42]),
+        Err(one_step_kdf::Error::NoSecret)
     );
 }
 
 #[test]
 fn test_no_output() {
     assert_eq!(
-        concat_kdf::derive_key_into::<Sha512>(&[0u8; 42], &[], &mut [0u8; 0]),
-        Err(concat_kdf::Error::NoOutput)
+        one_step_kdf::derive_key_into::<Sha512>(&[0u8; 42], &[], &mut [0u8; 0]),
+        Err(one_step_kdf::Error::NoOutput)
     );
 }

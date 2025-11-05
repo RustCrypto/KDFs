@@ -1,11 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
+    "ansi-x963-kdf",
     "bake-kdf",
     "hkdf",
-    "concat-kdf",
-    "ansi-x963-kdf",
     "kbkdf",
+    "one-step-kdf"
 ]
 
 [profile.dev]
