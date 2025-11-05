@@ -1,6 +1,6 @@
 [package]
 name = "bake-kdf"
-version = "0.0.1"
+version = "0.1.0-rc.0"
 description = "bake-kdf function (STB 34.101.66-2014)"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"

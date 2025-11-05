@@ -15,7 +15,7 @@ dependencies = [
 
 [[package]]
 name = "ansi-x963-kdf"
-version = "0.1.0-rc.0"
+version = "0.1.0-rc.1"
 dependencies = [
  "digest",
  "hex-literal",
@@ -24,7 +24,7 @@ dependencies = [
 
 [[package]]
 name = "bake-kdf"
-version = "0.0.1"
+version = "0.1.0-rc.0"
 dependencies = [
  "belt-hash",
  "hex-literal",
@@ -140,7 +140,7 @@ checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
 
 [[package]]
 name = "hkdf"
-version = "0.13.0-rc.2"
+version = "0.13.0-rc.3"
 dependencies = [
  "blobby",
  "hex-literal",
@@ -178,7 +178,7 @@ dependencies = [
 
 [[package]]
 name = "kbkdf"
-version = "0.1.0-pre.0"
+version = "0.1.0-rc.0"
 dependencies = [
  "aes",
  "cmac",
@@ -198,7 +198,7 @@ checksum = "2874a2af47a2325c2001a6e6fad9b16a53b802102b528163885171cf92b15976"
 
 [[package]]
 name = "one-step-kdf"
-version = "0.1.0-pre"
+version = "0.1.0-rc.0"
 dependencies = [
  "digest",
  "hex-literal",

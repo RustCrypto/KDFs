@@ -1,6 +1,6 @@
 [package]
 name = "one-step-kdf"
-version = "0.1.0-pre"
+version = "0.1.0-rc.0"
 description = "One-Step Key Derivation Function as defined in NIST SP 800-56C R2"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
