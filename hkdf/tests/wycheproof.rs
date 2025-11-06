@@ -13,13 +13,13 @@ fn test<H: HmacImpl>(test_vectors: &[TestVector]) {
     let mut buf = [0u8; 1 << 14];
     for (i, tv) in test_vectors.iter().enumerate() {
         let prk = GenericHkdf::<H>::new(Some(tv.salt), tv.ikm);
-        let buf = &mut buf[..tv.okm.len()];
+        let okm_dst = &mut buf[..tv.okm.len()];
 
         let mut err = None;
-        if prk.expand(tv.info, buf).is_err() {
+        if prk.expand(tv.info, okm_dst).is_err() {
             err = Some("prk expand");
         }
-        if buf != tv.okm {
+        if okm_dst != tv.okm {
             err = Some("mismatch in okm");
         }
 
