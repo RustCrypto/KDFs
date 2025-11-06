@@ -1,7 +1,7 @@
-use blobby::Blob4Iterator;
 use hkdf::{GenericHkdf, HmacImpl};
 use hmac::{Hmac, SimpleHmac};
 
+#[derive(Copy, Clone, Debug)]
 struct TestVector {
     ikm: &'static [u8],
     salt: &'static [u8],
@@ -10,13 +10,13 @@ struct TestVector {
 }
 
 fn test<H: HmacImpl>(test_vectors: &[TestVector]) {
-    let mut buf = [0u8; 1024];
+    let mut buf = [0u8; 1 << 14];
     for (i, tv) in test_vectors.iter().enumerate() {
         let prk = GenericHkdf::<H>::new(Some(tv.salt), tv.ikm);
         let buf = &mut buf[..tv.okm.len()];
 
         let mut err = None;
-        if prk.expand(tv.info, &mut buf).is_err() {
+        if prk.expand(tv.info, buf).is_err() {
             err = Some("prk expand");
         }
         if buf != tv.okm {
@@ -27,10 +27,7 @@ fn test<H: HmacImpl>(test_vectors: &[TestVector]) {
             panic!(
                 "\n\
                  Failed test #{i}: {err_desc}\n\
-                 ikm:\t{ikm:?}\n\
-                 salt:\t{salt:?}\n\
-                 info:\t{info:?}\n\
-                 okm:\t{okm:?}\n"
+                 test vector:\t{tv:#?}\n"
             );
         }
     }
