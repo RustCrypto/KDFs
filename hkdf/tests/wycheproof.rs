@@ -24,11 +24,7 @@ fn test<H: HmacImpl>(test_vectors: &[TestVector]) {
         }
 
         if let Some(err_desc) = err {
-            panic!(
-                "\n\
-                 Failed test #{i}: {err_desc}\n\
-                 test vector:\t{tv:#?}\n"
-            );
+            panic!("Failed test #{i}: {err_desc}\nTest vector:\t{tv:#?}");
         }
     }
 }
