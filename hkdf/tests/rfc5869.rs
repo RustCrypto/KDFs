@@ -20,16 +20,16 @@ fn test<H: HmacImpl>(tvs: &[TestVector]) {
             Some(tv.salt)
         };
         let (prk2, hkdf) = GenericHkdf::<H>::extract(salt, tv.ikm);
-        let okm = &mut buf[..tv.okm.len()];
-        assert!(hkdf.expand(tv.info, okm).is_ok());
+        let okm_dst = &mut buf[..tv.okm.len()];
+        assert!(hkdf.expand(tv.info, okm_dst).is_ok());
 
         assert_eq!(prk2[..], tv.prk[..]);
-        assert_eq!(okm, tv.okm);
+        assert_eq!(okm_dst, tv.okm);
 
-        okm.fill(0);
+        okm_dst.fill(0);
         let hkdf = GenericHkdf::<H>::from_prk(tv.prk).unwrap();
-        assert!(hkdf.expand(tv.info, okm).is_ok());
-        assert_eq!(okm, tv.okm);
+        assert!(hkdf.expand(tv.info, okm_dst).is_ok());
+        assert_eq!(okm_dst, tv.okm);
     }
 }
 
