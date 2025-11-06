@@ -1,47 +1,50 @@
-use blobby::Blob4Iterator;
 use hkdf::{GenericHkdf, HmacImpl};
 use hmac::{Hmac, SimpleHmac};
 
-fn test<H: HmacImpl>(data: &[u8]) {
-    for (i, row) in Blob4Iterator::new(data).unwrap().enumerate() {
-        let [ikm, salt, info, okm] = row.unwrap();
+#[derive(Copy, Clone, Debug)]
+struct TestVector {
+    ikm: &'static [u8],
+    salt: &'static [u8],
+    info: &'static [u8],
+    okm: &'static [u8],
+}
 
-        let prk = GenericHkdf::<H>::new(Some(salt), ikm);
-        let mut got_okm = vec![0; okm.len()];
+fn test<H: HmacImpl>(test_vectors: &[TestVector]) {
+    let mut buf = [0u8; 1 << 14];
+    for (i, tv) in test_vectors.iter().enumerate() {
+        let prk = GenericHkdf::<H>::new(Some(tv.salt), tv.ikm);
+        let okm_dst = &mut buf[..tv.okm.len()];
 
         let mut err = None;
-        if prk.expand(info, &mut got_okm).is_err() {
+        if prk.expand(tv.info, okm_dst).is_err() {
             err = Some("prk expand");
         }
-        if got_okm != okm {
+        if okm_dst != tv.okm {
             err = Some("mismatch in okm");
         }
 
         if let Some(err_desc) = err {
-            panic!(
-                "\n\
-                 Failed test №{i}: {err_desc}\n\
-                 ikm:\t{ikm:?}\n\
-                 salt:\t{salt:?}\n\
-                 info:\t{info:?}\n\
-                 okm:\t{okm:?}\n"
-            );
+            panic!("Failed test #{i}: {err_desc}\nTest vector:\t{tv:#?}");
         }
     }
 }
 
 macro_rules! new_test {
-    ($name:ident, $test_name:expr, $hash:ty) => {
+    ($name:ident, $hash:ty) => {
         #[test]
         fn $name() {
-            let data = include_bytes!(concat!("data/", $test_name, ".blb"));
-            test::<Hmac<$hash>>(data);
-            test::<SimpleHmac<$hash>>(data);
+            blobby::parse_into_structs!(
+                include_bytes!(concat!("data/", stringify!($name), ".blb"));
+                static TEST_VECTORS: &[TestVector { ikm, salt, info, okm }];
+            );
+
+            test::<Hmac<$hash>>(TEST_VECTORS);
+            test::<SimpleHmac<$hash>>(TEST_VECTORS);
         }
     };
 }
 
-new_test!(wycheproof_sha1, "wycheproof-sha1", sha1::Sha1);
-new_test!(wycheproof_sha256, "wycheproof-sha256", sha2::Sha256);
-new_test!(wycheproof_sha384, "wycheproof-sha384", sha2::Sha384);
-new_test!(wycheproof_sha512, "wycheproof-sha512", sha2::Sha512);
+new_test!(wycheproof_sha1, sha1::Sha1);
+new_test!(wycheproof_sha256, sha2::Sha256);
+new_test!(wycheproof_sha384, sha2::Sha384);
+new_test!(wycheproof_sha512, sha2::Sha512);
