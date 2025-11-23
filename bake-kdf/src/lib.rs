@@ -11,7 +11,7 @@
 use belt_hash::digest::FixedOutput;
 use belt_hash::{BeltHash, Digest, block_api::belt_compress};
 
-/// `belt-keyexpand` key expansion algorithm described in STB 34.101.34-2020 8.1.2.
+/// `belt-keyexpand` key expansion algorithm described in STB 34.101.31-2020 8.1.2.
 ///
 /// # Panics
 /// If `N` is not equal to 16, 24, or 32.
@@ -41,7 +41,7 @@ pub fn belt_keyexpand<const N: usize>(k: &[u8; N]) -> [u32; 8] {
     t
 }
 
-/// `belt-keyrep` key repetition algorithm described in STB 34.101.34-2020 8.1.3.
+/// `belt-keyrep` key repetition algorithm described in STB 34.101.31-2020 8.1.3.
 ///
 /// # Panics
 /// If `(N, M)` is not equal to `(16, 16)`, `(24, 16)`, `(24, 24)`,
