@@ -14,7 +14,7 @@ rust-version = "1.85"
 exclude = ["/tests/*"]
 
 [dependencies]
-digest = { version = "0.11.0-rc.4", default-features = false, features = ["mac"] }
+digest = { version = "0.11.0-rc.5", default-features = false, features = ["mac"] }
 
 [dev-dependencies]
 hex-literal = "1"
