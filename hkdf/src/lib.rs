@@ -20,6 +20,9 @@ pub use errors::{InvalidLength, InvalidPrkLength};
 pub use hmac;
 pub use hmac_impl::HmacImpl;
 
+#[cfg(feature = "kdf")]
+pub use kdf::{self, Kdf};
+
 /// [`GenericHkdfExtract`] variant which uses [`Hmac`] for the underlying HMAC implementation.
 pub type HkdfExtract<H> = GenericHkdfExtract<Hmac<H>>;
 /// [`GenericHkdf`] variant which uses [`Hmac`] for the underlying HMAC implementation.
@@ -59,6 +62,16 @@ impl<H: HmacImpl> GenericHkdfExtract<H> {
         let prk = self.hmac.finalize();
         let hkdf = GenericHkdf::<H>::from_prk(&prk).expect("PRK size is correct");
         (prk, hkdf)
+    }
+}
+
+#[cfg(feature = "kdf")]
+impl<H: HmacImpl> Kdf for GenericHkdfExtract<H> {
+    fn derive_key(&self, secret: &[u8], info: &[u8], out: &mut [u8]) -> kdf::Result<()> {
+        let mut extract = self.clone();
+        extract.input_ikm(secret);
+        let (_, hkdf) = extract.finalize();
+        hkdf.expand(info, out).map_err(|_| kdf::Error)
     }
 }
 
