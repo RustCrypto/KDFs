@@ -145,6 +145,7 @@ dependencies = [
  "blobby",
  "hex-literal",
  "hmac",
+ "kdf",
  "sha1",
  "sha2",
 ]
@@ -189,6 +190,12 @@ dependencies = [
  "sha1",
  "sha2",
 ]
+
+[[package]]
+name = "kdf"
+version = "0.1.0-pre.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4852c654c9650d06a4293146ead04bedcf29861dc0de1115ca1492b7a27c50aa"
 
 [[package]]
 name = "libc"
