@@ -38,7 +38,6 @@ jobs:
       - run: cargo build --no-default-features --target ${{ matrix.target }}
 
   minimal-versions:
-    if: false # Disabled because it can't handle git dependencies use to upgrade ecosystem
     uses: RustCrypto/actions/.github/workflows/minimal-versions.yml@master
     with:
         working-directory: ${{ github.workflow }}
