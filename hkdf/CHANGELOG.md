@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 0.13.0 (unreleased)
 ### Changed
 - Removed `std` crate feature ([#105])
-- Bump MSRV to 1.81 ([#105])
+- Bump MSRV to 1.85 and edition to 2024 ([#114])
 - Bump `hmac` dependency to v0.13
 - Unseal `HmacImpl` trait ([#154])
 
 [#105]: https://github.com/RustCrypto/KDFs/pull/105
+[#114]: https://github.com/RustCrypto/KDFs/pull/114
 [#154]: https://github.com/RustCrypto/KDFs/pull/154
 
 ## 0.12.3 (2022-02-17)
