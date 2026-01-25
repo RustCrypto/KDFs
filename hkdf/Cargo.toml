@@ -13,7 +13,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
-hmac = "0.13.0-rc.3"
+hmac = "0.13.0-rc.4"
 
 # optional dependencies
 kdf = { version = "0.1.0-pre.1", optional = true }
@@ -21,8 +21,8 @@ kdf = { version = "0.1.0-pre.1", optional = true }
 [dev-dependencies]
 blobby = "0.4"
 hex-literal = "1"
-sha1 = { version = "0.11.0-rc.3", default-features = false }
-sha2 = { version = "0.11.0-rc.3", default-features = false }
+sha1 = { version = "0.11.0-rc.4", default-features = false }
+sha2 = { version = "0.11.0-rc.4", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true
