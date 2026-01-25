@@ -13,7 +13,7 @@ keywords = ["crypto", "bake", "stb", "kdf"]
 categories = ["cryptography", "no-std"]
 
 [dependencies]
-belt-hash = { version = "0.2.0-rc.3", default-features = false }
+belt-hash = { version = "0.2.0-rc.4", default-features = false }
 
 [dev-dependencies]
 hex-literal = "1"
