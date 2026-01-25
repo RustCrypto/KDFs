@@ -140,7 +140,7 @@ checksum = "e712f64ec3850b98572bffac52e2c6f282b29fe6c5fa6d42334b30be438d95c1"
 
 [[package]]
 name = "hkdf"
-version = "0.13.0-rc.3"
+version = "0.13.0-rc.4"
 dependencies = [
  "blobby",
  "hex-literal",
