@@ -1,6 +1,6 @@
 [package]
 name = "bake-kdf"
-version = "0.1.0-rc.0"
+version = "0.1.0-rc.1"
 description = "bake-kdf function (STB 34.101.66-2014)"
 authors = ["RustCrypto Developers"]
 license = "MIT OR Apache-2.0"
@@ -13,7 +13,7 @@ keywords = ["crypto", "bake", "stb", "kdf"]
 categories = ["cryptography", "no-std"]
 
 [dependencies]
-belt-hash = { version = "0.2.0-rc.4", default-features = false }
+belt-hash = { version = "0.2.0-rc.5", default-features = false }
 
 [dev-dependencies]
 hex-literal = "1"

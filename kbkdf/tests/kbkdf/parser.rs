@@ -5,7 +5,7 @@ use core::{convert::TryInto, ops::Mul};
 use digest::{
     KeyInit, Mac,
     array::{ArraySize, typenum::Unsigned},
-    crypto_common::KeySizeUser,
+    common::KeySizeUser,
 };
 
 use crate::*;

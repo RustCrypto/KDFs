@@ -14,7 +14,7 @@ macro_rules! mock_output {
     ($name:ident, $size:ident) => {
         struct $name;
 
-        impl digest::crypto_common::KeySizeUser for $name {
+        impl digest::common::KeySizeUser for $name {
             type KeySize = digest::consts::$size;
         }
     };
