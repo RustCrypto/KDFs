@@ -1,6 +1,6 @@
 use super::{Array, Counter, DoublePipeline, Feedback, Kbkdf, Params};
 use core::convert::TryFrom;
-use digest::{consts::*, crypto_common::KeySizeUser};
+use digest::{common::KeySizeUser, consts::*};
 use hex_literal::hex;
 
 #[derive(Debug)]

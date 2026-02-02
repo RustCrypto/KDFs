@@ -12,8 +12,8 @@ use core::{fmt, marker::PhantomData, ops::Mul};
 use digest::{
     KeyInit, Mac,
     array::{Array, ArraySize, typenum::Unsigned},
+    common::KeySizeUser,
     consts::{U8, U32},
-    crypto_common::KeySizeUser,
     typenum::op,
 };
 
