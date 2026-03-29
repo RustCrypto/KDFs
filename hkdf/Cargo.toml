@@ -21,8 +21,8 @@ kdf = { version = "0.1", optional = true }
 [dev-dependencies]
 blobby = "0.4"
 hex-literal = "1"
-sha1 = { version = "0.11.0-rc.5", default-features = false }
-sha2 = { version = "0.11.0-rc.5", default-features = false }
+sha1 = { version = "0.11", default-features = false }
+sha2 = { version = "0.11", default-features = false }
 
 [package.metadata.docs.rs]
 all-features = true

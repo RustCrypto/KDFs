@@ -13,8 +13,8 @@ categories = ["cryptography", "no-std"]
 rust-version = "1.85"
 
 [dependencies]
-digest = "0.11.0-rc.11"
+digest = "0.11"
 
 [dev-dependencies]
 hex-literal = "1"
-sha2 = { version = "0.11.0-rc.5", default-features = false }
+sha2 = { version = "0.11", default-features = false }
