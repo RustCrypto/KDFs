@@ -13,7 +13,7 @@ edition = "2024"
 rust-version = "1.85"
 
 [dependencies]
-hmac = "0.13.0-rc.5"
+hmac = "0.13"
 
 # optional dependencies
 kdf = { version = "0.1", optional = true }
