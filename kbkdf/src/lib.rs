@@ -5,8 +5,6 @@
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
 
 use core::{fmt, marker::PhantomData, ops::Mul};
 use digest::{
@@ -20,7 +18,7 @@ use digest::{
 pub mod sealed;
 
 /// KBKDF error type.
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Error {
     /// Indicates that the requested length of the derived key is too large for the value of R specified.
     InvalidRequestSize,
@@ -42,6 +40,7 @@ impl core::error::Error for Error {}
 /// Parameters used for KBKDF.
 ///
 /// For more details, read the official specification: [NIST SP 800-108r1](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-108r1.pdf).
+#[derive(Clone, Copy, Debug)]
 pub struct Params<'k, 'l, 'c> {
     /// Key-derivation key.
     ///
@@ -66,6 +65,7 @@ pub struct Params<'k, 'l, 'c> {
 
 impl<'k, 'l, 'c> Params<'k, 'l, 'c> {
     /// Create a new builder for [`Params`]
+    #[must_use]
     pub fn builder(kin: &'k [u8]) -> ParamsBuilder<'k, 'l, 'c> {
         let params = Params {
             kin,
@@ -80,39 +80,46 @@ impl<'k, 'l, 'c> Params<'k, 'l, 'c> {
 }
 
 /// Parameters builders for [`Params`].
+#[derive(Clone, Debug)]
 pub struct ParamsBuilder<'k, 'l, 'c>(Params<'k, 'l, 'c>);
 
 impl<'k, 'l, 'c> ParamsBuilder<'k, 'l, 'c> {
     /// Return the built [`Params`]
+    #[must_use]
     pub fn build(self) -> Params<'k, 'l, 'c> {
         self.0
     }
 
     /// Set the label for the parameters
+    #[must_use]
     pub fn with_label(mut self, label: &'l [u8]) -> Self {
         self.0.label = label;
         self
     }
 
     /// Set the context for the parameters
+    #[must_use]
     pub fn with_context(mut self, context: &'c [u8]) -> Self {
         self.0.context = context;
         self
     }
 
     /// During the iterations, append the length of the Prf
+    #[must_use]
     pub fn use_l(mut self, use_l: bool) -> Self {
         self.0.use_l = use_l;
         self
     }
 
     /// During the iterations, separate the label from the context with a NULL byte
+    #[must_use]
     pub fn use_separator(mut self, use_separator: bool) -> Self {
         self.0.use_separator = use_separator;
         self
     }
 
     /// During the iterations, update the Prf with the iteration counter
+    #[must_use]
     pub fn use_counter(mut self, use_counter: bool) -> Self {
         self.0.use_counter = use_counter;
         self
@@ -162,6 +169,9 @@ where
     <Prf::OutputSize as Mul<U8>>::Output: Unsigned,
 {
     /// Derives `key` from `kin` and other parameters.
+    ///
+    /// # Errors
+    /// Returns [`Error::InvalidRequestSize`] if too many PRF iterations would be needed.
     fn derive(&self, params: Params<'_, '_, '_>) -> Result<Array<u8, K::KeySize>, Error> {
         // n - An integer whose value is the number of iterations of the PRF needed to generate L
         // bits of keying material
@@ -178,7 +188,7 @@ where
         let mut ki = None;
         self.input_iv(&mut ki);
         let mut a = {
-            let mut h = Prf::new_from_slice(params.kin).unwrap();
+            let mut h = Prf::new_from_slice(params.kin).expect("should be the right size");
             h.update(params.label);
             if params.use_separator {
                 h.update(&[0]);
@@ -190,13 +200,13 @@ where
         for counter in 1..=n {
             if counter > 1 {
                 a = {
-                    let mut h = Prf::new_from_slice(params.kin).unwrap();
+                    let mut h = Prf::new_from_slice(params.kin).expect("should be the right size");
                     h.update(a.as_slice());
                     h.finalize().into_bytes()
                 };
             }
 
-            let mut h = Prf::new_from_slice(params.kin).unwrap();
+            let mut h = Prf::new_from_slice(params.kin).expect("should be the right size");
 
             if Self::FEEDBACK_KI {
                 if let Some(ki) = ki {
@@ -257,6 +267,7 @@ where
 }
 
 /// KBKDF in Counter Mode.
+#[derive(Debug)]
 pub struct Counter<Prf, K, R = U32> {
     _marker: PhantomData<(Prf, K, R)>,
 }
@@ -282,6 +293,7 @@ where
 }
 
 /// KBKDF in Feedback Mode.
+#[derive(Debug)]
 pub struct Feedback<'a, Prf, K, R = U32>
 where
     Prf: Mac,
@@ -295,6 +307,7 @@ where
     Prf: Mac,
 {
     /// Creates a new [`Feedback`] instance with an optional IV.
+    #[must_use]
     pub fn new(iv: Option<&'a Array<u8, Prf::OutputSize>>) -> Self {
         Self {
             iv,
@@ -315,7 +328,7 @@ where
 {
     fn input_iv(&self, ki: &mut Option<Array<u8, Prf::OutputSize>>) {
         if let Some(iv) = self.iv {
-            *ki = Some(iv.clone())
+            *ki = Some(iv.clone());
         }
     }
 
@@ -323,6 +336,7 @@ where
 }
 
 /// KBKDF in Double-Pipeline Mode.
+#[derive(Debug)]
 pub struct DoublePipeline<Prf, K, R = U32>
 where
     Prf: Mac,

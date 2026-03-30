@@ -4,6 +4,8 @@
 //! KDF2 implementation [KDF2BytesGenerator][1]
 //!
 //! [1]: https://downloads.bouncycastle.org/java/docs/bcprov-jdk18on-javadoc/
+#![allow(clippy::unwrap_used, reason = "tests")]
+
 use digest::{Digest, FixedOutputReset};
 use hex_literal::hex;
 use sha2::{Sha224, Sha256, Sha512};

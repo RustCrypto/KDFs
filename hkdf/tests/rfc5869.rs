@@ -1,4 +1,6 @@
-//! Test vectors from https://tools.ietf.org/html/rfc5869
+//! Test vectors from <https://tools.ietf.org/html/rfc5869>.
+#![allow(clippy::unwrap_used, reason = "tests")]
+
 use hkdf::{GenericHkdf, HmacImpl};
 use hmac::{Hmac, SimpleHmac};
 

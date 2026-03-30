@@ -1,4 +1,4 @@
-# RustCrypto: One-Step KDF
+# [RustCrypto]: One-Step KDF
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
@@ -42,6 +42,8 @@ Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
+[//]: # (badges)
+
 [crate-image]: https://img.shields.io/crates/v/one-step-kdf.svg
 [crate-link]: https://crates.io/crates/one-step-kdf
 [docs-image]: https://docs.rs/one-step-kdf/badge.svg
@@ -52,3 +54,7 @@ dual licensed as above, without any additional terms or conditions.
 [rustc-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
 [chat-image]: https://img.shields.io/badge/zulip-join_chat-blue.svg
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs
+
+[//]: # (links)
+
+[RustCrypto]: https://github.com/RustCrypto

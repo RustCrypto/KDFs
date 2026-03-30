@@ -1,3 +1,6 @@
+//! Test vectors.
+#![allow(clippy::unwrap_used, reason = "tests")]
+
 use digest::{Digest, FixedOutputReset};
 use hex_literal::hex;
 use sha2::{Sha224, Sha256, Sha512};

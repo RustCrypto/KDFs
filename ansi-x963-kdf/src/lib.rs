@@ -5,8 +5,6 @@
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
 
 use core::fmt;
 use digest::{Digest, FixedOutputReset, array::typenum::Unsigned};
@@ -22,6 +20,10 @@ use digest::{Digest, FixedOutputReset, array::typenum::Unsigned};
 /// ansi_x963_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwrap();
 /// assert_eq!(key, hex!("8dbb1d50bcc7fc782abc9db5c64a2826"));
 /// ```
+///
+/// # Errors
+/// - Returns [`Error::InputOverflow`] if too much input is provided
+/// - Returns [`Error::CounterOverflow`] if `key` is too long
 #[inline]
 pub fn derive_key_into<D>(secret: &[u8], shared_info: &[u8], key: &mut [u8]) -> Result<(), Error>
 where
@@ -38,13 +40,14 @@ where
     // 1. Check that |Z| + |SharedInfo| + 4 < hashmaxlen
     // where "hashmaxlen denote the maximum length in octets of messages that can be hashed using Hash".
     // N.B.: `D::OutputSize::U64 * (u32::MAX as u64)`` is currently used as an approximation of hashmaxlen.
-    if secret.len() as u64 + shared_info.len() as u64 + 4 >= D::OutputSize::U64 * (u32::MAX as u64)
+    if secret.len() as u64 + shared_info.len() as u64 + 4
+        >= D::OutputSize::U64 * u64::from(u32::MAX)
     {
         return Err(Error::InputOverflow);
     }
 
     // 2. Check that keydatalen < hashlen × (2^32 − 1)
-    if key.len() as u64 >= D::OutputSize::U64 * (u32::MAX as u64) {
+    if key.len() as u64 >= D::OutputSize::U64 * u64::from(u32::MAX) {
         return Err(Error::CounterOverflow);
     }
 

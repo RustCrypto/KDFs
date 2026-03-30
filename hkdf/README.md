@@ -1,4 +1,4 @@
-# RustCrypto: HKDF
+# [RustCrypto]: HKDF
 
 [![crate][crate-image]][crate-link]
 [![Docs][docs-image]][docs-link]
@@ -112,3 +112,7 @@ dual licensed as above, without any additional terms or conditions.
 [chat-link]: https://rustcrypto.zulipchat.com/#narrow/stream/260043-KDFs
 [build-image]: https://github.com/RustCrypto/KDFs/workflows/hkdf/badge.svg?branch=master&event=push
 [build-link]: https://github.com/RustCrypto/KDFs/actions?query=workflow:hkdf
+
+[//]: # (links)
+
+[RustCrypto]: https://github.com/RustCrypto

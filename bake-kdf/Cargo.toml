@@ -18,5 +18,8 @@ belt-hash = { version = "0.2.0-rc.5", default-features = false }
 [dev-dependencies]
 hex-literal = "1"
 
+[lints]
+workspace = true
+
 [package.metadata.docs.rs]
 all-features = true

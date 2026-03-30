@@ -5,8 +5,7 @@
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
+#![allow(clippy::unwrap_used, reason = "todo")]
 
 use belt_hash::digest::FixedOutput;
 use belt_hash::{BeltHash, Digest, block_api::belt_compress};
@@ -15,9 +14,13 @@ use belt_hash::{BeltHash, Digest, block_api::belt_compress};
 ///
 /// # Panics
 /// If `N` is not equal to 16, 24, or 32.
-// TODO: use compile-time checks for `N`
 #[inline]
+#[must_use]
 pub fn belt_keyexpand<const N: usize>(k: &[u8; N]) -> [u32; 8] {
+    const {
+        assert!(matches!(N, 16 | 24 | 32), "N must be 16, 24, or 32");
+    }
+
     let mut t = [0u32; 8];
     // TODO: move this conversion into `belt_keyrep` when we will be able
     // to use generic parameters as `[u32; N / 4]`.
@@ -44,15 +47,30 @@ pub fn belt_keyexpand<const N: usize>(k: &[u8; N]) -> [u32; 8] {
 /// `belt-keyrep` key repetition algorithm described in STB 34.101.31-2020 8.1.3.
 ///
 /// # Panics
-/// If `(N, M)` is not equal to `(16, 16)`, `(24, 16)`, `(24, 24)`,
-/// `(32, 16)`, `(32, 24)`, or `(32, 32)`.
-// TODO: use compile-time check for `N` and `M`
+/// If `(N, M)` is not equal to one of:
+/// - `(16, 16)`
+/// - `(24, 16)`
+/// - `(24, 24)`
+/// - `(32, 16)`
+/// - `(32, 24)`
+/// - `(32, 32)`
 #[inline]
+#[must_use]
 pub fn belt_keyrep<const N: usize, const M: usize>(
     x: &[u8; N],
     d: &[u8; 12],
     i: &[u8; 16],
 ) -> [u8; M] {
+    const {
+        assert!(
+            matches!(
+                (N, M),
+                (16, 16) | (24, 16) | (24, 24) | (32, 16) | (32, 24) | (32, 32)
+            ),
+            "invalid N/M values"
+        );
+    }
+
     let r: u32 = match (N, M) {
         (16, 16) => 0xC8BA94B1,
         (24, 16) => 0x12D6E35B,
@@ -89,6 +107,7 @@ pub fn belt_keyrep<const N: usize, const M: usize>(
 
 /// `bake-kdf` key derivation algorithm described in STB 34.101.66-2014 8.1.4.
 #[inline]
+#[must_use]
 pub fn bake_kdf(x: &[u8], s: &[u8], c: u128) -> [u8; 32] {
     let mut hasher = BeltHash::default();
     hasher.update(x);

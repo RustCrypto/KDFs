@@ -1,3 +1,5 @@
+//! Integration tests.
+
 use core::iter;
 
 use hex_literal::hex;
@@ -184,7 +186,7 @@ fn test_extract_streaming() {
 
 #[test]
 fn test_debug_impls() {
-    fn needs_debug<T: std::fmt::Debug>() {}
+    fn needs_debug<T: core::fmt::Debug>() {}
     needs_debug::<Hkdf<Sha256>>();
     needs_debug::<HkdfExtract<Sha256>>();
 }
