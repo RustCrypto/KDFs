@@ -1,3 +1,5 @@
+//! Wycheproof test vectors.
+
 use hkdf::{GenericHkdf, HmacImpl};
 use hmac::{Hmac, SimpleHmac};
 

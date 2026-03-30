@@ -24,5 +24,8 @@ hex-literal = "1"
 sha1 = { version = "0.11", default-features = false }
 sha2 = { version = "0.11", default-features = false }
 
+[lints]
+workspace = true
+
 [package.metadata.docs.rs]
 all-features = true

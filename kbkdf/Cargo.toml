@@ -25,5 +25,8 @@ sha1 = { version = "0.11", default-features = false }
 cmac = "0.8.0-rc.4"
 aes = "0.9.0-rc.4"
 
+[lints]
+workspace = true
+
 [package.metadata.docs.rs]
 all-features = true

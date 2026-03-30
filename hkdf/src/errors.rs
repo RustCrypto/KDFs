@@ -12,7 +12,7 @@ impl fmt::Display for InvalidPrkLength {
 
 impl core::error::Error for InvalidPrkLength {}
 
-/// Structure for InvalidLength, used for output error handling.
+/// Structure for `InvalidLength`, used for output error handling.
 #[derive(Copy, Clone, Debug)]
 pub struct InvalidLength;
 

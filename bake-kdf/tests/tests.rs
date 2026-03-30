@@ -1,3 +1,5 @@
+//! Test vectors
+
 use bake_kdf::{bake_kdf, belt_keyexpand, belt_keyrep};
 use hex_literal::hex;
 

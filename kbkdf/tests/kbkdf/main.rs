@@ -1,3 +1,5 @@
+//! KBKDF tests.
+
 mod parser;
 
 type HmacSha1 = hmac::Hmac<sha1::Sha1>;

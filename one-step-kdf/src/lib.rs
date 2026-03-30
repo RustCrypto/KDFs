@@ -5,8 +5,6 @@
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![forbid(unsafe_code)]
-#![warn(missing_docs)]
 
 use core::fmt;
 use digest::{Digest, FixedOutputReset, Update, array::typenum::Unsigned};
@@ -22,6 +20,11 @@ use digest::{Digest, FixedOutputReset, Update, array::typenum::Unsigned};
 /// one_step_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwrap();
 /// assert_eq!(key, hex!("960db2c549ab16d71a7b008e005c2bdc"));
 /// ```
+///
+/// # Errors
+/// - Returns [`Error::NoSecret`] if `secret` is empty.
+/// - Returns [`Error::NoOutput`] if `output` is empty.
+/// - Returns [`Error::CounterOverflow`] if `key` is too large.
 pub fn derive_key_into<D>(secret: &[u8], other_info: &[u8], key: &mut [u8]) -> Result<(), Error>
 where
     D: Digest + FixedOutputReset,
@@ -35,7 +38,7 @@ where
     }
 
     // Key length shall be less than or equal to hash output length * (2^32 - 1).
-    if (key.len() as u64) >= D::OutputSize::U64 * (u32::MAX as u64) {
+    if (key.len() as u64) >= D::OutputSize::U64 * u64::from(u32::MAX) {
         return Err(Error::CounterOverflow);
     }
 

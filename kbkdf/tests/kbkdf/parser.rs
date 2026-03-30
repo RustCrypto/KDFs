@@ -1,3 +1,7 @@
+//! Parser tests.
+#![allow(clippy::trivially_copy_pass_by_ref, reason = "tests")]
+#![allow(clippy::unwrap_used, reason = "tests")]
+
 use digest::consts::*;
 use kbkdf::{Kbkdf, Params};
 
