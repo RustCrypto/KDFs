@@ -38,9 +38,9 @@ checksum = "d9aa1eef3994e2ccd304a78fe3fea4a73e5792007f85f09b79bb82143ca5f82b"
 
 [[package]]
 name = "belt-hash"
-version = "0.2.0-rc.5"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c56883a45783acff1ccdf0903f38b8688363e633d3c9a199c2063f0cc946832b"
+checksum = "708822e7b2f678a17c1933aa32743e902906e4546614bb3f14f56212a8ab81f0"
 dependencies = [
  "belt-block",
  "digest",
@@ -191,9 +191,9 @@ dependencies = [
 
 [[package]]
 name = "hybrid-array"
-version = "0.4.8"
+version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8655f91cd07f2b9d0c24137bd650fe69617773435ee5ec83022377777ce65ef1"
+checksum = "1a79f2aff40c18ab8615ddc5caa9eb5b96314aef18fe5823090f204ad988e813"
 dependencies = [
  "typenum",
 ]
