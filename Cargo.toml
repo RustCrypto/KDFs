@@ -5,7 +5,8 @@ members = [
     "bake-kdf",
     "hkdf",
     "kbkdf",
-    "one-step-kdf"
+    "one-step-kdf",
+    "sp800-108"
 ]
 
 [profile.dev]
