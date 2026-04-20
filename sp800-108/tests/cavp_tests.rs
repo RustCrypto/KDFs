@@ -110,7 +110,7 @@ where
                         (
                             vec![
                                 ContextComponent::ConstantBytes(tv.data_before_ctr),
-                                ContextComponent::BeCtr(rlen),
+                                ContextComponent::BeCounter(rlen),
                                 ContextComponent::ConstantBytes(tv.data_after_ctr),
                             ],
                             &[],
@@ -118,7 +118,7 @@ where
                         (
                             vec![
                                 ContextComponent::NonSecret,
-                                ContextComponent::BeCtr(rlen),
+                                ContextComponent::BeCounter(rlen),
                                 ContextComponent::ConstantBytes(tv.data_after_ctr),
                             ],
                             tv.data_before_ctr,
@@ -126,7 +126,7 @@ where
                         (
                             vec![
                                 ContextComponent::ConstantBytes(tv.data_before_ctr),
-                                ContextComponent::BeCtr(rlen),
+                                ContextComponent::BeCounter(rlen),
                                 ContextComponent::NonSecret,
                             ],
                             tv.data_after_ctr,
@@ -141,13 +141,16 @@ where
                     &[
                         (
                             vec![
-                                ContextComponent::BeCtr(rlen),
+                                ContextComponent::BeCounter(rlen),
                                 ContextComponent::ConstantBytes(tv.fixed_input_data),
                             ],
                             &[],
                         ),
                         (
-                            vec![ContextComponent::BeCtr(rlen), ContextComponent::NonSecret],
+                            vec![
+                                ContextComponent::BeCounter(rlen),
+                                ContextComponent::NonSecret,
+                            ],
                             tv.fixed_input_data,
                         ),
                     ],
@@ -161,12 +164,15 @@ where
                         (
                             vec![
                                 ContextComponent::ConstantBytes(tv.fixed_input_data),
-                                ContextComponent::BeCtr(rlen),
+                                ContextComponent::BeCounter(rlen),
                             ],
                             &[],
                         ),
                         (
-                            vec![ContextComponent::NonSecret, ContextComponent::BeCtr(rlen)],
+                            vec![
+                                ContextComponent::NonSecret,
+                                ContextComponent::BeCounter(rlen),
+                            ],
                             tv.fixed_input_data,
                         ),
                     ],
@@ -238,7 +244,7 @@ where
             _ => panic!("Unsupported counter location: {}", ctr_location),
         };
         for c in cases.iter_mut() {
-            c.0.insert(ctr_idx, ContextComponent::BeCtr(rlen));
+            c.0.insert(ctr_idx, ContextComponent::BeCounter(rlen));
         }
         test_cases::<P>(cases, i, tv);
     }
@@ -292,5 +298,3 @@ new_test!(feedback_ctr_hmac_sha512, Hmac<Sha512>, test_feedback_ctr);
 new_test!(feedback_ctr_cmac_aes128, Cmac<Aes128>, test_feedback_ctr);
 new_test!(feedback_ctr_cmac_aes192, Cmac<Aes192>, test_feedback_ctr);
 new_test!(feedback_ctr_cmac_aes256, Cmac<Aes256>, test_feedback_ctr);
-
-// TODO: Test BeLength

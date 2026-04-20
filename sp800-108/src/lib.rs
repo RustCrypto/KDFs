@@ -8,29 +8,57 @@
 
 use core::marker::PhantomData;
 
-use digest::{FixedOutput, KeyInit, Update};
-use kdf::Kdf;
+pub use digest::{FixedOutput, KeyInit, Update};
+pub use kdf::Kdf;
 
+/// The maximum number of [`ContextComponent`]s that can be passed to [`NistSp800_108KDF::new()`].
 pub const MAX_CONTEXT_COMPONENTS: usize = 16;
 
+/// Specifies a specific input to the PRF when deriving a key.
+///
+/// The NIST SP 800-108 KDFs generate their output one block at a time
+/// where a block is a single output of the underlying PRF.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ContextComponent<'a> {
+    /// No input. If used, must be after any others.
+    ///
+    /// Generally, there is no need for developers to use this value.
     Null,
-    BeCtr(u32),
+    /// Big-endian block counter with a specified bit-length.
+    /// The bit-length must be a positive multiple of 8 and no greater than 64.
+    BeCounter(u32),
+    /// The `non-secret` input to [`Kdf::derive_key()`].
     NonSecret,
+    /// The prior-block or the supplied `iv` value (may be empty).
     Feedback(&'a [u8]),
+    /// The block generated when both the counter and `K0` are omitted.
+    /// See section 4.1 of the [specification](https://csrc.nist.gov/pubs/sp/800/108/r1/upd1/final)
+    /// for more information.
     K0,
+    /// The bytes corresponding to the provided string.
     ConstantString(&'a str),
+    /// The provided bytes.
     ConstantBytes(&'a [u8]),
+    /// The length in bytes of the requested derived key.
+    /// It is encoded as a big-endian number with the specified number of bits.
+    /// The the specified bit-length must be a positive multiple of 8 and no greater than 64.
     BeLength(usize),
 }
 
+/// Structure representing the KDF, generic over a PRF `P`.
+/// Depending on configuration, it can represent a counter KDF,
+/// a feedback KDF, or a combination of the two.
+///
+/// The PRF `P` should generally be either an implementation of
+/// [`Hmac`](https://docs.rs/hmac/0.13.0/hmac/struct.Hmac.html)
+/// or of [`Cmac`](https://docs.rs/cmac/latest/cmac/struct.Cmac.html).
 #[derive(Debug)]
 pub struct NistSp800_108KDF<'a, P>
 where
     P: FixedOutput + KeyInit + Clone,
 {
     context: [ContextComponent<'a>; MAX_CONTEXT_COMPONENTS],
+    summary: ContextSummary,
     phantom: PhantomData<P>,
 }
 
@@ -38,35 +66,69 @@ impl<'a, P> NistSp800_108KDF<'a, P>
 where
     P: FixedOutput + KeyInit + Clone,
 {
+    /// Construct a new KDF instance where the input to the PRF is defined by `context`.
+    ///
+    /// `context` must be no longer than [`MAX_CONTEXT_COMPONENTS`].
+    /// `context` should not contain any instances of [`ContextComponent::Null`],
+    /// but if it does, they must be after all non-null values.
+    ///
+    /// # Errors
+    ///
+    /// Will return `Err` in any of the following cases:
+    ///
+    /// - `context` is longer than [`MAX_CONTEXT_COMPONENTS`].
+    /// - `context` has any `ContextComponent::Null` values before non-null values.
+    /// - `context` does not have any non-null values.
     pub fn new(context: &[ContextComponent<'a>]) -> kdf::Result<Self> {
         if context.len() > MAX_CONTEXT_COMPONENTS {
             return Err(kdf::Error);
         }
+        let summary = Self::summarize_context(context);
+        if summary.last_non_null_idx.is_none() {
+            return Err(kdf::Error);
+        }
+        if let Some(min_null) = summary.first_null_idx
+            && let Some(max_non_null) = summary.last_non_null_idx
+            && min_null < max_non_null
+        {
+            // There are components after the first null component
+            return Err(kdf::Error);
+        }
         let mut result = Self {
             context: [ContextComponent::Null; MAX_CONTEXT_COMPONENTS],
+            summary,
             phantom: PhantomData,
         };
         result.context[0..context.len()].copy_from_slice(context);
         Ok(result)
     }
 
-    fn summarize_context(&self) -> ContextSummary {
-        self.context
+    fn summarize_context(context: &[ContextComponent]) -> ContextSummary {
+        context
             .iter()
+            .enumerate()
             .fold(ContextSummary::default(), |mut acc, v| -> ContextSummary {
-                match v {
-                    ContextComponent::BeCtr(length) => {
+                match v.1 {
+                    ContextComponent::BeCounter(length) => {
                         acc.min_ctr = acc
                             .min_ctr
-                            .map_or(Some(*length), |old_length| Some(old_length.min(*length)))
+                            .map_or(Some(*length), |old_length| Some(old_length.min(*length)));
                     }
                     ContextComponent::NonSecret => acc.has_non_secret = true,
                     ContextComponent::K0 => acc.has_k0 = true,
                     _ => (), // NOP,
                 }
+                if v.1 == &ContextComponent::Null {
+                    if acc.first_null_idx.is_none() {
+                        acc.first_null_idx = Some(v.0);
+                    }
+                } else {
+                    acc.last_non_null_idx = Some(v.0);
+                }
                 acc
             })
     }
+
     fn calculate_block(
         &self,
         mut prf: P,
@@ -79,8 +141,10 @@ where
         for c in self.context {
             match c {
                 ContextComponent::Null => (),
-                ContextComponent::BeCtr(length) => {
-                    Self::update_be_ctr(&mut prf, counter, length as usize)?
+                ContextComponent::BeCounter(length) => {
+                    if counter > 0 {
+                        Self::update_be_ctr(&mut prf, counter, length as usize)?;
+                    }
                 }
                 ContextComponent::NonSecret => Update::update(&mut prf, non_secret),
                 ContextComponent::Feedback(iv) => Self::update_option(&mut prf, feedback, iv),
@@ -121,16 +185,23 @@ impl<'a, P> Kdf for NistSp800_108KDF<'a, P>
 where
     P: FixedOutput + KeyInit + Clone,
 {
+    /// Writes uniformly random data suitable as key material into the entire length of out
+    /// as described by  [`Kdf::derive_key()`].
+    ///
+    /// # Errors
+    ///
+    /// Will return `Err` in any of the following cases:
+    ///
+    /// - `out` is long enough that a counter in the context would overflow
+    /// - `non_secret` contains data but there is no corresponding [`ContextComponent::NonSecret`] to emit it.
     fn derive_key(&self, secret: &[u8], non_secret: &[u8], out: &mut [u8]) -> kdf::Result<()> {
-        // TODO: Test limits
         let prf = P::new_from_slice(secret).map_err(|_| kdf::Error)?;
-        let summary = self.summarize_context();
-        if !non_secret.is_empty() && !summary.has_non_secret {
+        if !non_secret.is_empty() && !self.summary.has_non_secret {
             // Additional input was provided but isn't used by the context.
             // This is an error
             return Err(kdf::Error);
         }
-        if let Some(min_ctr_bits) = summary.min_ctr {
+        if let Some(min_ctr_bits) = self.summary.min_ctr {
             let needed_blocks: usize = out.len().div_ceil(P::output_size());
             let needed_ctr_bits = usize::BITS - needed_blocks.leading_zeros();
             if needed_ctr_bits > min_ctr_bits {
@@ -138,7 +209,7 @@ where
                 return Err(kdf::Error);
             }
         }
-        let k0 = if summary.has_k0 {
+        let k0 = if self.summary.has_k0 {
             Some(self.calculate_block(prf.clone(), non_secret, 0, &None, &None, out.len())?)
         } else {
             None
@@ -166,4 +237,6 @@ struct ContextSummary {
     min_ctr: Option<u32>,
     has_k0: bool,
     has_non_secret: bool,
+    first_null_idx: Option<usize>,
+    last_non_null_idx: Option<usize>,
 }
