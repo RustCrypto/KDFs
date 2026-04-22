@@ -88,11 +88,11 @@ where
             return Err(kdf::Error);
         }
         if let Some(min_null) = summary.first_null_idx {
-            if let Some(max_non_null) = summary.last_non_null_idx
-                && min_null < max_non_null
-            {
-                // There are components after the first null component
-                return Err(kdf::Error);
+            if let Some(max_non_null) = summary.last_non_null_idx {
+                if min_null < max_non_null {
+                    // There are components after the first null component
+                    return Err(kdf::Error);
+                }
             }
         }
         let mut result = Self {
