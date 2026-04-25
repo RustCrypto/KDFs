@@ -65,17 +65,15 @@ where
 {
     /// Construct a new KDF instance where the input to the PRF is defined by `context`.
     ///
-    /// `context` must be no longer than [`MAX_CONTEXT_COMPONENTS`].
-    /// `context` should not contain any instances of [`ContextComponent::Null`],
-    /// but if it does, they must be after all non-null values.
+    /// `context` must be no longer than [`MAX_CONTEXT_COMPONENTS`] and must not be empty.
     ///
     /// # Errors
     ///
     /// Will return `Err` in any of the following cases:
     ///
     /// - `context` is longer than [`MAX_CONTEXT_COMPONENTS`].
-    /// - `context` has any `ContextComponent::Null` values before non-null values.
-    /// - `context` does not have any non-null values.
+    /// - `context` contains any big-endian encoded values with bit-lengths are aren't multiples of 8
+    /// - `context` contains any big-endian encoded values with bit-lengths of 0.
     pub fn new(context: &[ContextComponent<'a>]) -> kdf::Result<Self> {
         if context.len() > MAX_CONTEXT_COMPONENTS {
             return Err(kdf::Error);
@@ -196,7 +194,7 @@ where
     ///
     /// Will return `Err` in any of the following cases:
     ///
-    /// - `out` is long enough that a counter in the context would overflow
+    /// - `out` is long enough that a counter or length encoding in the context would overflow
     /// - `non_secret` contains data but there is no corresponding [`ContextComponent::NonSecret`] to emit it.
     fn derive_key(&self, secret: &[u8], non_secret: &[u8], out: &mut [u8]) -> kdf::Result<()> {
         let prf = P::new_from_slice(secret).map_err(|_| kdf::Error)?;
