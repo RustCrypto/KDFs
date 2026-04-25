@@ -80,57 +80,16 @@ fn non_secret_input_used() {
     );
 }
 
-/// Require at least one non-null element
+/// Require at least one element
 #[test]
-fn non_null_ctx() {
+fn non_empty_ctx() {
     assert!(
         NistSp800_108KDF::<Hmac<Sha256>>::new(&[]).is_err(),
         "Constructed KDF with empty context"
     );
-
-    assert!(
-        NistSp800_108KDF::<Hmac<Sha256>>::new(&[ContextComponent::Null]).is_err(),
-        "Constructed KDF with only null context"
-    );
 }
 
-/// Requires that all non-null `ContextComponent` values are before any `Null` ones.
-#[test]
-fn non_null_ctx_at_start() {
-    // Base case
-    let context = [ContextComponent::BeCounter(32)];
-    assert!(
-        NistSp800_108KDF::<Hmac<Sha256>>::new(&context).is_ok(),
-        "Could not construct KDF"
-    );
-
-    // Identical to base
-    let context = [ContextComponent::BeCounter(32), ContextComponent::Null];
-    assert!(
-        NistSp800_108KDF::<Hmac<Sha256>>::new(&context).is_ok(),
-        "Could not construct KDF"
-    );
-
-    // Only a single non-null
-    let context = [ContextComponent::Null, ContextComponent::BeCounter(32)];
-    assert!(
-        NistSp800_108KDF::<Hmac<Sha256>>::new(&context).is_err(),
-        "Did not reject"
-    );
-
-    // Null in between
-    let context = [
-        ContextComponent::ConstantString("Some value"),
-        ContextComponent::Null,
-        ContextComponent::BeCounter(32),
-    ];
-    assert!(
-        NistSp800_108KDF::<Hmac<Sha256>>::new(&context).is_err(),
-        "Did not reject"
-    );
-}
-
-/// Test that BeLength is properly handled
+/// Test that `BeLength` is properly handled
 #[test]
 fn be_length() {
     let key = b"1234567890abcdef";
@@ -175,4 +134,13 @@ fn be_length() {
         &expected,
         "Derived keys are different for length 16"
     );
+}
+
+#[test]
+fn non_octet_lengths() {
+    assert!(NistSp800_108KDF::<Hmac<Sha256>>::new(&[ContextComponent::BeCounter(7)]).is_err());
+    assert!(NistSp800_108KDF::<Hmac<Sha256>>::new(&[ContextComponent::BeCounter(0)]).is_err());
+
+    assert!(NistSp800_108KDF::<Hmac<Sha256>>::new(&[ContextComponent::BeCounter(7)]).is_err());
+    assert!(NistSp800_108KDF::<Hmac<Sha256>>::new(&[ContextComponent::BeCounter(0)]).is_err());
 }

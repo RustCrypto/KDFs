@@ -18,16 +18,13 @@ pub const MAX_CONTEXT_COMPONENTS: usize = 16;
 ///
 /// The NIST SP 800-108 KDFs generate their output one block at a time
 /// where a block is a single output of the underlying PRF.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ContextComponent<'a> {
-    /// No input. If used, must be after any others.
-    ///
-    /// Generally, there is no need for developers to use this value.
-    Null,
     /// Big-endian block counter with a specified bit-length.
     /// The bit-length must be a positive multiple of 8 and no greater than 64.
-    BeCounter(u32),
+    BeCounter(u8),
     /// The `non-secret` input to [`Kdf::derive_key()`].
+    #[default]
     NonSecret,
     /// The prior-block or the supplied `iv` value (may be empty).
     Feedback(&'a [u8]),
@@ -42,7 +39,7 @@ pub enum ContextComponent<'a> {
     /// The length in bytes of the requested derived key.
     /// It is encoded as a big-endian number with the specified number of bits.
     /// The the specified bit-length must be a positive multiple of 8 and no greater than 64.
-    BeLength(usize),
+    BeLength(u8),
 }
 
 /// Structure representing the KDF, generic over a PRF `P`.
@@ -84,19 +81,11 @@ where
             return Err(kdf::Error);
         }
         let summary = Self::summarize_context(context);
-        if summary.last_non_null_idx.is_none() {
+        if summary.ctx_len == 0 || summary.has_error {
             return Err(kdf::Error);
         }
-        if let Some(min_null) = summary.first_null_idx {
-            if let Some(max_non_null) = summary.last_non_null_idx {
-                if min_null < max_non_null {
-                    // There are components after the first null component
-                    return Err(kdf::Error);
-                }
-            }
-        }
         let mut result = Self {
-            context: [ContextComponent::Null; MAX_CONTEXT_COMPONENTS],
+            context: [ContextComponent::NonSecret; MAX_CONTEXT_COMPONENTS],
             summary,
             phantom: PhantomData,
         };
@@ -104,32 +93,43 @@ where
         Ok(result)
     }
 
+    /// Summarizes useful information about the context which we can use to check it for correctness
+    /// and proper usage.
     fn summarize_context(context: &[ContextComponent]) -> ContextSummary {
-        context
-            .iter()
-            .enumerate()
-            .fold(ContextSummary::default(), |mut acc, v| -> ContextSummary {
-                match v.1 {
-                    ContextComponent::BeCounter(length) => {
-                        acc.min_ctr = acc
-                            .min_ctr
-                            .map_or(Some(*length), |old_length| Some(old_length.min(*length)));
+        let mut result =
+            context
+                .iter()
+                .fold(ContextSummary::default(), |mut acc, v| -> ContextSummary {
+                    match v {
+                        ContextComponent::BeCounter(length) => {
+                            if length % 8 != 0 || *length == 0 {
+                                acc.has_error = true;
+                            }
+                            acc.min_ctr = acc
+                                .min_ctr
+                                .map_or(Some(*length), |old_length| Some(old_length.min(*length)));
+                        }
+                        ContextComponent::BeLength(length) => {
+                            if length % 8 != 0 || *length == 0 {
+                                acc.has_error = true;
+                            }
+                            acc.min_length = acc
+                                .min_length
+                                .map_or(Some(*length), |old_length| Some(old_length.min(*length)));
+                        }
+                        ContextComponent::NonSecret => acc.has_non_secret = true,
+                        ContextComponent::K0 => acc.has_k0 = true,
+                        _ => (), // NOP,
                     }
-                    ContextComponent::NonSecret => acc.has_non_secret = true,
-                    ContextComponent::K0 => acc.has_k0 = true,
-                    _ => (), // NOP,
-                }
-                if v.1 == &ContextComponent::Null {
-                    if acc.first_null_idx.is_none() {
-                        acc.first_null_idx = Some(v.0);
-                    }
-                } else {
-                    acc.last_non_null_idx = Some(v.0);
-                }
-                acc
-            })
+                    acc
+                });
+        result.ctx_len = context.len();
+        result
     }
 
+    /// Execute a single iteration of the internal loop of the KDF.
+    /// This feeds all input into the PRF and returns the corresponding output.
+    /// This should not fail because we check check encoding lengths prior to execution.
     fn calculate_block(
         &self,
         mut prf: P,
@@ -139,23 +139,20 @@ where
         k0: &Option<digest::Output<P>>,
         output_len: usize,
     ) -> kdf::Result<digest::Output<P>> {
-        for c in self.context {
+        for c in self.context.iter().take(self.summary.ctx_len) {
             match c {
-                ContextComponent::Null => (),
                 ContextComponent::BeCounter(length) => {
                     if counter > 0 {
-                        Self::update_be_ctr(&mut prf, counter, length as usize)?;
+                        Self::update_be_value(&mut prf, counter, *length)?;
                     }
                 }
-                ContextComponent::NonSecret => Update::update(&mut prf, non_secret),
+                ContextComponent::NonSecret => prf.update(non_secret),
                 ContextComponent::Feedback(iv) => Self::update_option(&mut prf, feedback, iv),
                 ContextComponent::K0 => Self::update_option(&mut prf, k0, &[]),
-                ContextComponent::ConstantString(value) => {
-                    Update::update(&mut prf, value.as_bytes());
-                }
-                ContextComponent::ConstantBytes(value) => Update::update(&mut prf, value),
+                ContextComponent::ConstantString(value) => prf.update(value.as_bytes()),
+                ContextComponent::ConstantBytes(value) => prf.update(value),
                 ContextComponent::BeLength(length) => {
-                    Self::update_be_ctr(&mut prf, output_len as u64, length)?;
+                    Self::update_be_value(&mut prf, output_len as u64, *length)?;
                 }
             }
         }
@@ -163,21 +160,27 @@ where
         Ok(prf.finalize_fixed())
     }
 
-    fn update_be_ctr(prf: &mut P, counter: u64, length: usize) -> kdf::Result<()> {
-        if counter >> length != 0 {
+    /// Encodes `value` as a `length`-bit big-endian, unsigned, integer and feeds it into `prf`.
+    /// `length` must be a multiple of 8.
+    fn update_be_value(prf: &mut P, value: u64, length: u8) -> kdf::Result<()> {
+        if length % 8 != 0 {
+            return Err(kdf::Error);
+        }
+        if value >> length != 0 {
             // Counter overflow
             return Err(kdf::Error);
         }
-        let bytes = counter.to_be_bytes();
-        Update::update(prf, &bytes[bytes.len() - (length / 8)..bytes.len()]);
+        let byte_length = length as usize / 8;
+        let bytes = value.to_be_bytes();
+        prf.update(&bytes[bytes.len() - byte_length..bytes.len()]);
         Ok(())
     }
 
     fn update_option(prf: &mut P, value: &Option<digest::Output<P>>, default: &[u8]) {
         if let Some(data) = value {
-            Update::update(prf, data);
+            prf.update(data);
         } else {
-            Update::update(prf, default);
+            prf.update(default);
         }
     }
 }
@@ -205,7 +208,14 @@ where
         if let Some(min_ctr_bits) = self.summary.min_ctr {
             let needed_blocks: usize = out.len().div_ceil(P::output_size());
             let needed_ctr_bits = usize::BITS - needed_blocks.leading_zeros();
-            if needed_ctr_bits > min_ctr_bits {
+            if needed_ctr_bits > u32::from(min_ctr_bits) {
+                // We cannot encode the counter in the bits we're given
+                return Err(kdf::Error);
+            }
+        }
+        if let Some(min_length_bits) = self.summary.min_length {
+            let needed_length_bits = usize::BITS - out.len().leading_zeros();
+            if needed_length_bits > u32::from(min_length_bits) {
                 // We cannot encode the counter in the bits we're given
                 return Err(kdf::Error);
             }
@@ -235,9 +245,10 @@ where
 
 #[derive(Debug, Copy, Clone, Default)]
 struct ContextSummary {
-    min_ctr: Option<u32>,
+    min_ctr: Option<u8>,
+    min_length: Option<u8>,
     has_k0: bool,
     has_non_secret: bool,
-    first_null_idx: Option<usize>,
-    last_non_null_idx: Option<usize>,
+    ctx_len: usize,
+    has_error: bool,
 }
