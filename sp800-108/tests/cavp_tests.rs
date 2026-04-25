@@ -85,13 +85,13 @@ where
     }
 }
 
-fn parse_rlen(rlen: &[u8]) -> u32 {
+fn parse_rlen(rlen: &[u8]) -> u8 {
     String::from_utf8_lossy(rlen)
         .split('_')
         .next()
         .expect("CAVP data incorrectly formatted")
         .trim()
-        .parse::<u32>()
+        .parse::<u8>()
         .expect("CAVP data incorrectly formatted")
 }
 
