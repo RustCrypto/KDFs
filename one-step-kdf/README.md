@@ -8,7 +8,7 @@
 [![Project Chat][chat-image]][chat-link]
 
 Pure Rust implementation of the One-Step Key Derivation Function (formerly known as Concat KDF)
-implemented generically over the underlying hash function.
+supporting hash- and HMAC-based auxiliary functions.
 
 This KDF is described in the section 4 of
 [NIST SP 800-56C: Recommendation for Key-Derivation Methods in Key-Establishment Schemes](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Cr2.pdf).
@@ -18,6 +18,8 @@ This KDF is described in the section 4 of
 The most common way to use One-Step KDF is as follows: you generate a shared secret with other party
 (e.g. via Diffie-Hellman algorithm) and use key derivation function to derive a shared key.
 
+## Hash-based
+
 ```rust
 use hex_literal::hex;
 use sha2::Sha256;
@@ -25,6 +27,29 @@ use sha2::Sha256;
 let mut key = [0u8; 16];
 one_step_kdf::derive_key_into::<Sha256>(b"secret", b"shared-info", &mut key).unwrap();
 assert_eq!(key, hex!("960db2c549ab16d71a7b008e005c2bdc"));
+```
+
+## HMAC-based
+
+Use [`derive_key_into_with`] with an initialized HMAC instance to derive a key using the
+HMAC-based auxiliary function:
+
+```rust
+use hex_literal::hex;
+use hmac::{HmacReset, KeyInit};
+use sha2::Sha256;
+
+let salt = [0u8; 64];
+let secret = [0u8; 32];
+let hmac = HmacReset::<Sha256>::new_from_slice(&salt).unwrap();
+let mut key = [0u8; 32];
+
+one_step_kdf::derive_key_into_with(hmac, &secret, &[], &mut key).unwrap();
+
+assert_eq!(
+    key,
+    hex!("ceb496ba22edd29dfc5fa4e2d58abcc30b49af2d76d754b54b5c02cf0a2c02dc")
+);
 ```
 
 ## License
@@ -58,3 +83,4 @@ dual licensed as above, without any additional terms or conditions.
 [//]: # (links)
 
 [RustCrypto]: https://github.com/RustCrypto
+[`derive_key_into_with`]: https://docs.rs/one-step-kdf/latest/one_step_kdf/fn.derive_key_into_with.html

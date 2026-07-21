@@ -17,6 +17,7 @@ digest = "0.11"
 
 [dev-dependencies]
 hex-literal = "1"
+hmac = { version = "0.13", default-features = false }
 sha2 = { version = "0.11", default-features = false }
 
 [lints]
