@@ -4,6 +4,7 @@ use core::iter;
 
 use hex_literal::hex;
 use hkdf::{Hkdf, HkdfExtract, SimpleHkdfExtract};
+
 use sha1::Sha1;
 use sha2::Sha256;
 
@@ -189,4 +190,27 @@ fn test_debug_impls() {
     fn needs_debug<T: core::fmt::Debug>() {}
     needs_debug::<Hkdf<Sha256>>();
     needs_debug::<HkdfExtract<Sha256>>();
+}
+
+#[cfg(feature = "kdf")]
+#[test]
+fn kdf_default_and_errors() {
+    use hkdf::{Kdf, kdf};
+
+    let kdf = HkdfExtract::<Sha256>::default();
+    let mut out = [0; 42];
+    kdf.derive_key(b"secret", b"info", &mut out).unwrap();
+    let mut expected = [0; 42];
+    Hkdf::<Sha256>::new(None, b"secret")
+        .expand(b"info", &mut expected)
+        .unwrap();
+    assert_eq!(out, expected);
+
+    let mut out = [0xAA; 255 * 32 + 1];
+    assert_eq!(
+        kdf.derive_key(b"secret", b"info", &mut out),
+        Err(kdf::Error),
+    );
+    assert_eq!(out, [0xAA; 255 * 32 + 1]);
+    assert_eq!(kdf.derive_key(b"secret", b"info", &mut []), Ok(()));
 }

@@ -19,7 +19,7 @@ jobs:
         with:
           toolchain: 1.87.0
           components: clippy
-      - run: cargo clippy --all -- -D warnings
+      - run: cargo clippy --all --all-features -- -D warnings
 
   rustfmt:
     runs-on: ubuntu-latest

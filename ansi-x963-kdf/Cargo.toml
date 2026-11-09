@@ -15,9 +15,15 @@ rust-version = "1.85"
 [dependencies]
 digest = "0.11"
 
+# optional dependencies
+kdf = { version = "0.1", optional = true }
+
 [dev-dependencies]
 hex-literal = "1"
 sha2 = { version = "0.11", default-features = false }
 
 [lints]
 workspace = true
+
+[package.metadata.docs.rs]
+all-features = true

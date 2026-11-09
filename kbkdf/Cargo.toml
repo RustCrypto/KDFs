@@ -16,6 +16,9 @@ exclude = ["/tests/*"]
 [dependencies]
 digest = { version = "0.11", default-features = false, features = ["mac"] }
 
+# optional dependencies
+kdf = { version = "0.1", optional = true }
+
 [dev-dependencies]
 hex-literal = "1"
 hex = "0.4"

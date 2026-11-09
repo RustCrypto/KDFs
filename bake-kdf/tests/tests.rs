@@ -63,14 +63,49 @@ fn test_kdf() {
         "CD3D6487 DC4EEB23 45697818 6A069C71 375D75C2 DF198BAD 1E61EEA0 DBBFF737"
     );
     let key = bake_kdf(&secret, &iv, 0);
+
+    #[cfg(feature = "kdf")]
+    {
+        use bake_kdf::{BakeKdf, Kdf};
+
+        let mut out = [0; 32];
+        BakeKdf::default()
+            .derive_key(&secret, &iv, &mut out)
+            .unwrap();
+        assert_eq!(out, key);
+    }
     assert_eq!(
         key,
         hex!("DAC4D8F4 11F9C523 D28BBAAB 32A5270E 4DFA1F0F 757EF8E0 F30AF08F BDE1E7F4"),
     );
 
     let key = bake_kdf(&secret, &iv, 1);
+
+    #[cfg(feature = "kdf")]
+    {
+        use bake_kdf::{BakeKdf, Kdf};
+
+        let mut out = [0; 32];
+        BakeKdf::new(1).derive_key(&secret, &iv, &mut out).unwrap();
+        assert_eq!(out, key);
+    }
     assert_eq!(
         key,
         hex!("54AC0582 84D679CF 4C47D3D7 2651F3E4 EF0D61D1 D0ED5BAF 8FF30B89 24E599D8"),
     );
+}
+
+#[cfg(feature = "kdf")]
+#[test]
+fn kdf_invalid_output_length() {
+    use bake_kdf::{BakeKdf, Kdf, kdf};
+
+    for len in [0, 1, 16, 31, 33, 64] {
+        let mut out = [0xAA; 64];
+        assert_eq!(
+            BakeKdf::default().derive_key(b"secret", b"info", &mut out[..len]),
+            Err(kdf::Error),
+        );
+        assert_eq!(out, [0xAA; 64]);
+    }
 }
