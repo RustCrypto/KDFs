@@ -7,8 +7,8 @@
 ![Rust Version][rustc-image]
 [![Project Chat][chat-image]][chat-link]
 
-Pure Rust implementation of the ANSI X9.63 Key Derivation Function (ANSI-X9.63-KDF) generic over hash function. 
-This function is described in the section 3.6.1 of [SEC 1: Elliptic Curve Cryptography](http://www.secg.org/sec1-v2.pdf).
+Pure Rust implementation of the ANSI X9.63 Key Derivation Function (ANSI-X9.63-KDF) generic over
+hash functions. Described in the section 3.6.1 of [SEC 1: Elliptic Curve Cryptography].
 
 # Usage
 
@@ -55,3 +55,4 @@ dual licensed as above, without any additional terms or conditions.
 [//]: # (links)
 
 [RustCrypto]: https://github.com/RustCrypto
+[SEC 1: Elliptic Curve Cryptography]: https://www.secg.org/sec1-v2.pdf
