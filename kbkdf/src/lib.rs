@@ -192,15 +192,27 @@ where
         let mut output = Array::<u8, K::KeySize>::default();
         let mut builder = output.as_mut_slice();
 
-        let mut ki = None;
-        self.input_iv(&mut ki);
-        let mut a = {
-            let mut h = Prf::new_from_slice(params.kin).expect("should be the right size");
+        // Fixed input data: Label || 0x00 || Context || [L]2
+        let fixed_input = |h: &mut Prf| {
             h.update(params.label);
             if params.use_separator {
                 h.update(&[0]);
             }
             h.update(params.context);
+            if params.use_l {
+                h.update(
+                    &(<KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32).to_be_bytes()
+                        [..],
+                );
+            }
+        };
+
+        let mut ki = None;
+        self.input_iv(&mut ki);
+        // A(1) := PRF(KI, A(0)), where A(0) is the fixed input data
+        let mut a = {
+            let mut h = Prf::new_from_slice(params.kin).expect("should be the right size");
+            fixed_input(&mut h);
             h.finalize().into_bytes()
         };
 
@@ -234,18 +246,7 @@ where
                 h.update(&counter.to_be_bytes()[(4 - R::USIZE / 8)..]);
             }
 
-            // Fixed input data
-            h.update(params.label);
-            if params.use_separator {
-                h.update(&[0]);
-            }
-            h.update(params.context);
-            if params.use_l {
-                h.update(
-                    &(<KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32).to_be_bytes()
-                        [..],
-                );
-            }
+            fixed_input(&mut h);
 
             let buf = h.finalize().into_bytes();
             ki = Some(buf.clone());
