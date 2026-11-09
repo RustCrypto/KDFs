@@ -10,6 +10,37 @@
 use belt_hash::digest::FixedOutput;
 use belt_hash::{BeltHash, Digest, block_api::belt_compress};
 
+#[cfg(feature = "kdf")]
+pub use kdf::{self, Kdf};
+
+/// BAKE KDF with a configured key number `c`, defaulting to zero.
+///
+/// The [`Kdf`] implementation maps `secret` to `x` and `non_secret` to `s` in
+/// [`bake_kdf`]. The output must be exactly 32 bytes; other lengths return [`kdf::Error`].
+#[cfg(feature = "kdf")]
+#[derive(Clone, Copy, Debug, Default)]
+pub struct BakeKdf {
+    c: u128,
+}
+
+#[cfg(feature = "kdf")]
+impl BakeKdf {
+    /// Creates a BAKE KDF with the given key number `c`.
+    #[must_use]
+    pub const fn new(c: u128) -> Self {
+        Self { c }
+    }
+}
+
+#[cfg(feature = "kdf")]
+impl Kdf for BakeKdf {
+    fn derive_key(&self, secret: &[u8], non_secret: &[u8], out: &mut [u8]) -> kdf::Result<()> {
+        let out: &mut [u8; 32] = out.try_into().map_err(|_| kdf::Error)?;
+        *out = bake_kdf(secret, non_secret, self.c);
+        Ok(())
+    }
+}
+
 /// `belt-keyexpand` key expansion algorithm described in STB 34.101.31-2020 8.1.2.
 ///
 /// # Panics

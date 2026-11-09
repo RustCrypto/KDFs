@@ -21,6 +21,17 @@ where
             let key = &mut buf[..key_length];
             one_step_kdf::derive_key_into::<D>(f.secret, f.other_info, key).unwrap();
             assert_eq!(&f.expected_key[..key_length], key);
+
+            #[cfg(feature = "kdf")]
+            {
+                use one_step_kdf::{Kdf, OneStepKdf};
+
+                key.fill(0);
+                OneStepKdf::<D>::default()
+                    .derive_key(f.secret, f.other_info, key)
+                    .unwrap();
+                assert_eq!(&f.expected_key[..key_length], key);
+            }
         }
     }
 }
@@ -189,4 +200,16 @@ fn test_no_output() {
         one_step_kdf::derive_key_into::<Sha512>(&[0u8; 42], &[], &mut [0u8; 0]),
         Err(one_step_kdf::Error::NoOutput)
     );
+}
+
+#[cfg(feature = "kdf")]
+#[test]
+fn kdf_rejects_empty_inputs() {
+    use one_step_kdf::{Kdf, OneStepKdf, kdf};
+
+    let kdf = OneStepKdf::<Sha256>::default();
+    let mut out = [0xAA; 32];
+    assert_eq!(kdf.derive_key(&[], b"info", &mut out), Err(kdf::Error));
+    assert_eq!(out, [0xAA; 32]);
+    assert_eq!(kdf.derive_key(b"secret", b"info", &mut []), Err(kdf::Error));
 }

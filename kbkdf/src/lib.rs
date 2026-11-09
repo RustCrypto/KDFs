@@ -17,6 +17,12 @@ use digest::{
 
 pub mod sealed;
 
+#[cfg(feature = "kdf")]
+mod kdf_impl;
+
+#[cfg(feature = "kdf")]
+pub use kdf::{self, Kdf};
+
 /// KBKDF error type.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Error {
@@ -178,7 +184,8 @@ where
         let n: u32 = <KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::L::U32
             .div_ceil(<KbkdfCore<K::KeySize, Prf::OutputSize> as KbkdfUser>::H::U32);
 
-        if n as usize > 2usize.pow(R::U32) - 1 {
+        // Use u64 so the default 32-bit counter also works on 32-bit targets.
+        if u64::from(n) > (1u64 << R::U32) - 1 {
             return Err(Error::InvalidRequestSize);
         }
 
@@ -333,6 +340,12 @@ where
     }
 
     const FEEDBACK_KI: bool = true;
+}
+
+impl<Prf: Mac, K, R> Default for Feedback<'_, Prf, K, R> {
+    fn default() -> Self {
+        Self::new(None)
+    }
 }
 
 /// KBKDF in Double-Pipeline Mode.

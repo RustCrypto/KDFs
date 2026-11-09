@@ -9,6 +9,35 @@
 use core::fmt;
 use digest::{Digest, FixedOutputReset, array::typenum::Unsigned};
 
+#[cfg(feature = "kdf")]
+pub use kdf::{self, Kdf};
+
+/// ANSI X9.63 KDF using the digest `D`.
+///
+/// The [`Kdf`] implementation maps `secret` to the shared secret and `non_secret` to
+/// `shared_info`. It returns [`kdf::Error`] for inputs rejected by [`derive_key_into`].
+#[cfg(feature = "kdf")]
+#[derive(Clone, Copy, Debug)]
+pub struct AnsiX963Kdf<D> {
+    _marker: core::marker::PhantomData<D>,
+}
+
+#[cfg(feature = "kdf")]
+impl<D> Default for AnsiX963Kdf<D> {
+    fn default() -> Self {
+        Self {
+            _marker: core::marker::PhantomData,
+        }
+    }
+}
+
+#[cfg(feature = "kdf")]
+impl<D: Digest + FixedOutputReset> Kdf for AnsiX963Kdf<D> {
+    fn derive_key(&self, secret: &[u8], non_secret: &[u8], out: &mut [u8]) -> kdf::Result<()> {
+        derive_key_into::<D>(secret, non_secret, out).map_err(|_| kdf::Error)
+    }
+}
+
 /// Derives `key` in-place from `secret` and `shared_info`.
 ///
 /// # Example

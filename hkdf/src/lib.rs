@@ -35,6 +35,10 @@ pub type SimpleHkdf<H> = GenericHkdf<SimpleHmac<H>>;
 ///
 /// This type is generic over HMAC implementation. Most users should use
 /// [`HkdfExtract`] or [`SimpleHkdfExtract`] type aliases.
+///
+/// With the `kdf` feature enabled, the `kdf::Kdf` implementation appends `secret` to
+/// any input key material already supplied and maps `non_secret` to HKDF-Expand's
+/// `info`. The configured salt is preserved, and the context can be reused.
 #[derive(Clone, Debug)]
 pub struct GenericHkdfExtract<H: HmacImpl> {
     hmac: H,
@@ -62,6 +66,12 @@ impl<H: HmacImpl> GenericHkdfExtract<H> {
         let prk = self.hmac.finalize();
         let hkdf = GenericHkdf::<H>::from_prk(&prk).expect("PRK size is correct");
         (prk, hkdf)
+    }
+}
+
+impl<H: HmacImpl> Default for GenericHkdfExtract<H> {
+    fn default() -> Self {
+        Self::new(None)
     }
 }
 

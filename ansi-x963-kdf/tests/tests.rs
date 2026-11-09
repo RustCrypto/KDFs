@@ -26,6 +26,17 @@ where
             let key = &mut buf[..key_length];
             ansi_x963_kdf::derive_key_into::<D>(f.secret, f.shared_info, key).unwrap();
             assert_eq!(&f.expected_key[..key_length], key);
+
+            #[cfg(feature = "kdf")]
+            {
+                use ansi_x963_kdf::{AnsiX963Kdf, Kdf};
+
+                key.fill(0);
+                AnsiX963Kdf::<D>::default()
+                    .derive_key(f.secret, f.shared_info, key)
+                    .unwrap();
+                assert_eq!(&f.expected_key[..key_length], key);
+            }
         }
     }
 }
@@ -190,4 +201,16 @@ fn test_no_output() {
         ansi_x963_kdf::derive_key_into::<Sha512>(&[0u8; 42], &[], &mut [0u8; 0]),
         Err(ansi_x963_kdf::Error::NoOutput)
     );
+}
+
+#[cfg(feature = "kdf")]
+#[test]
+fn kdf_rejects_empty_inputs() {
+    use ansi_x963_kdf::{AnsiX963Kdf, Kdf, kdf};
+
+    let kdf = AnsiX963Kdf::<Sha256>::default();
+    let mut out = [0xAA; 32];
+    assert_eq!(kdf.derive_key(&[], b"info", &mut out), Err(kdf::Error));
+    assert_eq!(out, [0xAA; 32]);
+    assert_eq!(kdf.derive_key(b"secret", b"info", &mut []), Err(kdf::Error));
 }

@@ -28,6 +28,19 @@ fn test<H: HmacImpl>(tvs: &[TestVector]) {
         assert_eq!(prk2[..], tv.prk[..]);
         assert_eq!(okm_dst, tv.okm);
 
+        #[cfg(feature = "kdf")]
+        {
+            use hkdf::{GenericHkdfExtract, Kdf};
+
+            let kdf = GenericHkdfExtract::<H>::new(salt);
+            // Reusing the context must not accumulate input key material.
+            for _ in 0..2 {
+                okm_dst.fill(0);
+                kdf.derive_key(tv.ikm, tv.info, okm_dst).unwrap();
+                assert_eq!(okm_dst, tv.okm);
+            }
+        }
+
         okm_dst.fill(0);
         let hkdf = GenericHkdf::<H>::from_prk(tv.prk).unwrap();
         assert!(hkdf.expand(tv.info, okm_dst).is_ok());

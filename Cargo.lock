@@ -19,6 +19,7 @@ version = "0.1.0-rc.2"
 dependencies = [
  "digest",
  "hex-literal",
+ "kdf",
  "sha2",
 ]
 
@@ -28,6 +29,7 @@ version = "0.1.0-rc.1"
 dependencies = [
  "belt-hash",
  "hex-literal",
+ "kdf",
 ]
 
 [[package]]
@@ -208,6 +210,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "hmac",
+ "kdf",
  "sha1",
  "sha2",
 ]
@@ -230,6 +233,7 @@ version = "0.1.0-rc.1"
 dependencies = [
  "digest",
  "hex-literal",
+ "kdf",
  "sha2",
 ]
 
